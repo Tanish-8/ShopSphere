@@ -12,14 +12,9 @@ import orderRoutes from "./routes/orderRoutes.js";
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 
 // ---------------------------------------------------------------------------
-// Load environment variables
+// Load environment variables (must be the very first thing)
 // ---------------------------------------------------------------------------
 dotenv.config();
-
-// ---------------------------------------------------------------------------
-// Connect to MongoDB Atlas
-// ---------------------------------------------------------------------------
-connectDB();
 
 // ---------------------------------------------------------------------------
 // Initialize Express
@@ -80,11 +75,23 @@ app.use(notFound);
 app.use(errorHandler);
 
 // ---------------------------------------------------------------------------
-// Start Server
+// Start Server — connect to DB first, then listen
 // ---------------------------------------------------------------------------
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`\n🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-  console.log(`   http://localhost:${PORT}/api\n`);
-});
+const startServer = async () => {
+  try {
+    // Wait for MongoDB connection before accepting HTTP requests
+    await connectDB();
+
+    app.listen(PORT, () => {
+      console.log(`\n🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+      console.log(`   http://localhost:${PORT}/api\n`);
+    });
+  } catch (error) {
+    console.error("💥 Failed to start server:", error.message);
+    process.exit(1);
+  }
+};
+
+startServer();
