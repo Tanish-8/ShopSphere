@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
+import useAuth from "../../hooks/useAuth";
 
 const navLinkClass = ({ isActive }) =>
   `transition-colors ${isActive ? "text-indigo-600" : "text-gray-700 hover:text-indigo-600"}`;
 
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isAuthenticated, user, logout } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur">
@@ -63,12 +65,33 @@ function Navbar() {
               </span>
             </button>
 
-            <button
-              type="button"
-              className="rounded-full bg-indigo-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
-            >
-              Login
-            </button>
+            {isAuthenticated ? (
+              <div className="flex items-center gap-2">
+                <span className="hidden text-sm font-medium text-gray-700 lg:inline">Hi, {user?.name?.split(" ")[0] || "User"}</span>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link
+                  to="/login"
+                  className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/register"
+                  className="rounded-full bg-indigo-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
+                >
+                  Register
+                </Link>
+              </div>
+            )}
           </div>
 
           <button
@@ -117,12 +140,35 @@ function Navbar() {
                   2
                 </span>
               </button>
-              <button
-                type="button"
-                className="rounded-full bg-indigo-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
-              >
-                Login
-              </button>
+              {isAuthenticated ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    logout();
+                    setIsMenuOpen(false);
+                  }}
+                  className="rounded-full border border-gray-300 px-5 py-2 text-sm font-medium text-gray-700"
+                >
+                  Logout
+                </button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Link
+                    to="/login"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="rounded-full border border-gray-300 px-5 py-2 text-sm font-medium text-gray-700"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to="/register"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="rounded-full bg-indigo-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
+                  >
+                    Register
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         )}

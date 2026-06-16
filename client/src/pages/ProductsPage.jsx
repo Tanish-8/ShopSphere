@@ -1,19 +1,77 @@
 import { Link } from "react-router-dom";
+import { useMemo, useState } from "react";
+import useProducts from "../hooks/useProducts";
 
-const products = [
-  { id: "1", name: "Smartphone Pro Max", category: "Electronics", price: "$799", rating: 4.7, image: "https://via.placeholder.com/500x360?text=Smartphone" },
-  { id: "2", name: "Running Sneakers", category: "Fashion", price: "$119", rating: 4.5, image: "https://via.placeholder.com/500x360?text=Sneakers" },
-  { id: "3", name: "Ceramic Dinner Set", category: "Home & Living", price: "$59", rating: 4.4, image: "https://via.placeholder.com/500x360?text=Dinner+Set" },
-  { id: "4", name: "Hydrating Serum", category: "Beauty", price: "$34", rating: 4.8, image: "https://via.placeholder.com/500x360?text=Serum" },
-  { id: "5", name: "Gaming Mouse", category: "Electronics", price: "$45", rating: 4.6, image: "https://via.placeholder.com/500x360?text=Gaming+Mouse" },
-  { id: "6", name: "Oversized Hoodie", category: "Fashion", price: "$49", rating: 4.3, image: "https://via.placeholder.com/500x360?text=Hoodie" },
-  { id: "7", name: "Aroma Diffuser", category: "Home & Living", price: "$28", rating: 4.4, image: "https://via.placeholder.com/500x360?text=Diffuser" },
-  { id: "8", name: "Lip Tint Set", category: "Beauty", price: "$22", rating: 4.2, image: "https://via.placeholder.com/500x360?text=Lip+Tint" }
-];
+const fallbackImage = "https://via.placeholder.com/500x360?text=Product";
 
-const categories = ["All", "Electronics", "Fashion", "Home & Living", "Beauty"];
+function getProductId(product) {
+  return product._id || product.id;
+}
+
+function getProductName(product) {
+  return product.name || product.title || "Untitled Product";
+}
+
+function getProductCategory(product) {
+  return product.category?.name || product.category || "General";
+}
+
+function getProductPrice(product) {
+  const value = Number(product.price || product.salePrice || 0);
+  return `$${value.toFixed(2)}`;
+}
+
+function getProductRating(product) {
+  const value = Number(product.rating || product.averageRating || product.ratings?.average || 0);
+  return Math.max(0, Math.min(5, Math.round(value)));
+}
+
+function getProductImage(product) {
+  if (Array.isArray(product.images) && product.images.length > 0) return product.images[0];
+  return product.image || product.thumbnail || fallbackImage;
+}
 
 function ProductsPage() {
+  const { products, loading, error } = useProducts();
+  const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [sortBy, setSortBy] = useState("popularity");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const categories = useMemo(() => {
+    const unique = new Set(products.map((product) => getProductCategory(product)));
+    return ["All", ...Array.from(unique)];
+  }, [products]);
+
+  const filteredProducts = useMemo(() => {
+    let result = [...products];
+
+    if (selectedCategory !== "All") {
+      result = result.filter((product) => getProductCategory(product) === selectedCategory);
+    }
+
+    if (search.trim()) {
+      const query = search.trim().toLowerCase();
+      result = result.filter((product) => getProductName(product).toLowerCase().includes(query));
+    }
+
+    if (sortBy === "priceLow") {
+      result.sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
+    } else if (sortBy === "priceHigh") {
+      result.sort((a, b) => Number(b.price || 0) - Number(a.price || 0));
+    } else if (sortBy === "newest") {
+      result.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    } else {
+      result.sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0));
+    }
+
+    return result;
+  }, [products, search, selectedCategory, sortBy]);
+
+  const pageSize = 8;
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
+  const paginatedProducts = filteredProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
     <div className="space-y-8">
       <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
@@ -22,6 +80,11 @@ function ProductsPage() {
             <input
               type="text"
               placeholder="Search products..."
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setCurrentPage(1);
+              }}
               className="w-full rounded-full border border-gray-300 bg-gray-50 px-4 py-2.5 pl-10 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
             />
             <svg className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
@@ -33,11 +96,18 @@ function ProductsPage() {
             </svg>
           </div>
 
-          <select className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 lg:w-56">
-            <option>Sort: Popularity</option>
-            <option>Sort: Price Low to High</option>
-            <option>Sort: Price High to Low</option>
-            <option>Sort: Newest</option>
+          <select
+            value={sortBy}
+            onChange={(event) => {
+              setSortBy(event.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 lg:w-56"
+          >
+            <option value="popularity">Sort: Popularity</option>
+            <option value="priceLow">Sort: Price Low to High</option>
+            <option value="priceHigh">Sort: Price High to Low</option>
+            <option value="newest">Sort: Newest</option>
           </select>
         </div>
 
@@ -46,7 +116,15 @@ function ProductsPage() {
             <button
               key={category}
               type="button"
-              className="rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-indigo-300 hover:text-indigo-600"
+              onClick={() => {
+                setSelectedCategory(category);
+                setCurrentPage(1);
+              }}
+              className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
+                selectedCategory === category
+                  ? "border-indigo-600 bg-indigo-600 text-white"
+                  : "border-gray-300 bg-white text-gray-700 hover:border-indigo-300 hover:text-indigo-600"
+              }`}
             >
               {category}
             </button>
@@ -55,41 +133,74 @@ function ProductsPage() {
       </section>
 
       <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        {products.map((product) => (
-          <article key={product.id} className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-            <img src={product.image} alt={product.name} className="h-44 w-full object-cover" />
-            <div className="space-y-2 p-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{product.category}</p>
-              <h2 className="font-semibold text-gray-900">{product.name}</h2>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-indigo-600">{product.price}</span>
-                <span className="text-sm text-amber-500">{"★".repeat(Math.round(product.rating - 0.1))}</span>
+        {!loading &&
+          !error &&
+          paginatedProducts.map((product) => (
+            <article key={getProductId(product)} className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+              <img src={getProductImage(product)} alt={getProductName(product)} className="h-44 w-full object-cover" />
+              <div className="space-y-2 p-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{getProductCategory(product)}</p>
+                <h2 className="font-semibold text-gray-900">{getProductName(product)}</h2>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-indigo-600">{getProductPrice(product)}</span>
+                  <span className="text-sm text-amber-500">{"★".repeat(getProductRating(product) || 1)}</span>
+                </div>
+                <Link
+                  to={`/products/${getProductId(product)}`}
+                  className="mt-2 inline-flex rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
+                >
+                  View Details
+                </Link>
               </div>
-              <Link
-                to={`/products/${product.id}`}
-                className="mt-2 inline-flex rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
-              >
-                View Details
-              </Link>
-            </div>
-          </article>
-        ))}
+            </article>
+          ))}
+
+        {loading && (
+          <div className="col-span-full rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-600">
+            Loading products...
+          </div>
+        )}
+
+        {!loading && error && (
+          <div className="col-span-full rounded-xl border border-red-200 bg-red-50 p-6 text-center text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        {!loading && !error && paginatedProducts.length === 0 && (
+          <div className="col-span-full rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-600">
+            No products found.
+          </div>
+        )}
       </section>
 
       <section className="flex flex-wrap items-center justify-center gap-2 pt-2">
-        <button type="button" className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">
+        <button
+          type="button"
+          onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+          disabled={currentPage === 1}
+          className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+        >
           Previous
         </button>
-        <button type="button" className="rounded-lg bg-indigo-600 px-3 py-2 text-sm text-white">
-          1
-        </button>
-        <button type="button" className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">
-          2
-        </button>
-        <button type="button" className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">
-          3
-        </button>
-        <button type="button" className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">
+        {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+          <button
+            key={page}
+            type="button"
+            onClick={() => setCurrentPage(page)}
+            className={`rounded-lg px-3 py-2 text-sm ${
+              currentPage === page ? "bg-indigo-600 text-white" : "border border-gray-300 text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            {page}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+          disabled={currentPage === totalPages}
+          className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+        >
           Next
         </button>
       </section>

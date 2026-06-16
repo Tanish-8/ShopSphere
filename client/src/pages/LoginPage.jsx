@@ -1,20 +1,45 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import useAuth from "../hooks/useAuth";
 
 function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [touched, setTouched] = useState({ email: false, password: false });
+  const [submitError, setSubmitError] = useState("");
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login, loading, error, clearError } = useAuth();
 
   const emailInvalid = touched.email && !/\S+@\S+\.\S+/.test(email);
   const passwordInvalid = touched.password && password.length < 6;
+  const redirectPath = location.state?.from?.pathname || "/";
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setTouched({ email: true, password: true });
+    setSubmitError("");
+    clearError();
+
+    if (!email || !password || emailInvalid || passwordInvalid) {
+      setSubmitError("Please fix validation errors before continuing.");
+      return;
+    }
+
+    try {
+      await login({ email, password });
+      navigate(redirectPath, { replace: true });
+    } catch {
+      // Context already sets global auth error.
+    }
+  };
 
   return (
     <div className="mx-auto max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
       <h1 className="text-3xl font-bold text-gray-900">Welcome Back</h1>
       <p className="mt-2 text-sm text-gray-600">Login to continue shopping on ShopSphere.</p>
 
-      <form className="mt-6 space-y-4">
+      <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
         <div>
           <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-gray-700">
             Email
@@ -55,11 +80,18 @@ function LoginPage() {
 
         <button
           type="submit"
+          disabled={loading}
           className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
         >
-          Login
+          {loading ? "Logging in..." : "Login"}
         </button>
       </form>
+
+      {(submitError || error) && (
+        <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {submitError || error}
+        </p>
+      )}
 
       <p className="mt-5 text-center text-sm text-gray-600">
         New to ShopSphere?{" "}

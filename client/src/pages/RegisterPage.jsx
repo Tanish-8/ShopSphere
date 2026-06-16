@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import useAuth from "../hooks/useAuth";
 
 function RegisterPage() {
   const [form, setForm] = useState({
@@ -14,18 +15,49 @@ function RegisterPage() {
     password: false,
     confirmPassword: false
   });
+  const [submitError, setSubmitError] = useState("");
+  const navigate = useNavigate();
+  const { register, loading, error, clearError } = useAuth();
 
   const nameInvalid = touched.name && form.name.trim().length < 2;
   const emailInvalid = touched.email && !/\S+@\S+\.\S+/.test(form.email);
   const passwordInvalid = touched.password && form.password.length < 6;
   const confirmInvalid = touched.confirmPassword && form.confirmPassword !== form.password;
 
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setTouched({
+      name: true,
+      email: true,
+      password: true,
+      confirmPassword: true
+    });
+    setSubmitError("");
+    clearError();
+
+    if (!form.name || !form.email || !form.password || !form.confirmPassword || nameInvalid || emailInvalid || passwordInvalid || confirmInvalid) {
+      setSubmitError("Please fix validation errors before continuing.");
+      return;
+    }
+
+    try {
+      await register({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        password: form.password
+      });
+      navigate("/", { replace: true });
+    } catch {
+      // Context already stores the latest auth error.
+    }
+  };
+
   return (
     <div className="mx-auto max-w-lg rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
       <h1 className="text-3xl font-bold text-gray-900">Create Account</h1>
       <p className="mt-2 text-sm text-gray-600">Register to start your shopping journey.</p>
 
-      <form className="mt-6 space-y-4">
+      <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
         <div>
           <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-gray-700">
             Full Name
@@ -106,11 +138,18 @@ function RegisterPage() {
 
         <button
           type="submit"
+          disabled={loading}
           className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
         >
-          Register
+          {loading ? "Creating account..." : "Register"}
         </button>
       </form>
+
+      {(submitError || error) && (
+        <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {submitError || error}
+        </p>
+      )}
 
       <p className="mt-5 text-center text-sm text-gray-600">
         Already have an account?{" "}

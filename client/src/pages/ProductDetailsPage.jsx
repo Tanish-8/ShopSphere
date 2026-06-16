@@ -1,11 +1,6 @@
-import { useState } from "react";
-
-const images = [
-  "https://via.placeholder.com/900x700?text=Product+Image+1",
-  "https://via.placeholder.com/900x700?text=Product+Image+2",
-  "https://via.placeholder.com/900x700?text=Product+Image+3",
-  "https://via.placeholder.com/900x700?text=Product+Image+4"
-];
+import { useEffect, useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
+import useProducts from "../hooks/useProducts";
 
 const reviews = [
   { id: 1, name: "Aarav M.", rating: 5, comment: "Excellent quality and quick delivery." },
@@ -14,8 +9,52 @@ const reviews = [
 ];
 
 function ProductDetailsPage() {
-  const [activeImage, setActiveImage] = useState(images[0]);
+  const { id } = useParams();
+  const { product, loading, error } = useProducts(id);
+  const galleryImages = useMemo(() => {
+    if (!product) return [];
+    if (Array.isArray(product.images) && product.images.length > 0) return product.images;
+    if (product.image) return [product.image];
+    if (product.thumbnail) return [product.thumbnail];
+    return ["https://via.placeholder.com/900x700?text=Product+Image"];
+  }, [product]);
+
+  const [activeImage, setActiveImage] = useState("https://via.placeholder.com/900x700?text=Product+Image");
   const [quantity, setQuantity] = useState(1);
+  const displayName = product?.name || product?.title || "Product";
+  const displayCategory = product?.category?.name || product?.category || "General";
+  const displayDescription = product?.description || "No description available for this product yet.";
+  const displayPrice = Number(product?.price || 0).toFixed(2);
+  const displayRating = Math.max(0, Math.min(5, Math.round(Number(product?.rating || product?.averageRating || 0))));
+  const displayStock = Number(product?.stock || product?.quantity || 0);
+
+  useEffect(() => {
+    if (galleryImages.length > 0) {
+      setActiveImage(galleryImages[0]);
+    }
+  }, [galleryImages]);
+
+  if (loading) {
+    return (
+      <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center text-sm text-gray-600 shadow-sm">
+        Loading product details...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-2xl border border-red-200 bg-red-50 p-8 text-center text-sm text-red-700 shadow-sm">{error}</div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center text-sm text-gray-600 shadow-sm">
+        Product not found.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-12">
@@ -25,7 +64,7 @@ function ProductDetailsPage() {
             <img src={activeImage} alt="Selected product" className="h-80 w-full object-cover sm:h-[26rem]" />
           </div>
           <div className="grid grid-cols-4 gap-3">
-            {images.map((image) => (
+            {galleryImages.map((image) => (
               <button
                 key={image}
                 type="button"
@@ -39,20 +78,22 @@ function ProductDetailsPage() {
         </div>
 
         <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
-          <p className="text-sm font-medium text-indigo-600">Electronics</p>
-          <h1 className="mt-2 text-3xl font-bold text-gray-900">Premium Wireless Headphones</h1>
+          <p className="text-sm font-medium text-indigo-600">{displayCategory}</p>
+          <h1 className="mt-2 text-3xl font-bold text-gray-900">{displayName}</h1>
           <p className="mt-3 text-sm leading-6 text-gray-600">
-            Experience immersive audio, active noise cancellation, and all-day comfort in this modern wireless design.
+            {displayDescription}
           </p>
 
           <div className="mt-5 flex items-center gap-3">
-            <span className="text-3xl font-bold text-gray-900">$129</span>
-            <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">In Stock</span>
+            <span className="text-3xl font-bold text-gray-900">${displayPrice}</span>
+            <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+              {displayStock > 0 ? "In Stock" : "Out of Stock"}
+            </span>
           </div>
 
           <div className="mt-4 flex items-center gap-2">
-            <span className="text-amber-500">★★★★★</span>
-            <span className="text-sm text-gray-600">4.8 (148 reviews)</span>
+            <span className="text-amber-500">{"★".repeat(displayRating || 1)}</span>
+            <span className="text-sm text-gray-600">{Number(product?.rating || product?.averageRating || 0).toFixed(1)} rating</span>
           </div>
 
           <div className="mt-7 flex items-center gap-4">
