@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
+import useCart from "../../hooks/useCart";
 
 const navLinkClass = ({ isActive }) =>
   `transition-colors ${isActive ? "text-indigo-600" : "text-gray-700 hover:text-indigo-600"}`;
@@ -8,6 +9,7 @@ const navLinkClass = ({ isActive }) =>
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { isAuthenticated, user, logout } = useAuth();
+  const { totalItemCount } = useCart();
 
   return (
     <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur">
@@ -50,8 +52,8 @@ function Navbar() {
               </svg>
             </div>
 
-            <button
-              type="button"
+            <Link
+              to="/cart"
               className="relative rounded-full p-2 text-gray-600 transition hover:bg-gray-100 hover:text-indigo-600"
               aria-label="Cart"
             >
@@ -61,9 +63,9 @@ function Navbar() {
                 <circle cx="18" cy="20" r="1.5" />
               </svg>
               <span className="absolute -right-0.5 -top-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-indigo-600 px-1 text-xs font-semibold text-white">
-                2
+                {totalItemCount}
               </span>
-            </button>
+            </Link>
 
             {isAuthenticated ? (
               <div className="flex items-center gap-2">
@@ -131,15 +133,16 @@ function Navbar() {
             </div>
 
             <div className="flex items-center justify-between">
-              <button
-                type="button"
+              <Link
+                to="/cart"
+                onClick={() => setIsMenuOpen(false)}
                 className="inline-flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700"
               >
                 Cart
                 <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-indigo-600 px-1 text-xs font-semibold text-white">
-                  2
+                  {totalItemCount}
                 </span>
-              </button>
+              </Link>
               {isAuthenticated ? (
                 <button
                   type="button"

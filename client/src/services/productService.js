@@ -1,18 +1,46 @@
 import api from "./api";
 
-function extractData(payload) {
-  if (Array.isArray(payload)) return payload;
-  if (payload?.data && Array.isArray(payload.data)) return payload.data;
-  if (payload?.products && Array.isArray(payload.products)) return payload.products;
-  return payload;
+function normalizeProduct(rawProduct) {
+  if (!rawProduct || typeof rawProduct !== "object") return null;
+
+  const id = rawProduct._id || rawProduct.id || null;
+  const images = Array.isArray(rawProduct.images)
+    ? rawProduct.images.filter(Boolean)
+    : rawProduct.image
+      ? [rawProduct.image]
+      : [];
+
+  return {
+    _id: id,
+    id,
+    name: rawProduct.name || rawProduct.title || "",
+    description: rawProduct.description || "",
+    price: Number(rawProduct.price || 0),
+    images,
+    image: rawProduct.image || images[0] || "",
+    stock: Number(rawProduct.stock ?? rawProduct.countInStock ?? rawProduct.quantity ?? 0),
+    rating: Number(rawProduct.rating ?? rawProduct.averageRating ?? 0),
+    category: rawProduct.category?.name || rawProduct.category || "General",
+    numReviews: Number(rawProduct.numReviews ?? 0)
+  };
+}
+
+function extractProductList(payload) {
+  const list = Array.isArray(payload) ? payload : payload?.data || payload?.products || [];
+  return Array.isArray(list) ? list.map(normalizeProduct).filter(Boolean) : [];
+}
+
+function extractSingleProduct(payload) {
+  const raw = payload?.data && !Array.isArray(payload.data) ? payload.data : payload;
+  return normalizeProduct(raw);
 }
 
 export async function fetchProducts() {
   const response = await api.get("/products");
-  return extractData(response.data);
+  return extractProductList(response.data);
 }
 
 export async function fetchProductById(id) {
   const response = await api.get(`/products/${id}`);
-  return extractData(response.data);
+  return extractSingleProduct(response.data);
 }

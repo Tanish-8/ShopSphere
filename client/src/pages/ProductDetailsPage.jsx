@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import useCart from "../hooks/useCart";
 import useProducts from "../hooks/useProducts";
 
 const reviews = [
@@ -11,6 +12,7 @@ const reviews = [
 function ProductDetailsPage() {
   const { id } = useParams();
   const { product, loading, error } = useProducts(id);
+  const { addItem } = useCart();
   const galleryImages = useMemo(() => {
     if (!product) return [];
     if (Array.isArray(product.images) && product.images.length > 0) return product.images;
@@ -21,6 +23,7 @@ function ProductDetailsPage() {
 
   const [activeImage, setActiveImage] = useState("https://via.placeholder.com/900x700?text=Product+Image");
   const [quantity, setQuantity] = useState(1);
+  const [successMessage, setSuccessMessage] = useState("");
   const displayName = product?.name || product?.title || "Product";
   const displayCategory = product?.category?.name || product?.category || "General";
   const displayDescription = product?.description || "No description available for this product yet.";
@@ -33,6 +36,27 @@ function ProductDetailsPage() {
       setActiveImage(galleryImages[0]);
     }
   }, [galleryImages]);
+
+  useEffect(() => {
+    if (!successMessage) return undefined;
+    const timer = setTimeout(() => setSuccessMessage(""), 2500);
+    return () => clearTimeout(timer);
+  }, [successMessage]);
+
+  const handleAddToCart = () => {
+    addItem(
+      {
+        productId: product._id || product.id,
+        name: displayName,
+        image: galleryImages[0],
+        price: Number(product?.price || 0),
+        countInStock: Math.max(0, displayStock)
+      },
+      quantity
+    );
+
+    setSuccessMessage("Item added to cart.");
+  };
 
   if (loading) {
     return (
@@ -128,10 +152,13 @@ function ProductDetailsPage() {
 
           <button
             type="button"
+            onClick={handleAddToCart}
+            disabled={displayStock <= 0}
             className="mt-7 w-full rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700"
           >
             Add to Cart
           </button>
+          {successMessage && <p className="mt-3 text-sm font-medium text-emerald-600">{successMessage}</p>}
         </div>
       </section>
 
