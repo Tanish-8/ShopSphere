@@ -104,12 +104,12 @@ function CartPage() {
               Clear Cart
             </button>
 
-            <button
-              type="button"
-              className="mt-3 w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
+            <Link
+              to="/checkout"
+              className="mt-3 block w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-indigo-700"
             >
               Proceed to Checkout
-            </button>
+            </Link>
           </aside>
         </div>
       )}
