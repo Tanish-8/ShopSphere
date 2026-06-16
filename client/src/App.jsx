@@ -1,6 +1,12 @@
 import { Route, Routes } from "react-router-dom";
 import Footer from "./components/layout/Footer";
 import Navbar from "./components/layout/Navbar";
+import HomePage from "./pages/HomePage";
+import LoginPage from "./pages/LoginPage";
+import NotFoundPage from "./pages/NotFoundPage";
+import ProductDetailsPage from "./pages/ProductDetailsPage";
+import ProductsPage from "./pages/ProductsPage";
+import RegisterPage from "./pages/RegisterPage";
 
 function App() {
   return (
@@ -9,25 +15,12 @@ function App() {
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10">
         <Routes>
-          <Route
-            path="/"
-            element={
-              <section className="rounded-lg border bg-white p-6 shadow-sm">
-                <h1 className="text-2xl font-bold">Frontend foundation ready</h1>
-                <p className="mt-3 text-gray-600">
-                  Next step is creating actual pages and API integration.
-                </p>
-              </section>
-            }
-          />
-          <Route
-            path="/products"
-            element={
-              <section className="rounded-lg border bg-white p-6 shadow-sm">
-                <h2 className="text-xl font-semibold">Products page placeholder</h2>
-              </section>
-            }
-          />
+          <Route path="/" element={<HomePage />} />
+          <Route path="/products" element={<ProductsPage />} />
+          <Route path="/products/:id" element={<ProductDetailsPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
       <Footer />
