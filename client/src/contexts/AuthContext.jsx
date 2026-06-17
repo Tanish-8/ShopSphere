@@ -5,7 +5,8 @@ import {
   loginUser,
   registerUser,
   removeStoredToken,
-  setStoredToken
+  setStoredToken,
+  updateProfile
 } from "../services/authService";
 
 export const AuthContext = createContext(null);
@@ -48,7 +49,7 @@ function AuthProvider({ children }) {
     restoreSession();
   }, [restoreSession]);
 
-  const login = async (payload) => {
+  const login = useCallback(async (payload) => {
     setLoading(true);
     setError("");
     try {
@@ -73,9 +74,9 @@ function AuthProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const register = async (payload) => {
+  const register = useCallback(async (payload) => {
     setLoading(true);
     setError("");
     try {
@@ -100,9 +101,40 @@ function AuthProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const clearError = () => setError("");
+  const clearError = useCallback(() => setError(""), []);
+
+  const refreshUser = useCallback(async () => {
+    try {
+      const profile = await getProfile();
+      setUser(profile);
+      return profile;
+    } catch (profileError) {
+      const message = profileError?.response?.data?.message || profileError?.message || "Failed to refresh profile.";
+      setError(message);
+      throw profileError;
+    }
+  }, []);
+
+  const updateUserProfile = useCallback(async (payload) => {
+    setLoading(true);
+    setError("");
+    try {
+      const updated = await updateProfile(payload);
+      setUser((prev) => ({
+        ...prev,
+        ...updated
+      }));
+      return updated;
+    } catch (updateError) {
+      const message = updateError?.response?.data?.message || updateError?.message || "Profile update failed.";
+      setError(message);
+      throw updateError;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const value = useMemo(
     () => ({
@@ -114,9 +146,11 @@ function AuthProvider({ children }) {
       login,
       register,
       logout,
-      clearError
+      clearError,
+      refreshUser,
+      updateUserProfile
     }),
-    [user, token, loading, error, logout]
+    [user, token, loading, error, logout, login, register, clearError, refreshUser, updateUserProfile]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

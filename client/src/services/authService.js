@@ -34,4 +34,9 @@ export async function getProfile() {
   return response.data?.data;
 }
 
+export async function updateProfile(payload) {
+  const response = await api.put("/auth/profile", payload, getAuthConfig());
+  return response.data?.data;
+}
+
 export { TOKEN_KEY, getStoredToken, setStoredToken, removeStoredToken };

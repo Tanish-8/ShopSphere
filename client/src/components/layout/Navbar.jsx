@@ -69,7 +69,9 @@ function Navbar() {
 
             {isAuthenticated ? (
               <div className="flex items-center gap-2">
-                <span className="hidden text-sm font-medium text-gray-700 lg:inline">Hi, {user?.name?.split(" ")[0] || "User"}</span>
+                <Link to="/profile" className="hidden text-sm font-medium text-gray-700 transition hover:text-indigo-600 lg:inline">
+                  Hi, {user?.name?.split(" ")[0] || "User"}
+                </Link>
                 <button
                   type="button"
                   onClick={logout}
@@ -144,16 +146,25 @@ function Navbar() {
                 </span>
               </Link>
               {isAuthenticated ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    logout();
-                    setIsMenuOpen(false);
-                  }}
-                  className="rounded-full border border-gray-300 px-5 py-2 text-sm font-medium text-gray-700"
-                >
-                  Logout
-                </button>
+                <div className="flex items-center gap-2">
+                  <Link
+                    to="/profile"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="rounded-full border border-gray-300 px-5 py-2 text-sm font-medium text-gray-700"
+                  >
+                    Profile
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      logout();
+                      setIsMenuOpen(false);
+                    }}
+                    className="rounded-full border border-gray-300 px-5 py-2 text-sm font-medium text-gray-700"
+                  >
+                    Logout
+                  </button>
+                </div>
               ) : (
                 <div className="flex items-center gap-2">
                   <Link
