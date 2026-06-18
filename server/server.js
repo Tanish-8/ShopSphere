@@ -9,6 +9,8 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import addressRoutes from "./routes/addressRoutes.js";
+import migrateAddresses from "./utils/migrateAddresses.js";
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 
 // ---------------------------------------------------------------------------
@@ -36,7 +38,21 @@ app.use(express.urlencoded({ extended: true }));
 // Enable CORS for frontend
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: (origin, callback) => {
+      const allowed = [
+        "http://localhost:5173",
+        "http://localhost:5174",
+      ];
+      if (process.env.CLIENT_URL) allowed.push(process.env.CLIENT_URL);
+
+      // Allow requests with no origin (e.g. server-to-server, curl)
+      if (!origin) return callback(null, true);
+
+      if (allowed.includes(origin)) {
+        return callback(null, origin);
+      }
+      return callback(new Error("Not allowed by CORS"), false);
+    },
     credentials: true,
   })
 );
@@ -67,6 +83,7 @@ app.get("/api", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
+    app.use("/api/addresses", addressRoutes);
 
 // ---------------------------------------------------------------------------
 // Error Handling
@@ -83,6 +100,9 @@ const startServer = async () => {
   try {
     // Wait for MongoDB connection before accepting HTTP requests
     await connectDB();
+        
+        // Run address migration (idempotent) to preserve legacy single address
+        await migrateAddresses();
 
     app.listen(PORT, () => {
       console.log(`\n🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);

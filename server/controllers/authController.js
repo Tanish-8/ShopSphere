@@ -155,7 +155,10 @@ export const updateUserProfile = async (req, res, next) => {
     user.email = req.body.email || user.email;
     user.phone = req.body.phone || user.phone;
 
-    if (req.body.address) {
+    // Support both legacy `address` and new `addresses` array during migration
+    if (req.body.addresses && Array.isArray(req.body.addresses)) {
+      user.addresses = req.body.addresses;
+    } else if (req.body.address) {
       user.address = { ...user.address?.toObject?.(), ...req.body.address };
     }
 

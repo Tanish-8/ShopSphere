@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useCart from "../hooks/useCart";
 import { createOrder } from "../services/orderService";
+import * as addressService from "../services/addressService";
 
 function CheckoutPage() {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [error, setError] = useState("");
   const [placingOrder, setPlacingOrder] = useState(false);
+  const [usingDefault, setUsingDefault] = useState(false);
 
   const isFormValid = useMemo(
     () =>
@@ -52,6 +54,9 @@ function CheckoutPage() {
           quantity: Number(item.quantity)
         })),
         shippingAddress: {
+          fullName: shippingAddress.fullName.trim(),
+          phone: shippingAddress.phone || '',
+          landmark: shippingAddress.landmark || '',
           street: shippingAddress.address.trim(),
           city: shippingAddress.city.trim(),
           state: shippingAddress.state.trim(),
@@ -71,6 +76,37 @@ function CheckoutPage() {
       setPlacingOrder(false);
     }
   };
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadDefault = async () => {
+      try {
+        const addrs = await addressService.getAddresses();
+        if (!mounted) return;
+        const def = addrs.find((a) => a.isDefault) || addrs[0];
+        if (def) {
+          setShippingAddress((prev) => ({
+            ...prev,
+            fullName: def.fullName || prev.fullName,
+            address: def.street || prev.address,
+            city: def.city || prev.city,
+            state: def.state || prev.state,
+            postalCode: def.zipCode || prev.postalCode,
+            country: def.country || prev.country,
+            phone: def.phone || prev.phone,
+            landmark: def.landmark || prev.landmark,
+          }));
+          setUsingDefault(true);
+        }
+      } catch (err) {
+        // ignore if user has no addresses or not authenticated yet
+      }
+    };
+
+    loadDefault();
+    return () => { mounted = false; };
+  }, []);
 
   return (
     <div className="space-y-8">
@@ -106,6 +142,32 @@ function CheckoutPage() {
                   name="address"
                   type="text"
                   value={shippingAddress.address}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label htmlFor="landmark" className="mb-1.5 block text-sm font-medium text-gray-700">
+                  Landmark (optional)
+                </label>
+                <input
+                  id="landmark"
+                  name="landmark"
+                  type="text"
+                  value={shippingAddress.landmark || ''}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label htmlFor="phone" className="mb-1.5 block text-sm font-medium text-gray-700">
+                  Phone (optional)
+                </label>
+                <input
+                  id="phone"
+                  name="phone"
+                  type="text"
+                  value={shippingAddress.phone || ''}
                   onChange={handleInputChange}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
                 />

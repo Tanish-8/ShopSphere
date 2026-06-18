@@ -105,6 +105,9 @@ function ProfilePage() {
             <p className="text-gray-500">Account Created</p>
             <p className="font-medium text-gray-900">{createdDate}</p>
           </div>
+          <div className="mt-4">
+            <a href="/addresses" className="inline-block rounded bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">Manage Addresses</a>
+          </div>
         </div>
       </section>
 

@@ -35,6 +35,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    // Legacy single-address field (kept for backward compatibility during migration)
     address: {
       street: { type: String, trim: true },
       city: { type: String, trim: true },
@@ -42,6 +43,23 @@ const userSchema = new mongoose.Schema(
       zipCode: { type: String, trim: true },
       country: { type: String, trim: true },
     },
+
+    // New: saved addresses array (address book)
+    addresses: [
+      {
+        label: { type: String, trim: true }, // Home, Work, Other, or custom
+        fullName: { type: String, trim: true },
+        phone: { type: String, trim: true },
+        landmark: { type: String, trim: true },
+        street: { type: String, trim: true },
+        city: { type: String, trim: true },
+        state: { type: String, trim: true },
+        zipCode: { type: String, trim: true },
+        country: { type: String, trim: true },
+        isDefault: { type: Boolean, default: false },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   {
     timestamps: true,
