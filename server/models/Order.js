@@ -89,6 +89,13 @@ const orderSchema = new mongoose.Schema(
     paidAt: {
       type: Date,
     },
+    paymentResult: {
+      paymentId: { type: String },
+      paymentMethod: { type: String },
+      paymentDate: { type: Date },
+      razorpayOrderId: { type: String },
+      razorpaySignature: { type: String },
+    },
     isDelivered: {
       type: Boolean,
       default: false,

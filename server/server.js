@@ -11,6 +11,7 @@ import productRoutes from "./routes/productRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import addressRoutes from "./routes/addressRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
 import migrateAddresses from "./utils/migrateAddresses.js";
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 
@@ -86,6 +87,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
     app.use("/api/addresses", addressRoutes);
     app.use("/api/admin", adminRoutes);
+    app.use("/api/payments", paymentRoutes);
 
 // ---------------------------------------------------------------------------
 // Error Handling

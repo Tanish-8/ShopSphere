@@ -63,6 +63,11 @@ export default function OrderDetailsPage() {
                 <p className="font-medium capitalize">{order.isPaid ? 'Paid' : 'Unpaid'}</p>
               </div>
               <div>
+                <p className="text-gray-500">Payment method</p>
+                <p className="font-medium">{order.paymentResult?.paymentMethod || order.paymentMethod || '-'}</p>
+                {order.paymentResult?.paymentId && <p className="text-xs text-gray-500">ID: {order.paymentResult.paymentId}</p>}
+              </div>
+              <div>
                 <p className="text-gray-500">Order status</p>
                 <p className="font-medium capitalize">{order.status || 'pending'}</p>
               </div>

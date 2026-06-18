@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import useCart from "../hooks/useCart";
 import { createOrder } from "../services/orderService";
 import * as addressService from "../services/addressService";
+import { createRazorpayOrder, verifyRazorpayPayment } from "../services/paymentService";
 
 function CheckoutPage() {
   const navigate = useNavigate();
@@ -51,7 +52,10 @@ function CheckoutPage() {
       const payload = {
         orderItems: cartItems.map((item) => ({
           product: item.productId,
-          quantity: Number(item.quantity)
+          quantity: Number(item.quantity),
+          name: item.name,
+          image: item.image,
+          price: Number(item.price || 0),
         })),
         shippingAddress: {
           fullName: shippingAddress.fullName.trim(),
@@ -64,12 +68,61 @@ function CheckoutPage() {
           country: shippingAddress.country.trim()
         },
         paymentMethod,
+        itemsPrice: Number(totalPrice.toFixed(2)),
         totalPrice: Number(totalPrice.toFixed(2))
       };
 
+      // Create ShopSphere order first (unpaid for Razorpay)
       const createdOrder = await createOrder(payload);
-      clearCart();
-      navigate(`/order-success/${createdOrder?._id || createdOrder?.id}`, { replace: true });
+
+      if (paymentMethod === 'razorpay') {
+        // Create razorpay order on server
+        const rp = await createRazorpayOrder({ amount: createdOrder.totalPrice, orderId: createdOrder._id });
+        // Load Razorpay script
+        const loadScript = (src) => new Promise((res, rej) => {
+          const s = document.createElement('script');
+          s.src = src; s.onload = res; s.onerror = rej; document.body.appendChild(s);
+        });
+        await loadScript('https://checkout.razorpay.com/v1/checkout.js');
+
+        const options = {
+          key: rp.keyId,
+          amount: rp.amount,
+          currency: rp.currency,
+          name: 'ShopSphere',
+          description: `Order ${createdOrder._id}`,
+          order_id: rp.orderId,
+          handler: async function (response) {
+            try {
+              // Verify payment on server
+              await verifyRazorpayPayment({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                orderId: createdOrder._id,
+              });
+
+              clearCart();
+              navigate(`/order-success/${createdOrder?._id || createdOrder?.id}`, { replace: true });
+            } catch (verErr) {
+              setError(verErr?.response?.data?.message || verErr?.message || 'Payment verification failed');
+            }
+          },
+          prefill: {
+            name: shippingAddress.fullName,
+            contact: shippingAddress.phone,
+          },
+          theme: { color: '#3367D6' },
+        };
+
+        // eslint-disable-next-line no-undef
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      } else {
+        // Cash on Delivery or other methods: order already created
+        clearCart();
+        navigate(`/order-success/${createdOrder?._id || createdOrder?.id}`, { replace: true });
+      }
     } catch (requestError) {
       setError(requestError?.response?.data?.message || requestError?.message || "Failed to place order.");
     } finally {
@@ -249,6 +302,16 @@ function CheckoutPage() {
                   onChange={(event) => setPaymentMethod(event.target.value)}
                 />
                 Card (placeholder)
+              </label>
+              <label className="flex items-center gap-3 rounded-lg border border-gray-200 p-3 text-sm text-gray-700">
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="razorpay"
+                  checked={paymentMethod === "razorpay"}
+                  onChange={(event) => setPaymentMethod(event.target.value)}
+                />
+                Razorpay
               </label>
             </div>
           </div>
