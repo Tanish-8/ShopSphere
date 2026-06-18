@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import AdminRoute from "./components/auth/AdminRoute";
 import Footer from "./components/layout/Footer";
 import Navbar from "./components/layout/Navbar";
 import CartPage from "./pages/CartPage";
@@ -15,6 +16,11 @@ import ProfilePage from "./pages/ProfilePage";
 import AddressesPage from "./pages/AddressesPage";
 import ProductsPage from "./pages/ProductsPage";
 import RegisterPage from "./pages/RegisterPage";
+import AdminLayout from "./pages/admin/AdminLayout";
+import DashboardPage from "./pages/admin/DashboardPage";
+import ProductsAdminPage from "./pages/admin/ProductsPage";
+import OrdersAdminPage from "./pages/admin/OrdersPage";
+import UsersAdminPage from "./pages/admin/UsersPage";
 
 function App() {
   return (
@@ -77,6 +83,13 @@ function App() {
           />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          {/* Admin routes */}
+          <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+            <Route index element={<AdminRoute><DashboardPage /></AdminRoute>} />
+            <Route path="products" element={<AdminRoute><ProductsAdminPage /></AdminRoute>} />
+            <Route path="orders" element={<AdminRoute><OrdersAdminPage /></AdminRoute>} />
+            <Route path="users" element={<AdminRoute><UsersAdminPage /></AdminRoute>} />
+          </Route>
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>

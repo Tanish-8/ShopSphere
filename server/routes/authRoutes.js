@@ -7,6 +7,7 @@ import {
   updateUserProfile,
   getAllUsers,
   deleteUser,
+  updateUserRole,
   registerValidation,
   loginValidation,
 } from "../controllers/authController.js";
@@ -26,5 +27,6 @@ router
 // Admin-only routes
 router.get("/users", protect, admin, getAllUsers);
 router.delete("/users/:id", protect, admin, deleteUser);
+router.put("/users/:id/role", protect, admin, updateUserRole);
 
 export default router;

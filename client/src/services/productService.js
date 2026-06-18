@@ -44,3 +44,32 @@ export async function fetchProductById(id) {
   const response = await api.get(`/products/${id}`);
   return extractSingleProduct(response.data);
 }
+
+// Admin actions
+import { getStoredToken } from "./authService";
+
+function getAuthConfig() {
+  const token = getStoredToken();
+  return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+}
+
+export async function fetchAllProductsAdmin(params = {}) {
+  const config = { params, ...getAuthConfig() };
+  const response = await api.get(`/products`, config);
+  return extractProductList(response.data);
+}
+
+export async function createProductAdmin(payload) {
+  const response = await api.post(`/products`, payload, getAuthConfig());
+  return extractSingleProduct(response.data?.data || response.data);
+}
+
+export async function updateProductAdmin(id, payload) {
+  const response = await api.put(`/products/${id}`, payload, getAuthConfig());
+  return extractSingleProduct(response.data?.data || response.data);
+}
+
+export async function deleteProductAdmin(id) {
+  const response = await api.delete(`/products/${id}`, getAuthConfig());
+  return response.data;
+}

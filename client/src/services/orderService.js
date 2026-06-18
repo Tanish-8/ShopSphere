@@ -21,6 +21,11 @@ export async function fetchOrderById(id) {
   return response.data?.data;
 }
 
+export async function fetchAllOrders() {
+  const response = await api.get(`/orders`, getAuthConfig());
+  return response.data;
+}
+
 export async function updateOrderStatus(orderId, status, note) {
   const payload = { status };
   if (note) payload.note = note;

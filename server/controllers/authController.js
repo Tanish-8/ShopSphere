@@ -233,3 +233,33 @@ export const deleteUser = async (req, res, next) => {
     next(error);
   }
 };
+
+// ---------------------------------------------------------------------------
+// @desc    Update user role (admin)
+// @route   PUT /api/auth/users/:id/role
+// @access  Private/Admin
+// ---------------------------------------------------------------------------
+export const updateUserRole = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    if (!role || (role !== "admin" && role !== "customer")) {
+      res.status(400);
+      throw new Error("Role must be 'admin' or 'customer'");
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      res.status(404);
+      throw new Error("User not found");
+    }
+
+    user.role = role;
+    await user.save();
+
+    res.json({ success: true, data: { _id: user._id, role: user.role } });
+  } catch (error) {
+    next(error);
+  }
+};
