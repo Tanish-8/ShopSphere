@@ -1,6 +1,8 @@
 import User from "../models/User.js";
 
 // Idempotent migration: copy legacy `address` into `addresses[0]` when addresses empty
+import 'dotenv/config';
+
 export default async function migrateAddresses() {
   try {
     const users = await User.find({ $or: [ { addresses: { $exists: false } }, { addresses: { $size: 0 } } ] });
@@ -28,4 +30,23 @@ export default async function migrateAddresses() {
   } catch (err) {
     console.error('Address migration failed:', err.message);
   }
+}
+
+// Run when executed directly
+import { fileURLToPath } from "url";
+const __filename = fileURLToPath(import.meta.url);
+if (process.argv[1] === __filename) {
+  (async () => {
+    // connect DB lazily to avoid circular imports
+    try {
+      const connectDB = (await import("../config/db.js")).default;
+      await connectDB();
+      await migrateAddresses();
+      console.log("Address migration complete");
+      process.exit(0);
+    } catch (err) {
+      console.error("Address migration failed:", err);
+      process.exit(1);
+    }
+  })();
 }

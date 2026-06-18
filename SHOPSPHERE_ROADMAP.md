@@ -9,9 +9,18 @@
 - Cart-server sync: merge guest cart on login and persist carts in DB
 - Improve error handling and user-facing messages for checkout flow
 - Add basic E2E/manual tests for critical flows (auth, checkout, order placement)
+ - Address Management: Completed (server APIs, client address book UI, default address, migration script)
+ - Order Details view: Completed (client page `/orders/:id`, timeline UI, pricing/shipping breakdown)
+ - Order tracking (next): implement customer-visible status timeline and admin status updates
 
 ## Phase 2 — Important features (deliver in months)
 - Order lifecycle improvements: email notifications (order confirmation, shipping), order tracking, status webhooks
+
+## Order Tracking (proposed — next priority)
+- Customer: view order status timeline on Order Details (Ordered → Processing → Shipped → Delivered)
+- Admin: update order status via admin UI or API (`PUT /api/orders/:id/status`), trigger notification hooks
+- DB: ensure `Order` schema records status history timestamps or events (optionally add `statusHistory` array)
+- API : expose status update endpoint and order GET returns status history
 - Advanced search & filtering: server-side filtering/pagination using query params, faceted search, and relevance ranking
 - Promotions: coupons, discounts, and promo codes with validation
 - User accounts: multiple addresses, saved payment methods (tokenized), wishlists

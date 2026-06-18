@@ -71,9 +71,17 @@ const orderSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
-      default: "pending",
+      enum: ["pending", "ordered", "processing", "shipped", "delivered", "cancelled"],
+      default: "ordered",
     },
+    statusHistory: [
+      {
+        status: { type: String },
+        at: { type: Date, default: Date.now },
+        note: { type: String },
+        changedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      },
+    ],
     isPaid: {
       type: Boolean,
       default: false,

@@ -104,6 +104,9 @@ export const createOrder = async (req, res, next) => {
       taxPrice,
       shippingPrice,
       totalPrice,
+      statusHistory: [
+        { status: "ordered", at: Date.now(), changedBy: req.user._id },
+      ],
     });
 
     // Reduce stock for each ordered product
@@ -230,20 +233,34 @@ export const updateOrderStatus = async (req, res, next) => {
       throw new Error("Status is required");
     }
 
-    const validStatuses = [
-      "pending",
-      "processing",
-      "shipped",
-      "delivered",
-      "cancelled",
-    ];
-    if (!validStatuses.includes(status)) {
-      res.status(400);
-      throw new Error(
-        `Invalid status. Must be one of: ${validStatuses.join(", ")}`
-      );
+    // Validate allowed transitions
+    const allowed = {
+      ordered: ["processing"],
+      processing: ["shipped"],
+      shipped: ["delivered"],
+    };
+
+    const prevStatusRaw = order.status || "ordered";
+    const prevStatus = prevStatusRaw === "pending" ? "ordered" : prevStatusRaw;
+
+    // If same status, nothing to do
+    if (prevStatus === status) {
+      return res.json({ success: true, data: order });
     }
 
+    const allowedNext = allowed[prevStatus] || [];
+    if (!allowedNext.includes(status)) {
+      return res.status(400).json({ success: false, message: "Invalid status transition" });
+    }
+
+    // Append to history and update status
+    const note = req.body.note;
+
+    if (!Array.isArray(order.statusHistory)) order.statusHistory = [];
+    order.statusHistory.push({ status, at: Date.now(), note, changedBy: req.user._id });
+
+    // Preserve previous status for potential restore logic
+    const previousStatus = order.status;
     order.status = status;
 
     // Auto-set delivery fields
@@ -252,8 +269,8 @@ export const updateOrderStatus = async (req, res, next) => {
       order.deliveredAt = Date.now();
     }
 
-    // If cancelled, restore stock
-    if (status === "cancelled" && order.status !== "cancelled") {
+    // If cancelled, restore stock (only when moving into cancelled)
+    if (status === "cancelled" && previousStatus !== "cancelled") {
       for (const item of order.orderItems) {
         await Product.findByIdAndUpdate(item.product, {
           $inc: { stock: item.quantity },
@@ -263,10 +280,7 @@ export const updateOrderStatus = async (req, res, next) => {
 
     const updatedOrder = await order.save();
 
-    res.json({
-      success: true,
-      data: updatedOrder,
-    });
+    res.json({ success: true, data: updatedOrder });
   } catch (error) {
     next(error);
   }

@@ -9,6 +9,8 @@
 - Cart: client-side cart stored in localStorage (guest + per-user keys), add/remove/update items
 - Checkout: shipping form, payment method selection (placeholder), order creation via API
 - Orders: create order (backend), reduce product stock, frontend order success and order history pages
+ - Address Management: server APIs and client address book UI with full CRUD, default address selection, and Checkout integration (migration from legacy `address` to `addresses` supported)
+ - Order Details UI: detailed order view showing summary, items, shipping info (including phone), pricing breakdown, and an order timeline; route `/orders/:id` implemented and wired to protected order API
 - Reviews (backend): product review model and POST /api/products/:id/reviews (protected)
 - Admin APIs (backend): product create/update/delete, user list/delete, order listing and status updates
 - Seeder: `server/seeder.js` to populate initial products and admin user
@@ -27,6 +29,10 @@
 - Image upload UI + secured upload endpoints (multipart/form-data handling)
 - Cart-server sync (merge guest cart on login) and persistent server-side carts
 - Email notifications (order confirmation, shipping updates)
+
+## Recent additions
+- Address Management: Completed (server + client + migration script). Users can add/edit/delete addresses, set a default, and select address during checkout.
+- Order Details page: Completed. Includes timeline and buy-again action.
 - Inventory alerts and low-stock notifications
 - Robust error handling and UX around network failures
 - Tests (unit/integration) and CI pipeline

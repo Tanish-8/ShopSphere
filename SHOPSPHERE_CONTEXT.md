@@ -83,4 +83,12 @@
 - Seed data: `server/seeder.js` can populate products and a test admin user.
 - Missing / incomplete areas: admin UI (no dedicated admin pages in client), payment gateway integration (card flow is placeholder), client-side product review submission (server supports reviews), image upload UI and APIs, some config mismatches (client API baseURL vs server port).
 
+## Recently completed features
+- Address Management: full CRUD server APIs and client UI for managing multiple addresses. Includes migration from legacy single `address` to new `addresses` array, support for default address selection, and integration with the Checkout flow to prefill shipping details.
+- Order Details page: Amazon-style order details implemented on the client with order summary, product list, shipping information (full name + phone), pricing breakdown, timeline visualization, and action buttons (Back to Orders, Buy Again). Uses existing `GET /api/orders/:id` endpoint.
+
+## Notes
+- The Address Management feature preserves legacy `address` while supporting the new `addresses` array to allow idempotent migrations and safe roll-forward deployments.
+- The Order Details UI is implemented at route `/orders/:id` and reuses the protected order retrieval endpoint; timeline and status rendering are client-side components fed by the order `status` field.
+
 If you'd like, I can now update the project README or correct the `client/src/services/api.js` baseURL to match the server port and create a small run/dev guide.

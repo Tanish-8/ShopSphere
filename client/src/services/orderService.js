@@ -15,3 +15,15 @@ export async function fetchMyOrders() {
   const response = await api.get("/orders/myorders", getAuthConfig());
   return Array.isArray(response.data?.data) ? response.data.data : [];
 }
+
+export async function fetchOrderById(id) {
+  const response = await api.get(`/orders/${id}`, getAuthConfig());
+  return response.data?.data;
+}
+
+export async function updateOrderStatus(orderId, status, note) {
+  const payload = { status };
+  if (note) payload.note = note;
+  const response = await api.put(`/orders/${orderId}/status`, payload, getAuthConfig());
+  return response.data?.data;
+}
