@@ -12,6 +12,7 @@ import orderRoutes from "./routes/orderRoutes.js";
 import addressRoutes from "./routes/addressRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
+import { handleWebhook } from './controllers/paymentController.js';
 import migrateAddresses from "./utils/migrateAddresses.js";
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 
@@ -30,6 +31,9 @@ const __dirname = path.dirname(__filename);
 // ---------------------------------------------------------------------------
 // Global Middleware
 // ---------------------------------------------------------------------------
+
+// Webhook raw body handler must run before JSON body parser
+app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), handleWebhook);
 
 // Parse JSON bodies
 app.use(express.json());
@@ -88,6 +92,7 @@ app.use("/api/orders", orderRoutes);
     app.use("/api/addresses", addressRoutes);
     app.use("/api/admin", adminRoutes);
     app.use("/api/payments", paymentRoutes);
+    
 
 // ---------------------------------------------------------------------------
 // Error Handling

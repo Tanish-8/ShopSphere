@@ -12,6 +12,9 @@ export const getDashboardStats = async (req, res, next) => {
     const totalRevenue = revenueAgg[0]?.total || 0;
 
     const totalOrders = await Order.countDocuments();
+    const paidOrders = await Order.countDocuments({ paymentStatus: 'paid' });
+    const failedPayments = await Order.countDocuments({ paymentStatus: 'failed' });
+    const pendingPayments = await Order.countDocuments({ paymentStatus: 'pending' });
     const totalProducts = await Product.countDocuments();
     const totalUsers = await User.countDocuments();
 
@@ -20,6 +23,9 @@ export const getDashboardStats = async (req, res, next) => {
       data: {
         totalRevenue,
         totalOrders,
+        paidOrders,
+        failedPayments,
+        pendingPayments,
         totalProducts,
         totalUsers,
       },

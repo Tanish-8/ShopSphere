@@ -96,6 +96,11 @@ const orderSchema = new mongoose.Schema(
       razorpayOrderId: { type: String },
       razorpaySignature: { type: String },
     },
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid", "failed", "refunded"],
+      default: "pending",
+    },
     isDelivered: {
       type: Boolean,
       default: false,

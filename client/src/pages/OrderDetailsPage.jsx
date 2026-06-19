@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { fetchOrderById } from "../services/orderService";
+import { createRazorpayOrder, verifyRazorpayPayment } from "../services/paymentService";
 import OrderTimeline from "../components/order/OrderTimeline";
 
 function formatDate(value) {
@@ -149,6 +150,47 @@ export default function OrderDetailsPage() {
               const pid = order.orderItems && order.orderItems[0] && order.orderItems[0].product;
               if (pid) navigate(`/products/${pid}`);
             }} className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white">Buy Again</button>
+            {order.paymentStatus === 'failed' && (
+              <button className="rounded-md bg-yellow-500 px-4 py-2 text-sm font-medium text-white" onClick={async () => {
+                try {
+                  const rp = await createRazorpayOrder({ amount: order.totalPrice, orderId: order._id });
+                  await new Promise((res, rej) => {
+                    const s = document.createElement('script');
+                    s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                    s.onload = res; s.onerror = rej; document.body.appendChild(s);
+                  });
+
+                  const options = {
+                    key: rp.keyId,
+                    amount: rp.amount,
+                    currency: rp.currency,
+                    name: 'ShopSphere',
+                    description: `Retry Order ${order._id}`,
+                    order_id: rp.orderId,
+                    handler: async function (response) {
+                      try {
+                        await verifyRazorpayPayment({
+                          razorpay_order_id: response.razorpay_order_id,
+                          razorpay_payment_id: response.razorpay_payment_id,
+                          razorpay_signature: response.razorpay_signature,
+                          orderId: order._id,
+                        });
+                        // reload order
+                        const updated = await fetchOrderById(order._id);
+                        window.location.reload();
+                      } catch (err) {
+                        alert('Verification failed');
+                      }
+                    }
+                  };
+                  // eslint-disable-next-line no-undef
+                  const rzp = new window.Razorpay(options);
+                  rzp.open();
+                } catch (err) {
+                  alert('Retry failed');
+                }
+              }}>Retry Payment</button>
+            )}
           </div>
         </aside>
       </div>
