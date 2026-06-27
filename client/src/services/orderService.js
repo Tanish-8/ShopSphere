@@ -37,3 +37,12 @@ export async function updateOrderStatus(orderId, status, note) {
   const response = await api.put(`/orders/${orderId}/status`, payload, getAuthConfig());
   return response.data?.data;
 }
+
+export async function downloadInvoice(orderId) {
+  const token = getStoredToken();
+  const response = await api.get(`/orders/${orderId}/invoice`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    responseType: "blob",
+  });
+  return response.data;
+}

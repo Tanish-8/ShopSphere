@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import useAuth from "../hooks/useAuth";
+import api from "../services/api";
 
 function ProfilePage() {
   const { user, updateUserProfile, loading: authLoading, error, clearError } = useAuth();
@@ -17,6 +18,22 @@ function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [submitError, setSubmitError] = useState("");
+
+  const [resending, setResending] = useState(false);
+  const [resendStatus, setResendStatus] = useState("");
+
+  const handleResendVerification = async () => {
+    setResending(true);
+    setResendStatus("");
+    try {
+      const response = await api.post("/auth/resend-verification");
+      setResendStatus("Verification email sent successfully!");
+    } catch (err) {
+      setResendStatus(err?.response?.data?.message || err.message || "Failed to resend link. Please try again.");
+    } finally {
+      setResending(false);
+    }
+  };
 
   const nameInvalid = touched.name && form.name.trim().length < 2;
   const passwordInvalid = touched.password && form.password.length > 0 && form.password.length < 6;
@@ -99,7 +116,33 @@ function ProfilePage() {
           </div>
           <div>
             <p className="text-gray-500">Email</p>
-            <p className="font-medium text-gray-900">{user?.email || "-"}</p>
+            <p className="font-medium text-gray-900 flex items-center gap-2">
+              {user?.email || "-"}
+              {user?.isVerified ? (
+                <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+                  Verified
+                </span>
+              ) : (
+                <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-600/20">
+                  Unverified
+                </span>
+              )}
+            </p>
+            {!user?.isVerified && (
+              <div className="mt-2">
+                <button
+                  type="button"
+                  onClick={handleResendVerification}
+                  disabled={resending}
+                  className="text-xs font-semibold text-indigo-600 hover:text-indigo-500 outline-none disabled:opacity-50"
+                >
+                  {resending ? "Resending..." : "Resend verification link"}
+                </button>
+                {resendStatus && (
+                  <p className="text-xs font-medium text-indigo-600 mt-1">{resendStatus}</p>
+                )}
+              </div>
+            )}
           </div>
           <div>
             <p className="text-gray-500">Account Created</p>

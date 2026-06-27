@@ -1,9 +1,22 @@
 import express from "express";
 import multer from "multer";
+import rateLimit from "express-rate-limit";
 import { protect, admin } from "../middleware/authMiddleware.js";
 import { uploadBufferToCloudinary } from "../config/cloudinary.js";
 
 const router = express.Router();
+
+// Upload rate limiter (max 30 uploads per hour per IP)
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 30,
+  message: {
+    success: false,
+    message: "Too many file upload requests, please try again after an hour.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Multer memory storage configuration
 const storage = multer.memoryStorage();
@@ -27,7 +40,7 @@ const upload = multer({
 // @desc    Upload an image to Cloudinary
 // @route   POST /api/upload
 // @access  Private/Admin
-router.post("/", protect, admin, upload.single("image"), async (req, res, next) => {
+router.post("/", protect, admin, uploadLimiter, upload.single("image"), async (req, res, next) => {
   try {
     if (!req.file) {
       res.status(400);

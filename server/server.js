@@ -4,6 +4,12 @@ import cors from "cors";
 import morgan from "morgan";
 import path from "path";
 import { fileURLToPath } from "url";
+import helmet from "helmet";
+import hpp from "hpp";
+import mongoSanitize from "express-mongo-sanitize";
+import xss from "xss-clean";
+import compression from "compression";
+import rateLimit from "express-rate-limit";
 
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
@@ -14,6 +20,7 @@ import adminRoutes from "./routes/adminRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
+import couponRoutes from "./routes/couponRoutes.js";
 import { handleWebhook } from './controllers/paymentController.js';
 import migrateAddresses from "./utils/migrateAddresses.js";
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
@@ -34,14 +41,78 @@ const __dirname = path.dirname(__filename);
 // Global Middleware
 // ---------------------------------------------------------------------------
 
+// Enable compression to optimize payload size
+app.use(compression());
+
+// Secure HTTP headers with Helmet (includes HSTS, Referrer, and Content Security Policy)
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "https://checkout.razorpay.com",
+          "https://api.razorpay.com",
+        ],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        imgSrc: [
+          "'self'",
+          "data:",
+          "https://res.cloudinary.com",
+          "https://images.unsplash.com",
+        ],
+        connectSrc: [
+          "'self'",
+          "https://api.razorpay.com",
+          "https://lumberjack-cx.razorpay.com",
+        ],
+        frameSrc: ["'self'", "https://api.razorpay.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: [],
+      },
+    },
+    hsts: {
+      maxAge: 31536000, // 1 year
+      includeSubDomains: true,
+      preload: true,
+    },
+    referrerPolicy: { policy: "same-origin" },
+  })
+);
+
+// Prevent NoSQL query injection
+app.use(mongoSanitize());
+
+// Prevent XSS script injections
+app.use(xss());
+
+// Prevent HTTP parameter pollution
+app.use(hpp());
+
+// General API request rate limiter
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200, // limit each IP to 200 requests per window
+  message: {
+    success: false,
+    message: "Too many requests from this IP, please try again later.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use("/api", generalLimiter);
+
 // Webhook raw body handler must run before JSON body parser
 app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), handleWebhook);
 
-// Parse JSON bodies
-app.use(express.json());
+// Parse JSON bodies (enforce 20kb limit to mitigate large payload DOS attacks)
+app.use(express.json({ limit: "20kb" }));
 
 // Parse URL-encoded bodies
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: "20kb" }));
 
 // Enable CORS for frontend
 app.use(
@@ -52,7 +123,13 @@ app.use(
         "http://localhost:5174",
         "http://localhost:5175",
       ];
-      if (process.env.CLIENT_URL) allowed.push(process.env.CLIENT_URL);
+      if (process.env.CORS_ORIGIN) {
+        const origins = process.env.CORS_ORIGIN.split(",").map((o) => o.trim());
+        allowed.push(...origins);
+      }
+      if (process.env.CLIENT_URL) {
+        allowed.push(process.env.CLIENT_URL);
+      }
 
       // Allow requests with no origin (e.g. server-to-server, curl)
       if (!origin) return callback(null, true);
@@ -97,6 +174,7 @@ app.use("/api/orders", orderRoutes);
     app.use("/api/payments", paymentRoutes);
   app.use("/api/wishlist", wishlistRoutes);
   app.use("/api/upload", uploadRoutes);
+  app.use("/api/coupons", couponRoutes);
     
 
 // ---------------------------------------------------------------------------

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchAllOrders } from "../../services/orderService";
-import { updateOrderStatus } from "../../services/orderService";
+import { fetchAllOrders, updateOrderStatus, downloadInvoice } from "../../services/orderService";
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
@@ -31,6 +30,23 @@ export default function OrdersPage() {
     } catch (e) { alert(e?.response?.data?.message || e.message); }
   };
 
+  const handleDownloadInvoice = async (orderId) => {
+    try {
+      const data = await downloadInvoice(orderId);
+      const blob = new Blob([data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `invoice_${orderId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("Failed to download invoice PDF.");
+    }
+  };
+
   return (
     <div>
       <h1 className="text-2xl font-bold mb-4">Manage Orders</h1>
@@ -56,6 +72,7 @@ export default function OrdersPage() {
               {o.status === 'ordered' && <button onClick={() => handleUpdate(o._id, 'processing')} className="px-3 py-1 rounded bg-indigo-600 text-white">Mark Processing</button>}
               {o.status === 'processing' && <button onClick={() => handleUpdate(o._id, 'shipped')} className="px-3 py-1 rounded bg-indigo-600 text-white">Mark Shipped</button>}
               {o.status === 'shipped' && <button onClick={() => handleUpdate(o._id, 'delivered')} className="px-3 py-1 rounded bg-indigo-600 text-white">Mark Delivered</button>}
+              <button onClick={() => handleDownloadInvoice(o._id)} className="px-3 py-1 rounded border hover:bg-gray-50">Invoice</button>
               <a href={`/orders/${o._id}`} className="px-3 py-1 rounded border">Open</a>
             </div>
           </div>

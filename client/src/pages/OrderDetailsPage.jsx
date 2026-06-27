@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { fetchOrderById } from "../services/orderService";
+import { fetchOrderById, downloadInvoice } from "../services/orderService";
 import { createRazorpayOrder, verifyRazorpayPayment } from "../services/paymentService";
 import OrderTimeline from "../components/order/OrderTimeline";
 
@@ -20,6 +20,9 @@ export default function OrderDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState("");
+
   useEffect(() => {
     let mounted = true;
     const load = async () => {
@@ -37,6 +40,27 @@ export default function OrderDetailsPage() {
     return () => (mounted = false);
   }, [id]);
 
+  const handleDownloadInvoice = async () => {
+    setDownloading(true);
+    setDownloadError("");
+    try {
+      const data = await downloadInvoice(order._id || order.id);
+      const blob = new Blob([data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `invoice_${order._id || order.id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setDownloadError("Failed to generate or download invoice PDF.");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   if (loading) return <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center">Loading order...</div>;
   if (error) return <div className="rounded-2xl border border-red-200 bg-red-50 p-8 text-center text-red-700">{error}</div>;
   if (!order) return null;
@@ -48,9 +72,21 @@ export default function OrderDetailsPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-3xl font-bold">Order Details</h1>
-        <p className="mt-1 text-sm text-gray-600">Order <span className="font-mono">{order._id}</span> • {formatDate(order.createdAt)}</p>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Order Details</h1>
+          <p className="mt-1 text-sm text-gray-600">Order <span className="font-mono">{order._id}</span> • {formatDate(order.createdAt)}</p>
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <button
+            onClick={handleDownloadInvoice}
+            disabled={downloading}
+            className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition disabled:opacity-50"
+          >
+            {downloading ? "Generating PDF..." : "Download Invoice"}
+          </button>
+          {downloadError && <p className="text-xs text-red-600">{downloadError}</p>}
+        </div>
       </header>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -116,6 +152,12 @@ export default function OrderDetailsPage() {
             <h3 className="text-sm font-semibold text-gray-700">Pricing</h3>
             <div className="mt-4 space-y-2 text-sm text-gray-700">
               <div className="flex justify-between"><span>Subtotal</span><Money value={subtotal} /></div>
+              {order.discountApplied > 0 && (
+                <div className="flex justify-between text-emerald-700 font-medium">
+                  <span>Discount ({order.couponCode || "Coupon"})</span>
+                  <span>-${Number(order.discountApplied).toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between"><span>Shipping</span><Money value={shipping} /></div>
               <div className="flex justify-between"><span>Tax</span><Money value={tax} /></div>
               <div className="flex justify-between border-t pt-2"><span className="font-medium">Total</span><Money value={total} /></div>

@@ -40,20 +40,46 @@ export const orderValidation = [
     .withMessage("Payment method must be card, paypal, cod, or razorpay"),
 ];
 
-export const calculateOrderPrices = (items) => {
+export const calculateOrderPrices = async (items, couponCode, user) => {
   const itemsPrice = items.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-  const taxPrice = +(itemsPrice * 0.18).toFixed(2); // 18% tax
+
+  let discountApplied = 0;
+  let couponData = null;
+
+  if (couponCode) {
+    try {
+      const { validateCouponCode } = await import("./couponController.js");
+      const result = await validateCouponCode({
+        user,
+        code: couponCode,
+        cartItems: items,
+        subtotal: itemsPrice,
+      });
+      discountApplied = result.discountApplied;
+      couponData = result.coupon;
+    } catch (error) {
+      console.warn("Coupon validation failed during price calculation:", error.message);
+      throw error;
+    }
+  }
+
+  const subtotalAfterDiscount = Math.max(0, itemsPrice - discountApplied);
+  const taxPrice = +(subtotalAfterDiscount * 0.18).toFixed(2); // 18% tax
   const shippingPrice = itemsPrice > 500 ? 0 : 50; // Free shipping over $500
-  const totalPrice = +(itemsPrice + taxPrice + shippingPrice).toFixed(2);
+  const totalPrice = +(subtotalAfterDiscount + taxPrice + shippingPrice).toFixed(2);
 
   return {
     itemsPrice,
+    discountApplied,
     taxPrice,
     shippingPrice,
-    totalPrice,
+    totalPrice: Math.max(0, totalPrice),
+    couponCode: couponData ? couponData.code : undefined,
+    discountType: couponData ? couponData.discountType : undefined,
+    discountValue: couponData ? couponData.discountValue : undefined,
   };
 };
 
@@ -104,21 +130,35 @@ export const createOrder = async (req, res, next) => {
     }
 
     // Calculate prices
-    const { itemsPrice, taxPrice, shippingPrice, totalPrice } = calculateOrderPrices(verifiedItems);
+    const { couponCode } = req.body;
+    const prices = await calculateOrderPrices(verifiedItems, couponCode, req.user);
 
     const order = await Order.create({
       user: req.user._id,
       orderItems: verifiedItems,
       shippingAddress,
       paymentMethod,
-      itemsPrice,
-      taxPrice,
-      shippingPrice,
-      totalPrice,
+      itemsPrice: prices.itemsPrice,
+      taxPrice: prices.taxPrice,
+      shippingPrice: prices.shippingPrice,
+      totalPrice: prices.totalPrice,
+      couponCode: prices.couponCode,
+      discountType: prices.discountType,
+      discountValue: prices.discountValue,
+      discountApplied: prices.discountApplied,
       statusHistory: [
         { status: "ordered", at: Date.now(), changedBy: req.user._id },
       ],
     });
+
+    // If coupon applied successfully, increment usage count in DB
+    if (prices.couponCode) {
+      const Coupon = (await import("../models/Coupon.js")).default;
+      await Coupon.findOneAndUpdate(
+        { code: prices.couponCode },
+        { $inc: { usedCount: 1 } }
+      );
+    }
 
     // Reduce stock for each ordered product
     for (const item of verifiedItems) {
@@ -341,7 +381,7 @@ export const updateOrderToPaid = async (req, res, next) => {
 // ---------------------------------------------------------------------------
 export const getOrderPricePreview = async (req, res, next) => {
   try {
-    const { orderItems } = req.body;
+    const { orderItems, couponCode } = req.body;
     if (!orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
       res.status(400);
       throw new Error("Order must contain at least one item");
@@ -362,12 +402,47 @@ export const getOrderPricePreview = async (req, res, next) => {
       });
     }
 
-    const prices = calculateOrderPrices(verifiedItems);
+    const prices = await calculateOrderPrices(verifiedItems, couponCode, req.user);
 
     res.json({
       success: true,
       data: prices,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ---------------------------------------------------------------------------
+// @desc    Download order invoice as PDF
+// @route   GET /api/orders/:id/invoice
+// @access  Private
+// ---------------------------------------------------------------------------
+export const downloadOrderInvoice = async (req, res, next) => {
+  try {
+    const order = await Order.findById(req.params.id).populate("user", "name email");
+
+    if (!order) {
+      res.status(404);
+      throw new Error("Order not found");
+    }
+
+    const isOwner = order.user && order.user._id.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === "admin";
+
+    if (!isOwner && !isAdmin) {
+      res.status(403);
+      throw new Error("Not authorized to download this invoice");
+    }
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=invoice_${order._id}.pdf`
+    );
+
+    const { generateInvoicePDF } = await import("../utils/invoiceService.js");
+    generateInvoicePDF(order, res);
   } catch (error) {
     next(error);
   }

@@ -1,5 +1,5 @@
 import express from "express";
-import { protect, admin } from "../middleware/authMiddleware.js";
+import { protect, admin, requireVerification } from "../middleware/authMiddleware.js";
 import {
   createOrder,
   getMyOrders,
@@ -9,15 +9,17 @@ import {
   updateOrderToPaid,
   orderValidation,
   getOrderPricePreview,
+  downloadOrderInvoice,
 } from "../controllers/orderController.js";
 
 const router = express.Router();
 
 // Private routes (logged-in users)
-router.post("/", protect, orderValidation, createOrder);
+router.post("/", protect, requireVerification, orderValidation, createOrder);
 router.post("/calculate", protect, getOrderPricePreview);
 router.get("/myorders", protect, getMyOrders);
 router.get("/:id", protect, getOrderById);
+router.get("/:id/invoice", protect, downloadOrderInvoice);
 router.put("/:id/pay", protect, updateOrderToPaid);
 
 // Admin-only routes

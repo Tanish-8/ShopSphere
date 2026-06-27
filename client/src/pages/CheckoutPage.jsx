@@ -6,10 +6,13 @@ import * as addressService from "../services/addressService";
 import { createRazorpayOrder, verifyRazorpayPayment } from "../services/paymentService";
 
 function CheckoutPage() {
+  const { cartItems, clearCart } = useCart();
   const navigate = useNavigate();
-  const { cartItems, totalPrice, clearCart } = useCart();
+
   const [shippingAddress, setShippingAddress] = useState({
     fullName: "",
+    phone: "",
+    landmark: "",
     address: "",
     city: "",
     state: "",
@@ -17,20 +20,19 @@ function CheckoutPage() {
     country: ""
   });
   const [paymentMethod, setPaymentMethod] = useState("cod");
-  const [error, setError] = useState("");
-  const [placingOrder, setPlacingOrder] = useState(false);
-  const [usingDefault, setUsingDefault] = useState(false);
-  const [prices, setPrices] = useState({
-    itemsPrice: 0,
-    taxPrice: 0,
-    shippingPrice: 0,
-    totalPrice: 0
-  });
+  const [prices, setPrices] = useState({ itemsPrice: 0, taxPrice: 0, shippingPrice: 0, totalPrice: 0, discountApplied: 0 });
   const [loadingPrices, setLoadingPrices] = useState(true);
+  const [placingOrder, setPlacingOrder] = useState(false);
+  const [error, setError] = useState("");
+
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState("");
+  const [couponError, setCouponError] = useState("");
+  const [couponSuccess, setCouponSuccess] = useState("");
 
   useEffect(() => {
     if (cartItems.length === 0) {
-      setPrices({ itemsPrice: 0, taxPrice: 0, shippingPrice: 0, totalPrice: 0 });
+      setPrices({ itemsPrice: 0, taxPrice: 0, shippingPrice: 0, totalPrice: 0, discountApplied: 0 });
       setLoadingPrices(false);
       return;
     }
@@ -39,20 +41,32 @@ function CheckoutPage() {
     const fetchPrices = async () => {
       setLoadingPrices(true);
       setError("");
+      setCouponError("");
       try {
         const payload = {
           orderItems: cartItems.map((item) => ({
             product: item.productId,
             quantity: Number(item.quantity)
-          }))
+          })),
+          couponCode: appliedCoupon || undefined
         };
         const data = await calculateOrderPrices(payload);
         if (mounted) {
           setPrices(data);
+          if (appliedCoupon) {
+            setCouponSuccess(`Coupon "${appliedCoupon}" applied! Saved $${data.discountApplied.toFixed(2)}`);
+          }
         }
       } catch (err) {
         if (mounted) {
-          setError(err?.response?.data?.message || err.message || "Failed to calculate order prices");
+          const errMsg = err?.response?.data?.message || err.message || "Failed to calculate order prices";
+          if (appliedCoupon) {
+            setCouponError(errMsg);
+            setAppliedCoupon("");
+            setCouponSuccess("");
+          } else {
+            setError(errMsg);
+          }
         }
       } finally {
         if (mounted) {
@@ -65,7 +79,7 @@ function CheckoutPage() {
     return () => {
       mounted = false;
     };
-  }, [cartItems]);
+  }, [cartItems, appliedCoupon]);
 
   const isFormValid = useMemo(
     () =>
@@ -115,7 +129,8 @@ function CheckoutPage() {
         },
         paymentMethod,
         itemsPrice: Number(prices.itemsPrice.toFixed(2)),
-        totalPrice: Number(prices.totalPrice.toFixed(2))
+        totalPrice: Number(prices.totalPrice.toFixed(2)),
+        couponCode: appliedCoupon || undefined,
       };
 
       // Create ShopSphere order first (unpaid for Razorpay)
@@ -389,11 +404,69 @@ function CheckoutPage() {
             ))}
           </div>
 
+          {/* Coupon Code Section */}
+          <div className="mt-5 border-t border-gray-200 pt-4">
+            <h3 className="text-sm font-semibold text-gray-900 mb-2">Have a Coupon?</h3>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+                placeholder="Enter coupon code"
+                disabled={!!appliedCoupon || loadingPrices}
+                className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm outline-none uppercase transition focus:border-indigo-500"
+              />
+              {appliedCoupon ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAppliedCoupon("");
+                    setCouponCode("");
+                    setCouponSuccess("");
+                    setCouponError("");
+                  }}
+                  className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 transition"
+                >
+                  Remove
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (couponCode.trim()) {
+                      setAppliedCoupon(couponCode.toUpperCase().trim());
+                    }
+                  }}
+                  disabled={!couponCode.trim() || loadingPrices}
+                  className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 transition disabled:opacity-50"
+                >
+                  Apply
+                </button>
+              )}
+            </div>
+            {couponSuccess && (
+              <p className="mt-2 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-2 py-1">
+                {couponSuccess}
+              </p>
+            )}
+            {couponError && (
+              <p className="mt-2 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded px-2 py-1">
+                {couponError}
+              </p>
+            )}
+          </div>
+
           <div className="mt-5 border-t border-gray-200 pt-4 text-sm space-y-2">
             <div className="flex items-center justify-between text-gray-600">
               <span>Subtotal</span>
               <span>${prices.itemsPrice.toFixed(2)}</span>
             </div>
+            {prices.discountApplied > 0 && (
+              <div className="flex items-center justify-between text-emerald-700 font-medium">
+                <span>Discount ({prices.couponCode})</span>
+                <span>-${prices.discountApplied.toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex items-center justify-between text-gray-600">
               <span>Shipping</span>
               <span>{prices.shippingPrice > 0 ? `$${prices.shippingPrice.toFixed(2)}` : "Free"}</span>

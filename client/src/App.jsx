@@ -17,11 +17,15 @@ import ProfilePage from "./pages/ProfilePage";
 import AddressesPage from "./pages/AddressesPage";
 import ProductsPage from "./pages/ProductsPage";
 import RegisterPage from "./pages/RegisterPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import EmailVerificationPage from "./pages/EmailVerificationPage";
 import AdminLayout from "./pages/admin/AdminLayout";
 import DashboardPage from "./pages/admin/DashboardPage";
 import ProductsAdminPage from "./pages/admin/ProductsPage";
 import OrdersAdminPage from "./pages/admin/OrdersPage";
 import UsersAdminPage from "./pages/admin/UsersPage";
+import CouponsAdminPage from "./pages/admin/CouponsPage";
 
 function App() {
   return (
@@ -83,6 +87,9 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/verify-email" element={<EmailVerificationPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           {/* Admin routes */}
@@ -91,6 +98,7 @@ function App() {
             <Route path="products" element={<AdminRoute><ProductsAdminPage /></AdminRoute>} />
             <Route path="orders" element={<AdminRoute><OrdersAdminPage /></AdminRoute>} />
             <Route path="users" element={<AdminRoute><UsersAdminPage /></AdminRoute>} />
+            <Route path="coupons" element={<AdminRoute><CouponsAdminPage /></AdminRoute>} />
           </Route>
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

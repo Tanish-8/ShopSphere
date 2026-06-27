@@ -26,7 +26,7 @@ router.post("/:id/reviews", protect, reviewValidation, addProductReview);
 
 // Admin-only routes
 router.post("/", protect, admin, productValidation, createProduct);
-router.put("/:id", protect, admin, updateProduct);
+router.put("/:id", protect, admin, productValidation, updateProduct);
 router.delete("/:id", protect, admin, deleteProduct);
 
 export default router;

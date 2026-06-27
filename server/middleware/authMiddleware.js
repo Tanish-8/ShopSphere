@@ -59,3 +59,16 @@ export const admin = (req, res, next) => {
     message: "Forbidden — admin access required",
   });
 };
+
+// ---------------------------------------------------------------------------
+// requireVerification — Restrict access to email-verified users
+// ---------------------------------------------------------------------------
+export const requireVerification = (req, res, next) => {
+  if (process.env.REQUIRE_EMAIL_VERIFICATION === "true" && req.user && !req.user.isVerified) {
+    return res.status(403).json({
+      success: false,
+      message: "Forbidden — your email must be verified to perform this action",
+    });
+  }
+  next();
+};

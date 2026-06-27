@@ -177,6 +177,17 @@ export const createProduct = async (req, res, next) => {
 // ---------------------------------------------------------------------------
 export const updateProduct = async (req, res, next) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400);
+      throw new Error(
+        errors
+          .array()
+          .map((e) => e.msg)
+          .join(". ")
+      );
+    }
+
     let product = await Product.findById(req.params.id);
 
     if (!product) {

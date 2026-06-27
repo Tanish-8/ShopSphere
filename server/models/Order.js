@@ -108,6 +108,21 @@ const orderSchema = new mongoose.Schema(
     deliveredAt: {
       type: Date,
     },
+    couponCode: {
+      type: String,
+    },
+    discountType: {
+      type: String,
+      enum: ["percentage", "fixed"],
+    },
+    discountValue: {
+      type: Number,
+      default: 0.0,
+    },
+    discountApplied: {
+      type: Number,
+      default: 0.0,
+    },
   },
   {
     timestamps: true,
