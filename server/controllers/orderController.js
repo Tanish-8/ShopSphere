@@ -147,7 +147,10 @@ export const createOrder = async (req, res, next) => {
       discountValue: prices.discountValue,
       discountApplied: prices.discountApplied,
       statusHistory: [
-        { status: "ordered", at: Date.now(), changedBy: req.user._id },
+        { status: "Placed", at: Date.now(), changedBy: req.user._id },
+      ],
+      orderTimeline: [
+        { status: "Placed", updatedAt: Date.now(), note: "Order placed successfully", updatedBy: req.user._id },
       ],
     });
 
@@ -285,22 +288,35 @@ export const updateOrderStatus = async (req, res, next) => {
     }
 
     // Validate allowed transitions
-    const allowed = {
-      ordered: ["processing"],
-      processing: ["shipped"],
-      shipped: ["delivered"],
-    };
+    const allowedStatuses = [
+      "Placed",
+      "Confirmed",
+      "Packed",
+      "Shipped",
+      "Out For Delivery",
+      "Delivered",
+      "Cancelled",
+      "Return Requested",
+      "Return Approved",
+      "Pickup Scheduled",
+      "Picked Up",
+      "Returned",
+      "Refund Processing",
+      "Refunded",
+      "Replacement Requested",
+      "Replacement Approved",
+      "Replacement Shipped",
+      "Replacement Delivered"
+    ];
 
-    const prevStatusRaw = order.status || "ordered";
-    const prevStatus = prevStatusRaw === "pending" ? "ordered" : prevStatusRaw;
+    const prevStatus = order.status || "Placed";
 
     // If same status, nothing to do
-    if (prevStatus === status) {
+    if (prevStatus.toLowerCase() === status.toLowerCase()) {
       return res.json({ success: true, data: order });
     }
 
-    const allowedNext = allowed[prevStatus] || [];
-    if (!allowedNext.includes(status)) {
+    if (!allowedStatuses.some(s => s.toLowerCase() === status.toLowerCase())) {
       return res.status(400).json({ success: false, message: "Invalid status transition" });
     }
 
@@ -310,18 +326,31 @@ export const updateOrderStatus = async (req, res, next) => {
     if (!Array.isArray(order.statusHistory)) order.statusHistory = [];
     order.statusHistory.push({ status, at: Date.now(), note, changedBy: req.user._id });
 
+    if (!Array.isArray(order.orderTimeline)) order.orderTimeline = [];
+    order.orderTimeline.push({
+      status,
+      updatedAt: Date.now(),
+      note: note || `Order status updated to ${status}`,
+      updatedBy: req.user._id,
+    });
+
     // Preserve previous status for potential restore logic
     const previousStatus = order.status;
     order.status = status;
 
+    // Prepare backend structure for future email notifications
+    // TODO: Integrate sendEmail notifications template here
+    // import { sendStatusUpdateEmail } from "../utils/email.js";
+    // await sendStatusUpdateEmail(order.user, order._id, status);
+
     // Auto-set delivery fields
-    if (status === "delivered") {
+    if (status.toLowerCase() === "delivered") {
       order.isDelivered = true;
       order.deliveredAt = Date.now();
     }
 
     // If cancelled, restore stock (only when moving into cancelled)
-    if (status === "cancelled" && previousStatus !== "cancelled") {
+    if (status.toLowerCase() === "cancelled" && previousStatus?.toLowerCase() !== "cancelled") {
       for (const item of order.orderItems) {
         await Product.findByIdAndUpdate(item.product, {
           $inc: { stock: item.quantity },
@@ -443,6 +472,408 @@ export const downloadOrderInvoice = async (req, res, next) => {
 
     const { generateInvoicePDF } = await import("../utils/invoiceService.js");
     generateInvoicePDF(order, res);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ---------------------------------------------------------------------------
+// @desc    Cancel order (customer/user)
+// @route   PUT /api/orders/:id/cancel
+// @access  Private
+// ---------------------------------------------------------------------------
+export const cancelOrder = async (req, res, next) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      res.status(404);
+      throw new Error("Order not found");
+    }
+
+    // Customer must be the owner of the order or admin
+    if (order.user.toString() !== req.user._id.toString() && req.user.role !== "admin") {
+      res.status(403);
+      throw new Error("Not authorized to cancel this order");
+    }
+
+    const currentStatus = order.status || "Placed";
+    const isAdmin = req.user.role === "admin";
+
+    // Configurable: statuses that block customer cancellation once shipped
+    const nonCancelableByCustomer = ["shipped", "out for delivery", "delivered",
+      "return requested", "return approved", "pickup scheduled", "picked up",
+      "returned", "refund processing", "refunded",
+      "replacement requested", "replacement approved", "replacement shipped", "replacement delivered"];
+
+    // Admin can cancel any non-terminal status
+    const nonCancelableByAdmin = ["cancelled", "refunded", "replacement delivered", "delivered"];
+
+    if (isAdmin) {
+      if (nonCancelableByAdmin.includes(currentStatus.toLowerCase())) {
+        res.status(400);
+        throw new Error(`Order cannot be cancelled at this stage: ${currentStatus}`);
+      }
+    } else {
+      // Customer: can only cancel Placed, Confirmed, Packed
+      const cancelableStatuses = ["placed", "confirmed", "packed"];
+      if (!cancelableStatuses.includes(currentStatus.toLowerCase())) {
+        const isShipped = nonCancelableByCustomer.includes(currentStatus.toLowerCase());
+        res.status(400);
+        throw new Error(
+          isShipped
+            ? `This order can no longer be cancelled because it has already been ${currentStatus.toLowerCase()}.`
+            : `Order cannot be cancelled at this stage: ${currentStatus}`
+        );
+      }
+    }
+
+    const { reason } = req.body;
+    const validReasons = [
+      "Changed my mind",
+      "Ordered by mistake",
+      "Found lower price",
+      "Delivery taking too long",
+      "Need different product",
+      "Other"
+    ];
+    const cancellationReason = reason || "Changed my mind";
+
+    const cancelledAt = new Date();
+    const cancelledByRole = isAdmin ? "admin" : "customer";
+    const cancellerNote = isAdmin
+      ? `Cancelled by admin. Reason: ${cancellationReason}`
+      : `Cancelled by customer. Reason: ${cancellationReason}`;
+
+    // Set order status and cancellation tracking fields
+    order.status = "Cancelled";
+    order.cancelledAt = cancelledAt;
+    order.cancelledBy = req.user._id;
+    order.cancelledByRole = cancelledByRole;
+    order.cancellationReason = cancellationReason;
+
+    // Add history log for cancellation
+    if (!Array.isArray(order.statusHistory)) order.statusHistory = [];
+    order.statusHistory.push({
+      status: "Cancelled",
+      at: cancelledAt,
+      note: cancellerNote,
+      changedBy: req.user._id,
+    });
+
+    if (!Array.isArray(order.orderTimeline)) order.orderTimeline = [];
+    order.orderTimeline.push({
+      status: "Cancelled",
+      updatedAt: cancelledAt,
+      note: cancellerNote,
+      updatedBy: req.user._id,
+    });
+
+    // If prepaid (isPaid is true or paymentMethod is not cod)
+    // Automatically create Refund Processing request or automated Razorpay refund
+    if (order.paymentMethod === "razorpay" && order.isPaid) {
+      const paymentId = order.paymentResult?.paymentId;
+      if (paymentId) {
+        const isSimulated = paymentId.startsWith("pay_") || paymentId.startsWith("sim_");
+        if (isSimulated || process.env.RAZORPAY_KEY_ID.includes("your_") || process.env.RAZORPAY_KEY_ID.includes("placeholder")) {
+          // Simulate Razorpay refund
+          order.paymentStatus = "refunded";
+          order.refundResult = {
+            refundId: `rfnd_sim_${Math.random().toString(36).substring(2, 11)}`,
+            amount: order.totalPrice,
+            method: "razorpay",
+            status: "completed",
+            date: new Date(),
+          };
+          order.statusHistory.push({
+            status: "Refunded",
+            at: Date.now(),
+            note: `Automated Razorpay refund processed. Refund ID: ${order.refundResult.refundId}`,
+            changedBy: req.user._id,
+          });
+
+          if (!Array.isArray(order.orderTimeline)) order.orderTimeline = [];
+          order.orderTimeline.push({
+            status: "Refunded",
+            updatedAt: Date.now(),
+            note: `Automated Razorpay refund processed. Refund ID: ${order.refundResult.refundId}`,
+            updatedBy: req.user._id,
+          });
+        } else {
+          // Real Razorpay refund
+          try {
+            const Razorpay = (await import("razorpay")).default;
+            const keyId = process.env.RAZORPAY_KEY_ID.trim();
+            const keySecret = process.env.RAZORPAY_KEY_SECRET.trim();
+            const client = new Razorpay({ key_id: keyId, key_secret: keySecret });
+            const refundObj = await client.payments.refund(paymentId, {
+              amount: Math.round(order.totalPrice * 100),
+            });
+            order.paymentStatus = "refunded";
+            order.refundResult = {
+              refundId: refundObj.id,
+              amount: order.totalPrice,
+              method: "razorpay",
+              status: "completed",
+              date: new Date(),
+            };
+            order.statusHistory.push({
+              status: "Refunded",
+              at: Date.now(),
+              note: `Automated Razorpay refund processed. Refund ID: ${refundObj.id}`,
+              changedBy: req.user._id,
+            });
+
+            if (!Array.isArray(order.orderTimeline)) order.orderTimeline = [];
+            order.orderTimeline.push({
+              status: "Refunded",
+              updatedAt: Date.now(),
+              note: `Automated Razorpay refund processed. Refund ID: ${refundObj.id}`,
+              updatedBy: req.user._id,
+            });
+          } catch (err) {
+            console.error("Automated Razorpay refund failed:", err.message);
+            order.paymentStatus = "Refund Processing";
+            order.statusHistory.push({
+              status: "Refund Processing",
+              at: Date.now(),
+              note: `Automated Razorpay refund failed. Reason: ${err.message}`,
+              changedBy: req.user._id,
+            });
+
+            if (!Array.isArray(order.orderTimeline)) order.orderTimeline = [];
+            order.orderTimeline.push({
+              status: "Refund Processing",
+              updatedAt: Date.now(),
+              note: `Automated Razorpay refund failed. Reason: ${err.message}`,
+              updatedBy: req.user._id,
+            });
+          }
+        }
+      }
+    } else if (order.isPaid || order.paymentMethod !== "cod") {
+      order.paymentStatus = "Refund Processing";
+      order.statusHistory.push({
+        status: "Refund Processing",
+        at: Date.now(),
+        note: `Automatic refund processing request generated.`,
+        changedBy: req.user._id,
+      });
+
+      if (!Array.isArray(order.orderTimeline)) order.orderTimeline = [];
+      order.orderTimeline.push({
+        status: "Refund Processing",
+        updatedAt: Date.now(),
+        note: `Automatic refund processing request generated.`,
+        updatedBy: req.user._id,
+      });
+    }
+
+    // Invalidate coupon usage count if coupon applied
+    if (order.couponCode) {
+      try {
+        const Coupon = (await import("../models/Coupon.js")).default;
+        await Coupon.findOneAndUpdate(
+          { code: order.couponCode },
+          { $inc: { usedCount: -1 } }
+        );
+      } catch (err) {
+        console.warn("Failed to update coupon usage on cancellation:", err.message);
+      }
+    }
+
+    // Restore product inventory
+    for (const item of order.orderItems) {
+      await Product.findByIdAndUpdate(item.product, {
+        $inc: { stock: item.quantity },
+      });
+    }
+
+    const updatedOrder = await order.save();
+
+    res.json({
+      success: true,
+      message: "Order has been cancelled successfully.",
+      data: updatedOrder,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ---------------------------------------------------------------------------
+// @desc    Request order return (customer/user)
+// @route   PUT /api/orders/:id/return
+// @access  Private
+// ---------------------------------------------------------------------------
+export const requestOrderReturn = async (req, res, next) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      res.status(404);
+      throw new Error("Order not found");
+    }
+
+    // Customer must be the owner of the order or admin
+    if (order.user.toString() !== req.user._id.toString() && req.user.role !== "admin") {
+      res.status(403);
+      throw new Error("Not authorized to return this order");
+    }
+
+    const currentStatus = order.status || "Placed";
+
+    // Only allow returns if order status == Delivered
+    if (currentStatus.toLowerCase() !== "delivered") {
+      res.status(400);
+      throw new Error("Only delivered orders can be returned.");
+    }
+
+    // Within return window (default 7 days from deliveredAt or updatedAt)
+    const deliveredDate = new Date(order.deliveredAt || order.updatedAt);
+    const now = new Date();
+    const diffTime = Math.abs(now - deliveredDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays > 7) {
+      res.status(400);
+      throw new Error("Return window has expired (7 days max).");
+    }
+
+    const { type, reason, comments, images, video } = req.body;
+    if (!reason) {
+      res.status(400);
+      throw new Error("Reason is required");
+    }
+
+    const requestType = type === "replacement" ? "replacement" : "return";
+    const statusText = requestType === "replacement" ? "Replacement Requested" : "Return Requested";
+
+    // Set order status
+    order.status = statusText;
+
+    // Populate return/replacement details
+    order.returnReplacementDetails = {
+      type: requestType,
+      reason,
+      comments,
+      images: (images || []).slice(0, 5),
+      video: video || undefined,
+      requestedAt: new Date()
+    };
+
+    const logNote = `${requestType === "replacement" ? "Replacement" : "Return"} requested by customer. Reason: ${reason}.${comments ? ` Comments: ${comments}` : ""}`;
+
+    // Add status history entry
+    if (!Array.isArray(order.statusHistory)) order.statusHistory = [];
+    order.statusHistory.push({
+      status: statusText,
+      at: Date.now(),
+      note: logNote,
+      changedBy: req.user._id,
+    });
+
+    if (!Array.isArray(order.orderTimeline)) order.orderTimeline = [];
+    order.orderTimeline.push({
+      status: statusText,
+      updatedAt: Date.now(),
+      note: logNote,
+      updatedBy: req.user._id,
+    });
+
+    const updatedOrder = await order.save();
+
+    res.json({
+      success: true,
+      message: `${requestType === "replacement" ? "Replacement" : "Return"} request submitted successfully.`,
+      data: updatedOrder,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ---------------------------------------------------------------------------
+// @desc    Initiate order refund (Admin only)
+// @route   POST /api/orders/:id/refund
+// @access  Private/Admin
+// ---------------------------------------------------------------------------
+export const adminProcessRefund = async (req, res, next) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      res.status(404);
+      throw new Error("Order not found");
+    }
+
+    const { refundAmount, method, upiId, bankAccount, bankIfsc } = req.body;
+    const amount = Number(refundAmount || order.totalPrice);
+
+    let refundId = `rfnd_adm_${Math.random().toString(36).substring(2, 11)}`;
+    let refundStatus = "completed";
+    let refundNote = `Refund of $${amount.toFixed(2)} processed via ${method || order.paymentMethod}.`;
+
+    if (order.paymentMethod === "razorpay" && order.isPaid) {
+      const paymentId = order.paymentResult?.paymentId;
+      if (paymentId && !paymentId.startsWith("pay_sim") && !paymentId.startsWith("sim_") && !process.env.RAZORPAY_KEY_ID.includes("your_") && !process.env.RAZORPAY_KEY_ID.includes("placeholder")) {
+        try {
+          const Razorpay = (await import("razorpay")).default;
+          const keyId = process.env.RAZORPAY_KEY_ID.trim();
+          const keySecret = process.env.RAZORPAY_KEY_SECRET.trim();
+          const client = new Razorpay({ key_id: keyId, key_secret: keySecret });
+          const refundObj = await client.payments.refund(paymentId, {
+            amount: Math.round(amount * 100),
+          });
+          refundId = refundObj.id;
+        } catch (err) {
+          res.status(400);
+          throw new Error(`Razorpay refund failed: ${err.message}`);
+        }
+      } else {
+        refundId = `rfnd_sim_${Math.random().toString(36).substring(2, 11)}`;
+      }
+    } else if (order.paymentMethod === "cod") {
+      if (method === "UPI" && upiId) {
+        refundNote += ` UPI ID: ${upiId}`;
+      } else if (method === "Bank Transfer" && bankAccount) {
+        refundNote += ` Bank Account: ${bankAccount}, IFSC: ${bankIfsc || "N/A"}`;
+      }
+    }
+
+    order.paymentStatus = "refunded";
+    order.status = "Refunded";
+
+    order.refundResult = {
+      refundId,
+      amount,
+      method: method || order.paymentMethod,
+      status: refundStatus,
+      date: new Date(),
+    };
+
+    if (!Array.isArray(order.statusHistory)) order.statusHistory = [];
+    order.statusHistory.push({
+      status: "Refunded",
+      at: Date.now(),
+      note: refundNote,
+      changedBy: req.user._id,
+    });
+
+    if (!Array.isArray(order.orderTimeline)) order.orderTimeline = [];
+    order.orderTimeline.push({
+      status: "Refunded",
+      updatedAt: Date.now(),
+      note: refundNote,
+      updatedBy: req.user._id,
+    });
+
+    const updatedOrder = await order.save();
+
+    res.json({
+      success: true,
+      message: "Refund initiated successfully.",
+      data: updatedOrder,
+    });
   } catch (error) {
     next(error);
   }

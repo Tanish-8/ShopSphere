@@ -46,3 +46,18 @@ export async function downloadInvoice(orderId) {
   });
   return response.data;
 }
+
+export async function cancelOrder(orderId, reason) {
+  const response = await api.put(`/orders/${orderId}/cancel`, { reason }, getAuthConfig());
+  return response.data?.data;
+}
+
+export async function requestOrderReturn(orderId, payload) {
+  const response = await api.put(`/orders/${orderId}/return`, payload, getAuthConfig());
+  return response.data?.data;
+}
+
+export async function adminProcessRefund(orderId, payload) {
+  const response = await api.post(`/orders/${orderId}/refund`, payload, getAuthConfig());
+  return response.data?.data;
+}

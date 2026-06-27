@@ -39,6 +39,7 @@ function ProductsPage() {
   const queryCategory = searchParams.get("category") || "All";
   const querySort = searchParams.get("sort") || "popularity";
   const queryPage = parseInt(searchParams.get("page"), 10) || 1;
+  const queryFeatured = searchParams.get("featured") || "";
 
   // Local state for interactive instant input typing before debounce fires
   const [searchTerm, setSearchTerm] = useState(querySearch);
@@ -107,7 +108,8 @@ function ProductsPage() {
         limit: 8,
         sort: querySort,
         category: queryCategory !== "All" ? queryCategory : undefined,
-        search: querySearch || undefined
+        search: querySearch || undefined,
+        featured: queryFeatured === "true" ? "true" : undefined
       };
 
       const data = await fetchProducts(params, signal);
@@ -123,7 +125,7 @@ function ProductsPage() {
         setLoading(false);
       }
     }
-  }, [queryPage, queryCategory, querySort, querySearch]);
+  }, [queryPage, queryCategory, querySort, querySearch, queryFeatured]);
 
   // Trigger query fetch whenever search parameters in URL change, managing abort controllers
   useEffect(() => {

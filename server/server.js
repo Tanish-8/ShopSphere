@@ -24,6 +24,8 @@ import couponRoutes from "./routes/couponRoutes.js";
 import { handleWebhook } from './controllers/paymentController.js';
 import migrateAddresses from "./utils/migrateAddresses.js";
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
+import swaggerUi from "swagger-ui-express";
+import { swaggerDocument } from "./config/swagger.js";
 
 // ---------------------------------------------------------------------------
 // Load environment variables (must be the very first thing)
@@ -175,7 +177,11 @@ app.use("/api/orders", orderRoutes);
   app.use("/api/wishlist", wishlistRoutes);
   app.use("/api/upload", uploadRoutes);
   app.use("/api/coupons", couponRoutes);
-    
+
+  // Serve Swagger API Documentation (hidden in production by default unless ENABLE_SWAGGER_IN_PRODUCTION is true)
+  if (process.env.NODE_ENV !== "production" || process.env.ENABLE_SWAGGER_IN_PRODUCTION === "true") {
+    app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+  }
 
 // ---------------------------------------------------------------------------
 // Error Handling

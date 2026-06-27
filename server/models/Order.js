@@ -71,8 +71,27 @@ const orderSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "ordered", "processing", "shipped", "delivered", "cancelled"],
-      default: "ordered",
+      enum: [
+        "Placed",
+        "Confirmed",
+        "Packed",
+        "Shipped",
+        "Out For Delivery",
+        "Delivered",
+        "Cancelled",
+        "Return Requested",
+        "Return Approved",
+        "Pickup Scheduled",
+        "Picked Up",
+        "Returned",
+        "Refund Processing",
+        "Refunded",
+        "Replacement Requested",
+        "Replacement Approved",
+        "Replacement Shipped",
+        "Replacement Delivered"
+      ],
+      default: "Placed",
     },
     statusHistory: [
       {
@@ -82,6 +101,29 @@ const orderSchema = new mongoose.Schema(
         changedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
       },
     ],
+    orderTimeline: [
+      {
+        status: { type: String },
+        updatedAt: { type: Date, default: Date.now },
+        note: { type: String },
+        updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      },
+    ],
+    // Cancellation tracking
+    cancellationReason: { type: String },
+    cancelledAt: { type: Date },
+    cancelledBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    cancelledByRole: { type: String, enum: ["customer", "admin"] },
+    returnReplacementDetails: {
+      type: { type: String, enum: ["return", "replacement"] },
+      reason: { type: String },
+      comments: { type: String },
+      images: [{ type: String }],
+      video: { type: String },
+      requestedAt: { type: Date },
+      actionedAt: { type: Date },
+      adminNotes: { type: String }
+    },
     isPaid: {
       type: Boolean,
       default: false,
@@ -96,9 +138,17 @@ const orderSchema = new mongoose.Schema(
       razorpayOrderId: { type: String },
       razorpaySignature: { type: String },
     },
+    refundResult: {
+      refundId: { type: String },
+      amount: { type: Number },
+      method: { type: String },
+      status: { type: String },
+      date: { type: Date },
+      error: { type: String },
+    },
     paymentStatus: {
       type: String,
-      enum: ["pending", "paid", "failed", "refunded"],
+      enum: ["pending", "paid", "failed", "refunded", "Refund Processing"],
       default: "pending",
     },
     isDelivered: {

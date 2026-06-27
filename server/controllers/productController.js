@@ -52,6 +52,11 @@ export const getProducts = async (req, res, next) => {
       filter.category = { $regex: req.query.category, $options: "i" };
     }
 
+    // Featured filter
+    if (req.query.featured === "true") {
+      filter.isFeatured = true;
+    }
+
     // Brand filter
     if (req.query.brand) {
       filter.brand = { $regex: req.query.brand, $options: "i" };
