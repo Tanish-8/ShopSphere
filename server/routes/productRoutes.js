@@ -7,6 +7,7 @@ import {
   updateProduct,
   deleteProduct,
   addProductReview,
+  getProductReviews,
   getTopProducts,
   productValidation,
   reviewValidation,
@@ -18,6 +19,7 @@ const router = express.Router();
 router.get("/top", getTopProducts); // Must be before /:id to avoid conflict
 router.get("/", getProducts);
 router.get("/:id", getProductById);
+router.get("/:id/reviews", getProductReviews);
 
 // Private routes (logged-in users)
 router.post("/:id/reviews", protect, reviewValidation, addProductReview);

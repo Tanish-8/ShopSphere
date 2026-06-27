@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchProductById, fetchProducts } from "../services/productService";
+import { fetchProductById, fetchProducts, fetchProductDetails } from "../services/productService";
 
 function useProducts(productId) {
   const [products, setProducts] = useState([]);
@@ -16,7 +16,8 @@ function useProducts(productId) {
 
       try {
         if (productId) {
-          const singleProduct = await fetchProductById(productId);
+          // Fetch full product details (including reviews) when viewing a single product
+          const singleProduct = await fetchProductDetails(productId);
           if (mounted) {
             setProduct(singleProduct || null);
             setProducts([]);

@@ -36,9 +36,26 @@ export const orderValidation = [
     .notEmpty()
     .withMessage("Country is required"),
   body("paymentMethod")
-    .isIn(["card", "paypal", "cod"])
-    .withMessage("Payment method must be card, paypal, or cod"),
+    .isIn(["card", "paypal", "cod", "razorpay"])
+    .withMessage("Payment method must be card, paypal, cod, or razorpay"),
 ];
+
+export const calculateOrderPrices = (items) => {
+  const itemsPrice = items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+  const taxPrice = +(itemsPrice * 0.18).toFixed(2); // 18% tax
+  const shippingPrice = itemsPrice > 500 ? 0 : 50; // Free shipping over $500
+  const totalPrice = +(itemsPrice + taxPrice + shippingPrice).toFixed(2);
+
+  return {
+    itemsPrice,
+    taxPrice,
+    shippingPrice,
+    totalPrice,
+  };
+};
 
 // ---------------------------------------------------------------------------
 // @desc    Create a new order
@@ -87,13 +104,7 @@ export const createOrder = async (req, res, next) => {
     }
 
     // Calculate prices
-    const itemsPrice = verifiedItems.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
-    const taxPrice = +(itemsPrice * 0.18).toFixed(2); // 18% tax
-    const shippingPrice = itemsPrice > 500 ? 0 : 50; // Free shipping over ₹500 / $500
-    const totalPrice = +(itemsPrice + taxPrice + shippingPrice).toFixed(2);
+    const { itemsPrice, taxPrice, shippingPrice, totalPrice } = calculateOrderPrices(verifiedItems);
 
     const order = await Order.create({
       user: req.user._id,
@@ -300,6 +311,15 @@ export const updateOrderToPaid = async (req, res, next) => {
       throw new Error("Order not found");
     }
 
+    // Only the order owner or an admin can mark an order as paid
+    if (
+      order.user.toString() !== req.user._id.toString() &&
+      req.user.role !== "admin"
+    ) {
+      res.status(403);
+      throw new Error("Not authorized to update this order");
+    }
+
     order.isPaid = true;
     order.paidAt = Date.now();
 
@@ -308,6 +328,45 @@ export const updateOrderToPaid = async (req, res, next) => {
     res.json({
       success: true,
       data: updatedOrder,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ---------------------------------------------------------------------------
+// @desc    Calculate order prices preview
+// @route   POST /api/orders/calculate
+// @access  Private
+// ---------------------------------------------------------------------------
+export const getOrderPricePreview = async (req, res, next) => {
+  try {
+    const { orderItems } = req.body;
+    if (!orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
+      res.status(400);
+      throw new Error("Order must contain at least one item");
+    }
+
+    const verifiedItems = [];
+    for (const item of orderItems) {
+      const product = await Product.findById(item.product);
+      if (!product) {
+        res.status(404);
+        throw new Error(`Product not found: ${item.product}`);
+      }
+
+      verifiedItems.push({
+        product: product._id,
+        price: product.price,
+        quantity: Number(item.quantity),
+      });
+    }
+
+    const prices = calculateOrderPrices(verifiedItems);
+
+    res.json({
+      success: true,
+      data: prices,
     });
   } catch (error) {
     next(error);

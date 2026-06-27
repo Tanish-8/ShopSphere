@@ -1,18 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import useCart from "../hooks/useCart";
+import { addToWishlist as apiAddToWishlist, removeFromWishlist as apiRemoveFromWishlist, fetchWishlist } from '../services/wishlistService';
+import useAuth from '../hooks/useAuth';
 import useProducts from "../hooks/useProducts";
-
-const reviews = [
-  { id: 1, name: "Aarav M.", rating: 5, comment: "Excellent quality and quick delivery." },
-  { id: 2, name: "Sanya R.", rating: 4, comment: "Good value for money. Looks premium." },
-  { id: 3, name: "Dev K.", rating: 5, comment: "Works perfectly. Highly recommended." }
-];
+import { fetchProductDetails, postProductReview } from '../services/productService';
 
 function ProductDetailsPage() {
   const { id } = useParams();
-  const { product, loading, error } = useProducts(id);
+  const navigate = useNavigate();
+  const { product: hookProduct, loading, error } = useProducts(id);
+  const [productOverride, setProductOverride] = useState(null);
+  const product = productOverride ?? hookProduct;
   const { addItem } = useCart();
+  const { user, isAuthenticated } = useAuth();
+
   const galleryImages = useMemo(() => {
     if (!product) return [];
     if (Array.isArray(product.images) && product.images.length > 0) return product.images;
@@ -24,6 +26,8 @@ function ProductDetailsPage() {
   const [activeImage, setActiveImage] = useState("https://via.placeholder.com/900x700?text=Product+Image");
   const [quantity, setQuantity] = useState(1);
   const [successMessage, setSuccessMessage] = useState("");
+  const [wishlisted, setWishlisted] = useState(false);
+
   const displayName = product?.name || product?.title || "Product";
   const displayCategory = product?.category?.name || product?.category || "General";
   const displayDescription = product?.description || "No description available for this product yet.";
@@ -31,11 +35,39 @@ function ProductDetailsPage() {
   const displayRating = Math.max(0, Math.min(5, Math.round(Number(product?.rating || product?.averageRating || 0))));
   const displayStock = Number(product?.stock || product?.quantity || 0);
 
+  // Reviews form state
+  const [ratingInput, setRatingInput] = useState(5);
+  const [commentInput, setCommentInput] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+
+  useEffect(() => {
+    setProductOverride(null);
+  }, [id]);
+
   useEffect(() => {
     if (galleryImages.length > 0) {
       setActiveImage(galleryImages[0]);
     }
   }, [galleryImages]);
+
+  useEffect(() => {
+    if (!product) return;
+    if (!isAuthenticated) {
+      setWishlisted(false);
+      return;
+    }
+    let mounted = true;
+    (async () => {
+      try {
+        const list = await fetchWishlist();
+        if (mounted) setWishlisted(list.some(p => (p._id || p.id) === (product._id || product.id)));
+      } catch (e) {
+        // ignore
+      }
+    })();
+    return () => { mounted = false; };
+  }, [product, isAuthenticated]);
 
   useEffect(() => {
     if (!successMessage) return undefined;
@@ -56,6 +88,23 @@ function ProductDetailsPage() {
     );
 
     setSuccessMessage("Item added to cart.");
+  };
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    setReviewError('');
+    setSubmittingReview(true);
+    try {
+      await postProductReview(product._id || product.id, { rating: ratingInput, comment: commentInput });
+      const updated = await fetchProductDetails(product._id || product.id);
+      setProductOverride(updated);
+      setCommentInput("");
+      setSuccessMessage('Review submitted.');
+    } catch (err) {
+      setReviewError(err?.response?.data?.message || err?.message || 'Failed to submit review.');
+    } finally {
+      setSubmittingReview(false);
+    }
   };
 
   if (loading) {
@@ -158,22 +207,74 @@ function ProductDetailsPage() {
           >
             Add to Cart
           </button>
+          <div className="mt-3 flex gap-3">
+            <button
+              type="button"
+              onClick={async () => {
+                if (!isAuthenticated) return navigate('/login');
+                try {
+                  if (wishlisted) {
+                    await apiRemoveFromWishlist(product._id || product.id);
+                    setWishlisted(false);
+                  } else {
+                    await apiAddToWishlist(product._id || product.id);
+                    setWishlisted(true);
+                  }
+                  window.dispatchEvent(new Event("wishlist-updated"));
+                } catch (e) { console.error(e) }
+              }}
+              className={`px-4 py-2 rounded-lg border ${wishlisted ? 'bg-pink-600 text-white' : 'bg-white text-gray-700'}`}>
+              {wishlisted ? 'Remove from Wishlist' : 'Add to Wishlist'}
+            </button>
+          </div>
           {successMessage && <p className="mt-3 text-sm font-medium text-emerald-600">{successMessage}</p>}
         </div>
       </section>
 
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
         <h2 className="text-2xl font-bold text-gray-900">Customer Reviews</h2>
+        <div className="mt-4 flex items-center gap-3">
+          <div className="text-3xl font-bold text-gray-900">{Number(product?.rating || 0).toFixed(1)}</div>
+          <div className="text-amber-500">{"★".repeat(Math.max(1, Math.round(Number(product?.rating || 0))))}</div>
+          <div className="text-sm text-gray-600">{product?.numReviews || 0} reviews</div>
+        </div>
+
         <div className="mt-6 space-y-4">
-          {reviews.map((review) => (
-            <article key={review.id} className="rounded-lg border border-gray-100 bg-gray-50 p-4">
+          {(Array.isArray(product?.reviews) ? [...product.reviews].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) : []).map((review) => (
+            <article key={review._id || review.id} className="rounded-lg border border-gray-100 bg-gray-50 p-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-gray-900">{review.name}</h3>
-                <span className="text-sm text-amber-500">{"★".repeat(review.rating)}</span>
+                <span className="text-sm text-amber-500">{"★".repeat(Math.max(1, Math.round(review.rating || 0)))}</span>
               </div>
               <p className="mt-2 text-sm text-gray-600">{review.comment}</p>
+              <div className="mt-2 text-xs text-gray-400">{new Date(review.createdAt).toLocaleString()}</div>
             </article>
           ))}
+        </div>
+
+        <div className="mt-6">
+          {isAuthenticated ? (
+            (product?.reviews || []).some(r => (r.user === user?._id) || (r.user?._id === user?._id)) ? (
+              <div className="text-sm text-gray-600">You have already reviewed this product.</div>
+            ) : (
+              <form onSubmit={handleSubmitReview}>
+                <div className="mb-3">
+                  <label className="block text-sm font-medium text-gray-700">Your Rating</label>
+                  <select value={ratingInput} onChange={(e) => setRatingInput(Number(e.target.value))} className="mt-1 rounded border px-3 py-2">
+                    {[5, 4, 3, 2, 1].map(v => <option key={v} value={v}>{v} star{v > 1 ? 's' : ''}</option>)}
+                  </select>
+                </div>
+                <div className="mb-3">
+                  <label className="block text-sm font-medium text-gray-700">Comment</label>
+                  <textarea value={commentInput} onChange={(e) => setCommentInput(e.target.value)} rows={4} className="mt-1 w-full rounded border px-3 py-2" />
+                </div>
+                {reviewError && <div className="text-sm text-red-600 mb-2">{reviewError}</div>}
+                <button type="submit" disabled={submittingReview} className="rounded bg-indigo-600 px-4 py-2 text-white">{submittingReview ? 'Submitting...' : 'Submit Review'}</button>
+              </form>
+            )
+          ) : (
+            <div className="text-sm">Please <Link to="/login" className="text-indigo-600">login</Link> to write a review.</div>
+          )}
         </div>
       </section>
     </div>

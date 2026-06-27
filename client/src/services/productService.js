@@ -35,14 +35,31 @@ function extractSingleProduct(payload) {
   return normalizeProduct(raw);
 }
 
-export async function fetchProducts() {
-  const response = await api.get("/products");
-  return extractProductList(response.data);
+export async function fetchProducts(params = {}, signal) {
+  const response = await api.get("/products", { params, signal });
+  const products = extractProductList(response.data);
+  products.totalProducts = response.data.totalProducts ?? response.data.total ?? products.length;
+  products.totalPages = response.data.totalPages ?? response.data.pages ?? 1;
+  products.currentPage = response.data.currentPage ?? response.data.page ?? 1;
+  return products;
 }
 
 export async function fetchProductById(id) {
   const response = await api.get(`/products/${id}`);
   return extractSingleProduct(response.data);
+}
+
+// Fetch full product details (including reviews)
+export async function fetchProductDetails(id) {
+  const response = await api.get(`/products/${id}`);
+  return response.data?.data || response.data;
+}
+
+export async function postProductReview(id, payload) {
+  const token = getStoredToken();
+  const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+  const response = await api.post(`/products/${id}/reviews`, payload, config);
+  return response.data;
 }
 
 // Admin actions

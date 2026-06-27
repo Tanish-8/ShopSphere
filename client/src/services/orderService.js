@@ -11,6 +11,11 @@ export async function createOrder(payload) {
   return response.data?.data;
 }
 
+export async function calculateOrderPrices(payload) {
+  const response = await api.post("/orders/calculate", payload, getAuthConfig());
+  return response.data?.data;
+}
+
 export async function fetchMyOrders() {
   const response = await api.get("/orders/myorders", getAuthConfig());
   return Array.isArray(response.data?.data) ? response.data.data : [];

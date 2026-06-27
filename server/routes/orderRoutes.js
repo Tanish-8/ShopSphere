@@ -8,12 +8,14 @@ import {
   updateOrderStatus,
   updateOrderToPaid,
   orderValidation,
+  getOrderPricePreview,
 } from "../controllers/orderController.js";
 
 const router = express.Router();
 
 // Private routes (logged-in users)
 router.post("/", protect, orderValidation, createOrder);
+router.post("/calculate", protect, getOrderPricePreview);
 router.get("/myorders", protect, getMyOrders);
 router.get("/:id", protect, getOrderById);
 router.put("/:id/pay", protect, updateOrderToPaid);

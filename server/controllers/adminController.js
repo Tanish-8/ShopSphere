@@ -18,6 +18,21 @@ export const getDashboardStats = async (req, res, next) => {
     const totalProducts = await Product.countDocuments();
     const totalUsers = await User.countDocuments();
 
+    // Reviews metrics across all products
+    const reviewsAgg = await Product.aggregate([
+      { $match: { numReviews: { $gt: 0 } } },
+      {
+        $group: {
+          _id: null,
+          totalReviews: { $sum: "$numReviews" },
+          ratingSum: { $sum: { $multiply: ["$rating", "$numReviews"] } },
+        },
+      },
+    ]);
+
+    const totalReviews = reviewsAgg[0]?.totalReviews || 0;
+    const averageRating = totalReviews > 0 ? (reviewsAgg[0].ratingSum / totalReviews) : 0;
+
     res.json({
       success: true,
       data: {
@@ -28,6 +43,8 @@ export const getDashboardStats = async (req, res, next) => {
         pendingPayments,
         totalProducts,
         totalUsers,
+        totalReviews,
+        averageRating,
       },
     });
   } catch (error) {

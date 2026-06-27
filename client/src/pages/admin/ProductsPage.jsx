@@ -5,6 +5,7 @@ import {
   createProductAdmin,
   updateProductAdmin,
 } from "../../services/productService";
+import { FALLBACK_PRODUCT_IMAGE } from "../../utils/productImage";
 
 function ProductForm({ initial, onCancel, onSave, saving }) {
   const [form, setForm] = useState({
@@ -225,7 +226,7 @@ export default function ProductsPage() {
             <tbody>
               {products.map((p) => (
                 <tr key={p._id} className="border-t">
-                  <td className="px-4 py-2 w-24"><img src={p.image || '/placeholder.png'} alt="" className="h-12 w-12 object-cover rounded" /></td>
+                  <td className="px-4 py-2 w-24"><img src={p.image || FALLBACK_PRODUCT_IMAGE} alt="" className="h-12 w-12 object-cover rounded" /></td>
                   <td className="px-4 py-2">{p.name}</td>
                   <td className="px-4 py-2">{p.category}</td>
                   <td className="px-4 py-2">${p.price.toFixed(2)}</td>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { fetchMyOrders } from "../services/orderService";
 
 function formatDate(value) {
@@ -72,8 +73,12 @@ function OrderHistoryPage() {
               </thead>
               <tbody>
                 {orders.map((order) => (
-                  <tr key={order._id} className="border-t border-gray-100">
-                    <td className="px-4 py-3 font-medium text-gray-800">{order._id}</td>
+                  <tr key={order._id} className="border-t border-gray-100 hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium text-gray-800">
+                      <Link to={`/orders/${order._id}`} className="text-indigo-600 hover:underline">
+                        {order._id}
+                      </Link>
+                    </td>
                     <td className="px-4 py-3 text-gray-600">{formatDate(order.createdAt)}</td>
                     <td className="px-4 py-3 font-semibold text-indigo-600">${Number(order.totalPrice || 0).toFixed(2)}</td>
                     <td className="px-4 py-3">
@@ -91,7 +96,9 @@ function OrderHistoryPage() {
             {orders.map((order) => (
               <article key={order._id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
                 <p className="text-xs uppercase text-gray-500">Order ID</p>
-                <p className="mt-1 break-all text-sm font-medium text-gray-800">{order._id}</p>
+                <Link to={`/orders/${order._id}`} className="mt-1 block break-all text-sm font-medium text-indigo-600 hover:underline">
+                  {order._id}
+                </Link>
                 <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <p className="text-gray-500">Date</p>

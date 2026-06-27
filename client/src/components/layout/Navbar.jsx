@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 import useCart from "../../hooks/useCart";
+import { fetchWishlist } from "../../services/wishlistService";
 
 const navLinkClass = ({ isActive }) =>
   `transition-colors ${isActive ? "text-indigo-600" : "text-gray-700 hover:text-indigo-600"}`;
@@ -10,6 +11,33 @@ function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { isAuthenticated, user, logout } = useAuth();
   const { totalItemCount } = useCart();
+  const [wishlistCount, setWishlistCount] = useState(0);
+  const location = useLocation();
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadWishlistCount = async () => {
+      if (!isAuthenticated) {
+        if (mounted) setWishlistCount(0);
+        return;
+      }
+      try {
+        const list = await fetchWishlist();
+        if (mounted) setWishlistCount(list.length);
+      } catch (e) {
+        // ignore
+      }
+    };
+
+    loadWishlistCount();
+    window.addEventListener("wishlist-updated", loadWishlistCount);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener("wishlist-updated", loadWishlistCount);
+    };
+  }, [isAuthenticated, location.pathname]);
 
   return (
     <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur">
@@ -64,6 +92,19 @@ function Navbar() {
               </svg>
               <span className="absolute -right-0.5 -top-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-indigo-600 px-1 text-xs font-semibold text-white">
                 {totalItemCount}
+              </span>
+            </Link>
+
+            <Link
+              to="/wishlist"
+              className="relative rounded-full p-2 text-gray-600 transition hover:bg-gray-100 hover:text-indigo-600"
+              aria-label="Wishlist"
+            >
+              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 10-7.8 7.8L12 22l8.8-9.6a5.5 5.5 0 000-7.8z" />
+              </svg>
+              <span className="absolute -right-0.5 -top-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-pink-600 px-1 text-xs font-semibold text-white">
+                {wishlistCount}
               </span>
             </Link>
 

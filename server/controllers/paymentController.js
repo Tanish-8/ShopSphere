@@ -3,20 +3,69 @@ import crypto from "crypto";
 import Order from "../models/Order.js";
 import PaymentLog from "../models/PaymentLog.js";
 
-const keyId = process.env.RAZORPAY_KEY_ID;
-const keySecret = process.env.RAZORPAY_KEY_SECRET;
+const PLACEHOLDER_CREDENTIALS = new Set([
+  "YOUR_KEY_ID",
+  "YOUR_KEY_SECRET",
+  "YOUR_WEBHOOK_SECRET",
+  "CHANGE_ME",
+  "test_key",
+]);
 
-let razor;
-if (keyId && keySecret) {
-  razor = new Razorpay({ key_id: keyId, key_secret: keySecret });
+function isInvalidCredential(value) {
+  if (value == null || typeof value !== "string") return true;
+  const trimmed = value.trim();
+  if (!trimmed) return true;
+  if (PLACEHOLDER_CREDENTIALS.has(trimmed)) return true;
+  if (PLACEHOLDER_CREDENTIALS.has(trimmed.toUpperCase())) return true;
+  return false;
+}
+
+function getRazorpayConfigError() {
+  if (isInvalidCredential(process.env.RAZORPAY_KEY_ID)) {
+    return "Razorpay key ID is not configured. Set RAZORPAY_KEY_ID in your environment.";
+  }
+  if (isInvalidCredential(process.env.RAZORPAY_KEY_SECRET)) {
+    return "Razorpay key secret is not configured. Set RAZORPAY_KEY_SECRET in your environment.";
+  }
+  return null;
+}
+
+function getWebhookSecretError() {
+  if (isInvalidCredential(process.env.RAZORPAY_WEBHOOK_SECRET)) {
+    return "Razorpay webhook secret is not configured. Set RAZORPAY_WEBHOOK_SECRET in your environment.";
+  }
+  return null;
+}
+
+let razor = null;
+
+function getRazorpayClient() {
+  const configError = getRazorpayConfigError();
+  if (configError) {
+    return { error: configError };
+  }
+
+  const keyId = process.env.RAZORPAY_KEY_ID.trim();
+  const keySecret = process.env.RAZORPAY_KEY_SECRET.trim();
+
+  if (!razor) {
+    razor = new Razorpay({ key_id: keyId, key_secret: keySecret });
+  }
+
+  return { client: razor, keyId, keySecret };
+}
+
+function sendConfigError(res, message) {
+  res.status(503);
+  throw new Error(message);
 }
 
 // Create a Razorpay order
 export const createRazorpayOrder = async (req, res, next) => {
   try {
-    if (!razor) {
-      res.status(500);
-      throw new Error("Razorpay not configured on server");
+    const { client, keyId, error } = getRazorpayClient();
+    if (error) {
+      sendConfigError(res, error);
     }
 
     const { amount, orderId } = req.body;
@@ -25,17 +74,19 @@ export const createRazorpayOrder = async (req, res, next) => {
       throw new Error("Amount is required");
     }
 
-    // Amount expected in rupees, convert to paise
+    // Amount expected in base currency unit, convert to cents/paise (multiply by 100)
     const amountPaise = Math.round(Number(amount) * 100);
+
+    const currency = process.env.RAZORPAY_CURRENCY || "USD";
 
     const options = {
       amount: amountPaise,
-      currency: "INR",
+      currency,
       receipt: `shopsphere_rcpt_${orderId || Date.now()}`,
       payment_capture: 1,
     };
 
-    const order = await razor.orders.create(options);
+    const order = await client.orders.create(options);
 
     res.json({
       success: true,
@@ -55,13 +106,14 @@ export const createRazorpayOrder = async (req, res, next) => {
 // Handle Razorpay webhooks (raw body expected)
 export const handleWebhook = async (req, res, next) => {
   try {
-    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    const webhookSecretError = getWebhookSecretError();
+    if (webhookSecretError) {
+      return res.status(503).send(webhookSecretError);
+    }
+
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET.trim();
     const signature = req.headers['x-razorpay-signature'];
     const raw = req.body; // express.raw provides Buffer
-
-    if (!webhookSecret) {
-      return res.status(500).send('Webhook secret not configured');
-    }
 
     const expected = crypto.createHmac('sha256', webhookSecret).update(raw).digest('hex');
     if (signature !== expected) {
@@ -81,14 +133,17 @@ export const handleWebhook = async (req, res, next) => {
 
     // Look up razorpay order to find receipt containing shopsphere id
     let shopOrderId = null;
-    if (razorpayOrderId && razor) {
-      try {
-        const rpOrder = await razor.orders.fetch(razorpayOrderId);
-        if (rpOrder && rpOrder.receipt && rpOrder.receipt.startsWith('shopsphere_rcpt_')) {
-          shopOrderId = rpOrder.receipt.replace('shopsphere_rcpt_', '');
+    if (razorpayOrderId) {
+      const { client, error } = getRazorpayClient();
+      if (!error) {
+        try {
+          const rpOrder = await client.orders.fetch(razorpayOrderId);
+          if (rpOrder && rpOrder.receipt && rpOrder.receipt.startsWith('shopsphere_rcpt_')) {
+            shopOrderId = rpOrder.receipt.replace('shopsphere_rcpt_', '');
+          }
+        } catch (e) {
+          // ignore
         }
-      } catch (e) {
-        // ignore
       }
     }
 
@@ -142,15 +197,15 @@ export const handleWebhook = async (req, res, next) => {
 // Verify payment signature and mark ShopSphere order as paid
 export const verifyRazorpayPayment = async (req, res, next) => {
   try {
+    const { keySecret, error } = getRazorpayClient();
+    if (error) {
+      sendConfigError(res, error);
+    }
+
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId } = req.body;
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !orderId) {
       res.status(400);
       throw new Error("Missing required verification fields");
-    }
-
-    if (!keySecret) {
-      res.status(500);
-      throw new Error("Razorpay secret not configured on server");
     }
 
     const generated = crypto

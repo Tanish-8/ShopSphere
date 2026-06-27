@@ -12,6 +12,7 @@ import orderRoutes from "./routes/orderRoutes.js";
 import addressRoutes from "./routes/addressRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
+import wishlistRoutes from "./routes/wishlistRoutes.js";
 import { handleWebhook } from './controllers/paymentController.js';
 import migrateAddresses from "./utils/migrateAddresses.js";
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
@@ -48,6 +49,7 @@ app.use(
       const allowed = [
         "http://localhost:5173",
         "http://localhost:5174",
+        "http://localhost:5175",
       ];
       if (process.env.CLIENT_URL) allowed.push(process.env.CLIENT_URL);
 
@@ -92,6 +94,7 @@ app.use("/api/orders", orderRoutes);
     app.use("/api/addresses", addressRoutes);
     app.use("/api/admin", adminRoutes);
     app.use("/api/payments", paymentRoutes);
+  app.use("/api/wishlist", wishlistRoutes);
     
 
 // ---------------------------------------------------------------------------

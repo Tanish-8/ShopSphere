@@ -14,7 +14,20 @@ export default function AddressForm({ initial = {}, onCancel, onSave }) {
     isDefault: initial.isDefault || false,
   });
 
-  useEffect(() => setForm((f) => ({ ...f, ...initial })), [initial]);
+  useEffect(() => {
+    setForm({
+      label: initial.label || 'Home',
+      fullName: initial.fullName || '',
+      phone: initial.phone || '',
+      landmark: initial.landmark || '',
+      street: initial.street || '',
+      city: initial.city || '',
+      state: initial.state || '',
+      zipCode: initial.zipCode || '',
+      country: initial.country || '',
+      isDefault: initial.isDefault || false,
+    });
+  }, [initial._id]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;

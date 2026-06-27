@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useCart from "../hooks/useCart";
-import { createOrder } from "../services/orderService";
+import { createOrder, calculateOrderPrices } from "../services/orderService";
 import * as addressService from "../services/addressService";
 import { createRazorpayOrder, verifyRazorpayPayment } from "../services/paymentService";
 
@@ -20,6 +20,52 @@ function CheckoutPage() {
   const [error, setError] = useState("");
   const [placingOrder, setPlacingOrder] = useState(false);
   const [usingDefault, setUsingDefault] = useState(false);
+  const [prices, setPrices] = useState({
+    itemsPrice: 0,
+    taxPrice: 0,
+    shippingPrice: 0,
+    totalPrice: 0
+  });
+  const [loadingPrices, setLoadingPrices] = useState(true);
+
+  useEffect(() => {
+    if (cartItems.length === 0) {
+      setPrices({ itemsPrice: 0, taxPrice: 0, shippingPrice: 0, totalPrice: 0 });
+      setLoadingPrices(false);
+      return;
+    }
+
+    let mounted = true;
+    const fetchPrices = async () => {
+      setLoadingPrices(true);
+      setError("");
+      try {
+        const payload = {
+          orderItems: cartItems.map((item) => ({
+            product: item.productId,
+            quantity: Number(item.quantity)
+          }))
+        };
+        const data = await calculateOrderPrices(payload);
+        if (mounted) {
+          setPrices(data);
+        }
+      } catch (err) {
+        if (mounted) {
+          setError(err?.response?.data?.message || err.message || "Failed to calculate order prices");
+        }
+      } finally {
+        if (mounted) {
+          setLoadingPrices(false);
+        }
+      }
+    };
+
+    fetchPrices();
+    return () => {
+      mounted = false;
+    };
+  }, [cartItems]);
 
   const isFormValid = useMemo(
     () =>
@@ -68,8 +114,8 @@ function CheckoutPage() {
           country: shippingAddress.country.trim()
         },
         paymentMethod,
-        itemsPrice: Number(totalPrice.toFixed(2)),
-        totalPrice: Number(totalPrice.toFixed(2))
+        itemsPrice: Number(prices.itemsPrice.toFixed(2)),
+        totalPrice: Number(prices.totalPrice.toFixed(2))
       };
 
       // Create ShopSphere order first (unpaid for Razorpay)
@@ -106,6 +152,13 @@ function CheckoutPage() {
               navigate(`/order-success/${createdOrder?._id || createdOrder?.id}`, { replace: true });
             } catch (verErr) {
               setError(verErr?.response?.data?.message || verErr?.message || 'Payment verification failed');
+              setPlacingOrder(false);
+            }
+          },
+          modal: {
+            ondismiss: function () {
+              setError("Payment cancelled. You can retry paying when ready.");
+              setPlacingOrder(false);
             }
           },
           prefill: {
@@ -117,6 +170,12 @@ function CheckoutPage() {
 
         // eslint-disable-next-line no-undef
         const rzp = new window.Razorpay(options);
+        
+        rzp.on('payment.failed', function (resp) {
+          setError(resp.error.description || "Payment failed. Please try again.");
+          setPlacingOrder(false);
+        });
+
         rzp.open();
       } else {
         // Cash on Delivery or other methods: order already created
@@ -125,7 +184,6 @@ function CheckoutPage() {
       }
     } catch (requestError) {
       setError(requestError?.response?.data?.message || requestError?.message || "Failed to place order.");
-    } finally {
       setPlacingOrder(false);
     }
   };
@@ -331,10 +389,22 @@ function CheckoutPage() {
             ))}
           </div>
 
-          <div className="mt-5 border-t border-gray-200 pt-4 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600">Total</span>
-              <span className="text-lg font-bold text-indigo-600">${totalPrice.toFixed(2)}</span>
+          <div className="mt-5 border-t border-gray-200 pt-4 text-sm space-y-2">
+            <div className="flex items-center justify-between text-gray-600">
+              <span>Subtotal</span>
+              <span>${prices.itemsPrice.toFixed(2)}</span>
+            </div>
+            <div className="flex items-center justify-between text-gray-600">
+              <span>Shipping</span>
+              <span>{prices.shippingPrice > 0 ? `$${prices.shippingPrice.toFixed(2)}` : "Free"}</span>
+            </div>
+            <div className="flex items-center justify-between text-gray-600">
+              <span>Tax (18%)</span>
+              <span>${prices.taxPrice.toFixed(2)}</span>
+            </div>
+            <div className="flex items-center justify-between border-t border-gray-100 pt-2 font-semibold">
+              <span className="text-gray-900">Grand Total</span>
+              <span className="text-lg text-indigo-600">${prices.totalPrice.toFixed(2)}</span>
             </div>
           </div>
 
@@ -342,7 +412,7 @@ function CheckoutPage() {
 
           <button
             type="submit"
-            disabled={placingOrder || cartItems.length === 0}
+            disabled={placingOrder || loadingPrices || cartItems.length === 0}
             className="mt-5 w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {placingOrder ? "Placing Order..." : "Place Order"}

@@ -9,6 +9,7 @@ import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import ProductDetailsPage from "./pages/ProductDetailsPage";
+import WishlistPage from "./pages/WishlistPage";
 import OrderHistoryPage from "./pages/OrderHistoryPage";
 import OrderDetailsPage from "./pages/OrderDetailsPage";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
@@ -32,6 +33,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/products/:id" element={<ProductDetailsPage />} />
+          <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
           <Route path="/cart" element={<CartPage />} />
           <Route
             path="/checkout"

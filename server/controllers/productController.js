@@ -40,13 +40,14 @@ export const getProducts = async (req, res, next) => {
     // Build dynamic filter
     const filter = {};
 
-    // Keyword search on name
-    if (req.query.keyword) {
-      filter.name = { $regex: req.query.keyword, $options: "i" };
+    // Keyword / Search query
+    const search = req.query.search || req.query.keyword;
+    if (search) {
+      filter.name = { $regex: search, $options: "i" };
     }
 
-    // Category filter
-    if (req.query.category) {
+    // Category filter (ignore 'All' category button click)
+    if (req.query.category && req.query.category.toLowerCase() !== "all") {
       filter.category = { $regex: req.query.category, $options: "i" };
     }
 
@@ -67,14 +68,22 @@ export const getProducts = async (req, res, next) => {
       filter.rating = { $gte: Number(req.query.rating) };
     }
 
+    // Stock filtering
+    if (req.query.inStock === "true") {
+      filter.stock = { $gt: 0 };
+    }
+
     // Sorting
     let sort = { createdAt: -1 }; // Default: newest first
     if (req.query.sort) {
       const sortMap = {
         price_asc: { price: 1 },
         price_desc: { price: -1 },
+        priceLow: { price: 1 },
+        priceHigh: { price: -1 },
         rating: { rating: -1 },
         newest: { createdAt: -1 },
+        popularity: { rating: -1 },
       };
       sort = sortMap[req.query.sort] || sort;
     }
@@ -92,6 +101,11 @@ export const getProducts = async (req, res, next) => {
       page,
       pages: Math.ceil(total / limit),
       data: products,
+      // User-requested metadata standard fields:
+      products,
+      totalProducts: total,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
     });
   } catch (error) {
     next(error);
@@ -281,6 +295,20 @@ export const getTopProducts = async (req, res, next) => {
       success: true,
       data: products,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get reviews for a product
+export const getProductReviews = async (req, res, next) => {
+  try {
+    const product = await Product.findById(req.params.id).select('reviews rating numReviews');
+    if (!product) {
+      res.status(404);
+      throw new Error('Product not found');
+    }
+    res.json({ success: true, data: product.reviews || [], rating: product.rating, numReviews: product.numReviews });
   } catch (error) {
     next(error);
   }

@@ -1,4 +1,4 @@
-import { createContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useEffect, useMemo, useState } from "react";
 import useAuth from "../hooks/useAuth";
 
 const GUEST_CART_KEY = "shopsphere_cart_guest";
@@ -35,7 +35,7 @@ function CartProvider({ children }) {
     setCartItems(getStoredCart(storageKey));
   }, [storageKey]);
 
-  const addItem = (item, quantity = 1) => {
+  const addItem = useCallback((item, quantity = 1) => {
     if (!item?.productId) return;
     const safeQuantity = Math.max(1, Number(quantity) || 1);
 
@@ -68,17 +68,17 @@ function CartProvider({ children }) {
       persistCart(storageKey, updatedItems);
       return updatedItems;
     });
-  };
+  }, [storageKey]);
 
-  const removeItem = (productId) => {
+  const removeItem = useCallback((productId) => {
     setCartItems((prev) => {
       const updatedItems = prev.filter((item) => item.productId !== productId);
       persistCart(storageKey, updatedItems);
       return updatedItems;
     });
-  };
+  }, [storageKey]);
 
-  const updateQuantity = (productId, quantity) => {
+  const updateQuantity = useCallback((productId, quantity) => {
     const safeQuantity = Math.max(1, Number(quantity) || 1);
 
     setCartItems((prev) => {
@@ -93,12 +93,12 @@ function CartProvider({ children }) {
       persistCart(storageKey, updatedItems);
       return updatedItems;
     });
-  };
+  }, [storageKey]);
 
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
     setCartItems([]);
     persistCart(storageKey, []);
-  };
+  }, [storageKey]);
 
   const totalPrice = useMemo(
     () => cartItems.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0),
@@ -120,7 +120,7 @@ function CartProvider({ children }) {
       totalPrice,
       totalItemCount
     }),
-    [cartItems, totalPrice, totalItemCount]
+    [cartItems, addItem, removeItem, updateQuantity, clearCart, totalPrice, totalItemCount]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
