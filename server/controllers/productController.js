@@ -1,5 +1,6 @@
 import { validationResult, body } from "express-validator";
 import Product from "../models/Product.js";
+import { deleteFromCloudinary, extractPublicIdFromUrl } from "../config/cloudinary.js";
 
 // ---------------------------------------------------------------------------
 // Validation rules
@@ -183,6 +184,30 @@ export const updateProduct = async (req, res, next) => {
       throw new Error("Product not found");
     }
 
+    // Identify and delete replaced Cloudinary images
+    const oldImages = product.images || [];
+    const newImages = req.body.images || (req.body.image ? [req.body.image] : []);
+
+    for (const oldUrl of oldImages) {
+      if (!newImages.includes(oldUrl)) {
+        const publicId = extractPublicIdFromUrl(oldUrl);
+        if (publicId) {
+          deleteFromCloudinary(publicId).catch((err) => {
+            console.error(`Failed to delete replaced image ${publicId}:`, err.message);
+          });
+        }
+      }
+    }
+
+    if (product.image && req.body.image && product.image !== req.body.image) {
+      const publicId = extractPublicIdFromUrl(product.image);
+      if (publicId) {
+        deleteFromCloudinary(publicId).catch((err) => {
+          console.error(`Failed to delete replaced image ${publicId}:`, err.message);
+        });
+      }
+    }
+
     product = await Product.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
@@ -209,6 +234,21 @@ export const deleteProduct = async (req, res, next) => {
     if (!product) {
       res.status(404);
       throw new Error("Product not found");
+    }
+
+    // Delete associated Cloudinary images
+    const imagesToDelete = [...(product.images || [])];
+    if (product.image) {
+      imagesToDelete.push(product.image);
+    }
+
+    for (const imageUrl of imagesToDelete) {
+      const publicId = extractPublicIdFromUrl(imageUrl);
+      if (publicId) {
+        deleteFromCloudinary(publicId).catch((err) => {
+          console.error(`Failed to delete image ${publicId}:`, err.message);
+        });
+      }
     }
 
     await Product.findByIdAndDelete(req.params.id);

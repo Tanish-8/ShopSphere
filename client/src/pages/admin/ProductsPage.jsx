@@ -6,6 +6,7 @@ import {
   updateProductAdmin,
 } from "../../services/productService";
 import { FALLBACK_PRODUCT_IMAGE } from "../../utils/productImage";
+import ImageUpload from "../../components/admin/ImageUpload";
 
 function ProductForm({ initial, onCancel, onSave, saving }) {
   const [form, setForm] = useState({
@@ -20,6 +21,7 @@ function ProductForm({ initial, onCancel, onSave, saving }) {
   });
 
   const [errors, setErrors] = useState({});
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => setForm((f) => ({ ...f, ...initial })), [initial]);
 
@@ -74,7 +76,7 @@ function ProductForm({ initial, onCancel, onSave, saving }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-sm font-medium">Price</label>
           <input type="number" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="w-full border rounded px-2 py-1" />
@@ -85,15 +87,19 @@ function ProductForm({ initial, onCancel, onSave, saving }) {
           <input type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} className="w-full border rounded px-2 py-1" />
           {errors.stock && <div className="text-red-600 text-sm">{errors.stock}</div>}
         </div>
-        <div>
-          <label className="block text-sm font-medium">Image URL</label>
-          <input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} className="w-full border rounded px-2 py-1" />
-        </div>
       </div>
 
-      <div className="flex justify-end gap-2">
+      <div>
+        <ImageUpload
+          value={form.image}
+          onChange={(url) => setForm({ ...form, image: url })}
+          onUploadingChange={setUploadingImage}
+        />
+      </div>
+
+      <div className="flex justify-end gap-2 pt-2 border-t">
         <button type="button" onClick={onCancel} className="px-3 py-1 border rounded">Cancel</button>
-        <button type="submit" disabled={saving} className="px-3 py-1 bg-blue-600 text-white rounded">{saving ? 'Saving...' : 'Save'}</button>
+        <button type="submit" disabled={saving || uploadingImage} className="px-3 py-1 bg-blue-600 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed">{saving ? 'Saving...' : 'Save'}</button>
       </div>
     </form>
   );
