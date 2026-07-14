@@ -15,6 +15,7 @@ import OrderDetailsPage from "./pages/OrderDetailsPage";
 import OrderTrackingPage from "./pages/OrderTrackingPage";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
 import ProfilePage from "./pages/ProfilePage";
+import CouponsPage from "./pages/CouponsPage";
 import AddressesPage from "./pages/AddressesPage";
 import InvoicesPage from "./pages/InvoicesPage";
 import SettingsPage from "./pages/SettingsPage";
@@ -88,6 +89,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/coupons"
+            element={
+              <ProtectedRoute>
+                <CouponsPage />
               </ProtectedRoute>
             }
           />

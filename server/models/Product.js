@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { CATEGORIES } from "../../shared/categories.js";
 
 const reviewSchema = new mongoose.Schema(
   {
@@ -50,6 +51,10 @@ const productSchema = new mongoose.Schema(
     category: {
       type: String,
       required: [true, "Category is required"],
+      enum: {
+        values: CATEGORIES,
+        message: "{VALUE} is not a valid category"
+      },
       trim: true,
     },
     brand: {
@@ -79,6 +84,38 @@ const productSchema = new mongoose.Schema(
       default: 0,
     },
     reviews: [reviewSchema],
+    originalPrice: {
+      type: Number,
+    },
+    discount: {
+      type: Number,
+      default: 0,
+    },
+    badge: {
+      type: String,
+      trim: true,
+    },
+    sku: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    tags: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+    features: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+    specifications: {
+      type: Map,
+      of: String,
+    },
     isFeatured: {
       type: Boolean,
       default: false,
@@ -90,9 +127,9 @@ const productSchema = new mongoose.Schema(
 );
 
 // ---------------------------------------------------------------------------
-// Index for text search on name, description, and category
+// Index for text search on name, description, category, brand, and tags
 // ---------------------------------------------------------------------------
-productSchema.index({ name: "text", description: "text", category: "text" });
+productSchema.index({ name: "text", description: "text", category: "text", brand: "text", tags: "text" });
 
 const Product = mongoose.model("Product", productSchema);
 export default Product;

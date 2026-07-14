@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { fetchMyOrders, downloadInvoice } from "../services/orderService";
+import { fetchMyOrders, downloadInvoice, cancelOrder } from "../services/orderService";
+import CancelOrderModal from "../components/order/CancelOrderModal";
+import { ORDER_STATUS, PAYMENT_STATUS, CANCELLABLE_STATUSES } from "../utils/constants";
 
 function formatDate(value) {
   if (!value) return "-";
@@ -12,6 +14,20 @@ function OrderHistoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [downloadingId, setDownloadingId] = useState(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
+  const handleCancelConfirm = async (finalReason) => {
+    if (!selectedOrder) return;
+    await cancelOrder(selectedOrder._id, finalReason);
+    setOrders((prevOrders) =>
+      prevOrders.map((o) =>
+        o._id === selectedOrder._id
+          ? { ...o, status: ORDER_STATUS.CANCELLED }
+          : o
+      )
+    );
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -105,24 +121,67 @@ function OrderHistoryPage() {
                     <td className="px-4 py-3 text-gray-600">{formatDate(order.createdAt)}</td>
                     <td className="px-4 py-3 font-semibold text-indigo-600">${Number(order.totalPrice || 0).toFixed(2)}</td>
                     <td className="px-4 py-3">
-                      <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-2xs font-bold uppercase tracking-wider text-indigo-700">
-                        {order.status || "pending"}
+                      <span className={`rounded-full px-2.5 py-1 text-2xs font-bold uppercase tracking-wider ${
+                        order.status === ORDER_STATUS.DELIVERED ? "bg-emerald-50 text-emerald-700" :
+                        order.status === ORDER_STATUS.CANCELLED ? "bg-red-50 text-red-700" :
+                        "bg-indigo-50 text-indigo-700"
+                      }`}>
+                        {(order.status || "PLACED").replace(/_/g, " ")}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right space-x-2">
-                      <Link
-                        to={`/orders/${order._id}/track`}
-                        className="inline-flex items-center rounded-xl bg-indigo-600 px-3 py-1.5 text-2xs font-bold text-white transition hover:bg-indigo-700 cursor-pointer"
-                      >
-                        Track Order
-                      </Link>
-                      <button
-                        onClick={() => handleDownload(order._id)}
-                        disabled={downloadingId === order._id}
-                        className="inline-flex items-center rounded-xl border border-gray-350 bg-white px-3 py-1.5 text-2xs font-bold text-gray-700 transition hover:bg-gray-50 cursor-pointer disabled:opacity-50"
-                      >
-                        {downloadingId === order._id ? "..." : "Invoice"}
-                      </button>
+                      {(() => {
+                        const statusUpper = (order.status || ORDER_STATUS.PLACED).toUpperCase();
+                        const isCancelable = CANCELLABLE_STATUSES.includes(statusUpper);
+                        const isCancelled = statusUpper === ORDER_STATUS.CANCELLED;
+                        const isRefunded = statusUpper === ORDER_STATUS.REFUNDED;
+                        const isCancelledOrRefunded = isCancelled || isRefunded;
+                        const isDelivered = statusUpper === ORDER_STATUS.DELIVERED;
+
+                        return (
+                          <>
+                            {!isCancelledOrRefunded && (
+                              <Link
+                                to={`/orders/${order._id}/track`}
+                                className="inline-flex items-center rounded-xl bg-indigo-600 px-3 py-1.5 text-2xs font-bold text-white transition hover:bg-indigo-700 cursor-pointer"
+                              >
+                                Track Order
+                              </Link>
+                            )}
+                            <button
+                              onClick={() => handleDownload(order._id)}
+                              disabled={downloadingId === order._id}
+                              className="inline-flex items-center rounded-xl border border-gray-350 bg-white px-3 py-1.5 text-2xs font-bold text-gray-700 transition hover:bg-gray-50 cursor-pointer disabled:opacity-50"
+                            >
+                              {downloadingId === order._id ? "..." : "Download Invoice"}
+                            </button>
+                            {isCancelable && (
+                              <button
+                                onClick={() => {
+                                  setSelectedOrder(order);
+                                  setShowCancelModal(true);
+                                }}
+                                className="inline-flex items-center rounded-xl bg-red-50 hover:bg-red-100 text-2xs font-bold text-red-700 transition border border-red-200 px-3 py-1.5 cursor-pointer"
+                              >
+                                Cancel Order
+                              </button>
+                            )}
+                            {isDelivered && (
+                              <Link
+                                to={`/orders/${order._id}`}
+                                className="inline-flex items-center rounded-xl bg-purple-50 hover:bg-purple-100 text-2xs font-bold text-purple-700 transition border border-purple-200 px-3 py-1.5 cursor-pointer"
+                              >
+                                Return / Replace
+                              </Link>
+                            )}
+                            {isCancelledOrRefunded && (
+                              <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-2xs font-bold border uppercase ${isRefunded ? "bg-teal-50 text-teal-700 border-teal-100" : "bg-red-50 text-red-700 border-red-100"}`}>
+                                {isRefunded ? "Refunded" : "Cancelled"}
+                              </span>
+                            )}
+                          </>
+                        );
+                      })()}
                     </td>
                   </tr>
                 ))}
@@ -153,31 +212,81 @@ function OrderHistoryPage() {
                 </div>
 
                 <div className="flex justify-between items-center pt-2 border-t border-gray-50">
-                  <span className="inline-flex rounded-full bg-indigo-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-indigo-700">
-                    {order.status || "pending"}
+                  <span className={`inline-flex rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+                    order.status === ORDER_STATUS.DELIVERED ? "bg-emerald-50 text-emerald-700" :
+                    order.status === ORDER_STATUS.CANCELLED ? "bg-red-50 text-red-700" :
+                    "bg-indigo-50 text-indigo-700"
+                  }`}>
+                    {(order.status || "PLACED").replace(/_/g, " ")}
                   </span>
                   
-                  <div className="flex gap-2">
-                    <Link
-                      to={`/orders/${order._id}/track`}
-                      className="inline-flex items-center rounded-xl bg-indigo-600 px-3 py-1.5 text-[10px] font-bold text-white transition hover:bg-indigo-700"
-                    >
-                      Track
-                    </Link>
-                    <button
-                      onClick={() => handleDownload(order._id)}
-                      disabled={downloadingId === order._id}
-                      className="inline-flex items-center rounded-xl border border-gray-300 bg-white px-3 py-1.5 text-[10px] font-bold text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-                    >
-                      {downloadingId === order._id ? "..." : "Invoice"}
-                    </button>
-                  </div>
+                  {(() => {
+                    const statusUpper = (order.status || ORDER_STATUS.PLACED).toUpperCase();
+                    const isCancelable = CANCELLABLE_STATUSES.includes(statusUpper);
+                    const isCancelled = statusUpper === ORDER_STATUS.CANCELLED;
+                    const isRefunded = statusUpper === ORDER_STATUS.REFUNDED;
+                    const isCancelledOrRefunded = isCancelled || isRefunded;
+                    const isDelivered = statusUpper === ORDER_STATUS.DELIVERED;
+
+                    return (
+                      <div className="flex gap-2 items-center flex-wrap justify-end">
+                        {!isCancelledOrRefunded && (
+                          <Link
+                            to={`/orders/${order._id}/track`}
+                            className="inline-flex items-center rounded-xl bg-indigo-600 px-3 py-1.5 text-[10px] font-bold text-white transition hover:bg-indigo-700"
+                          >
+                            Track
+                          </Link>
+                        )}
+                        <button
+                          onClick={() => handleDownload(order._id)}
+                          disabled={downloadingId === order._id}
+                          className="inline-flex items-center rounded-xl border border-gray-300 bg-white px-3 py-1.5 text-[10px] font-bold text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+                        >
+                          {downloadingId === order._id ? "..." : "Download Invoice"}
+                        </button>
+                        {isCancelable && (
+                          <button
+                            onClick={() => {
+                              setSelectedOrder(order);
+                              setShowCancelModal(true);
+                            }}
+                            className="inline-flex items-center rounded-xl bg-red-50 hover:bg-red-100 text-[10px] font-bold text-red-700 transition border border-red-200 px-3 py-1.5 cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        )}
+                        {isDelivered && (
+                          <Link
+                            to={`/orders/${order._id}`}
+                            className="inline-flex items-center rounded-xl bg-purple-50 hover:bg-purple-100 text-[10px] font-bold text-purple-700 transition border border-purple-200 px-3 py-1.5 cursor-pointer"
+                          >
+                            Return/Replace
+                          </Link>
+                        )}
+                        {isCancelledOrRefunded && (
+                          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold border uppercase ${isRefunded ? "bg-teal-50 text-teal-700 border-teal-100" : "bg-red-50 text-red-700 border-red-100"}`}>
+                            {isRefunded ? "Refunded" : "Cancelled"}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </article>
             ))}
           </section>
         </>
       )}
+
+      <CancelOrderModal
+        isOpen={showCancelModal}
+        onClose={() => {
+          setShowCancelModal(false);
+          setSelectedOrder(null);
+        }}
+        onConfirm={handleCancelConfirm}
+      />
     </div>
   );
 }

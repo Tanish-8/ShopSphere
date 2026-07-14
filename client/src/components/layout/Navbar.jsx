@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 import useCart from "../../hooks/useCart";
 import { fetchWishlist } from "../../services/wishlistService";
+import { fetchProducts } from "../../services/productService";
+import { FALLBACK_PRODUCT_IMAGE } from "../../utils/productImage";
 
 const navLinkClass = ({ isActive }) =>
   `transition-colors ${isActive ? "text-indigo-600" : "text-gray-700 hover:text-indigo-600"}`;
@@ -15,6 +17,42 @@ function Navbar() {
   const location = useLocation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [closeTimeoutId, setCloseTimeoutId] = useState(null);
+
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Debounced search logic for live suggestions
+  useEffect(() => {
+    if (searchQuery.trim().length <= 1) {
+      setSuggestions([]);
+      return;
+    }
+    const delayDebounceFn = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const results = await fetchProducts({ keyword: searchQuery, limit: 5 });
+        setSuggestions(results || []);
+      } catch (err) {
+        console.error("Search suggestion error:", err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/products?keyword=${encodeURIComponent(searchQuery.trim())}`);
+      setShowSuggestions(false);
+      setIsMenuOpen(false);
+    }
+  };
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -97,7 +135,7 @@ function Navbar() {
         <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
       </svg>
     ) },
-    { label: "Coupons", to: "/profile", icon: (
+    { label: "Coupons", to: "/coupons", icon: (
       <svg className="h-5 w-5 text-gray-400 group-hover:text-indigo-600 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
         <path strokeLinecap="round" strokeLinejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
       </svg>
@@ -167,23 +205,71 @@ function Navbar() {
 
           <div className="hidden flex-1 items-center justify-end gap-4 md:flex">
             <div className="relative w-full max-w-sm">
-              <input
-                type="text"
-                placeholder="Search products..."
-                className="w-full rounded-full border border-gray-300 bg-gray-50 px-4 py-2 pl-10 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-              />
-              <svg
-                className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M9 3a6 6 0 104.472 10.001l3.263 3.264a1 1 0 001.414-1.414l-3.264-3.263A6 6 0 009 3zm-4 6a4 4 0 118 0 4 4 0 01-8 0z"
-                  clipRule="evenodd"
+              <form onSubmit={handleSearchSubmit}>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                  placeholder="Search products..."
+                  className="w-full rounded-full border border-gray-300 bg-gray-50 px-4 py-2 pl-10 pr-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 focus:bg-white"
                 />
-              </svg>
+                <button type="submit" className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 hover:text-indigo-650 transition-colors cursor-pointer">
+                  <svg
+                    className="h-4 w-4"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M9 3a6 6 0 104.472 10.001l3.263 3.264a1 1 0 001.414-1.414l-3.264-3.263A6 6 0 009 3zm-4 6a4 4 0 118 0 4 4 0 01-8 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+              </form>
+
+              {/* Suggestions overlay */}
+              {showSuggestions && searchQuery.trim().length > 1 && (
+                <div className="absolute left-0 right-0 mt-2 rounded-2xl border border-gray-150 bg-white p-2.5 shadow-lg z-50 text-left space-y-1 animate-dropdown">
+                  {isSearching ? (
+                    <div className="p-3 text-xs text-gray-500 text-center font-bold">Searching products...</div>
+                  ) : suggestions.length === 0 ? (
+                    <div className="p-3 text-xs text-gray-500 text-center font-bold">No products found</div>
+                  ) : (
+                    suggestions.map((item) => (
+                      <Link
+                        key={item._id || item.id}
+                        to={`/products/${item._id || item.id}`}
+                        onClick={() => {
+                          setSearchQuery("");
+                          setShowSuggestions(false);
+                        }}
+                        className="flex items-center gap-3 rounded-xl p-2 hover:bg-indigo-50/50 transition border border-transparent hover:border-indigo-100"
+                      >
+                        <img
+                          src={item.image || FALLBACK_PRODUCT_IMAGE}
+                          alt={item.name}
+                          className="h-9 w-9 rounded-lg object-cover bg-gray-50 shrink-0 border border-gray-100"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = FALLBACK_PRODUCT_IMAGE;
+                          }}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-xs font-bold text-gray-900 leading-tight">{item.name}</p>
+                          <p className="text-[10px] font-bold text-indigo-650 mt-0.5">${item.price.toFixed(2)}</p>
+                        </div>
+                        <span className="text-[9px] font-extrabold bg-indigo-50 text-indigo-700 rounded px-2 py-0.5 uppercase tracking-wider shrink-0">
+                          {item.category}
+                        </span>
+                      </Link>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
 
             <Link
@@ -372,11 +458,68 @@ function Navbar() {
             </div>
 
             <div className="relative">
-              <input
-                type="text"
-                placeholder="Search products..."
-                className="w-full rounded-full border border-gray-300 bg-gray-50 px-4 py-2 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-              />
+              <form onSubmit={handleSearchSubmit}>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                  placeholder="Search products..."
+                  className="w-full rounded-full border border-gray-300 bg-gray-50 px-4 py-2 pl-10 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                />
+                <button type="submit" className="absolute left-3 top-2.5 h-4 w-4 text-gray-400">
+                  <svg
+                    className="h-4 w-4"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M9 3a6 6 0 104.472 10.001l3.263 3.264a1 1 0 001.414-1.414l-3.264-3.263A6 6 0 009 3zm-4 6a4 4 0 118 0 4 4 0 01-8 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+              </form>
+
+              {showSuggestions && searchQuery.trim().length > 1 && (
+                <div className="absolute left-0 right-0 mt-2 rounded-2xl border border-gray-150 bg-white p-2.5 shadow-lg z-50 text-left space-y-1 animate-dropdown">
+                  {isSearching ? (
+                    <div className="p-3 text-xs text-gray-500 text-center font-bold">Searching products...</div>
+                  ) : suggestions.length === 0 ? (
+                    <div className="p-3 text-xs text-gray-500 text-center font-bold">No products found</div>
+                  ) : (
+                    suggestions.map((item) => (
+                      <Link
+                        key={item._id || item.id}
+                        to={`/products/${item._id || item.id}`}
+                        onClick={() => {
+                          setSearchQuery("");
+                          setShowSuggestions(false);
+                          setIsMenuOpen(false);
+                        }}
+                        className="flex items-center gap-3 rounded-xl p-2 hover:bg-indigo-50/50 transition border border-transparent hover:border-indigo-100"
+                      >
+                        <img
+                          src={item.image || FALLBACK_PRODUCT_IMAGE}
+                          alt={item.name}
+                          className="h-9 w-9 rounded-lg object-cover bg-gray-50 shrink-0 border border-gray-100"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = FALLBACK_PRODUCT_IMAGE;
+                          }}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-xs font-bold text-gray-900 leading-tight">{item.name}</p>
+                          <p className="text-[10px] font-bold text-indigo-650 mt-0.5">${item.price.toFixed(2)}</p>
+                        </div>
+                      </Link>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="flex items-center justify-between">

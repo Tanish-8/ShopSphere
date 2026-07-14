@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchMyOrders, downloadInvoice } from "../services/orderService";
+import { ORDER_STATUS, PAYMENT_STATUS } from "../utils/constants";
 
 export default function InvoicesPage() {
   const [orders, setOrders] = useState([]);
@@ -66,8 +67,8 @@ export default function InvoicesPage() {
     if (!matchesSearch) return false;
     if (filterStatus === "All") return true;
     
-    const isPaid = order.isPaid || order.paymentStatus?.toLowerCase() === "paid";
-    const isCancelled = order.status?.toLowerCase() === "cancelled";
+    const isPaid = order.isPaid || (order.paymentStatus || "").toUpperCase() === PAYMENT_STATUS.PAID;
+    const isCancelled = (order.status || "").toUpperCase() === ORDER_STATUS.CANCELLED;
     const isPending = !isPaid && !isCancelled;
 
     if (filterStatus === "Paid") return isPaid;
@@ -195,8 +196,8 @@ export default function InvoicesPage() {
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {filteredOrders.map((order) => {
-                      const isPaid = order.isPaid || order.paymentStatus?.toLowerCase() === "paid";
-                      const isCancelled = order.status?.toLowerCase() === "cancelled";
+                       const isPaid = order.isPaid || (order.paymentStatus || "").toUpperCase() === PAYMENT_STATUS.PAID;
+                       const isCancelled = (order.status || "").toUpperCase() === ORDER_STATUS.CANCELLED;
                       
                       return (
                         <tr key={order._id || order.id} className="hover:bg-gray-50/50 transition">
@@ -246,9 +247,9 @@ export default function InvoicesPage() {
               {/* Mobile Card List View */}
               <div className="md:hidden divide-y divide-gray-100">
                 {filteredOrders.map((order) => {
-                  const isPaid = order.isPaid || order.paymentStatus?.toLowerCase() === "paid";
-                  const isCancelled = order.status?.toLowerCase() === "cancelled";
-                  const idStr = order._id || order.id;
+                   const isPaid = order.isPaid || (order.paymentStatus || "").toUpperCase() === PAYMENT_STATUS.PAID;
+                   const isCancelled = (order.status || "").toUpperCase() === ORDER_STATUS.CANCELLED;
+                   const idStr = order._id || order.id;
 
                   return (
                     <div key={idStr} className="p-4 space-y-3 bg-white text-xs">

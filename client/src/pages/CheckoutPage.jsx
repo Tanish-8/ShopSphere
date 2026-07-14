@@ -26,7 +26,7 @@ export default function CheckoutPage() {
   const [error, setError] = useState("");
 
   const [couponCode, setCouponCode] = useState("");
-  const [appliedCoupon, setAppliedCoupon] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(() => localStorage.getItem("shopsphere_applied_coupon") || "");
   const [couponError, setCouponError] = useState("");
   const [couponSuccess, setCouponSuccess] = useState("");
 

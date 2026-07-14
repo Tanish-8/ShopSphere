@@ -1,60 +1,82 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import useCart from "../../hooks/useCart";
 import { FALLBACK_PRODUCT_IMAGE } from "../../utils/productImage";
 
 export default function ProductCard({ product, isWishlisted, onWishlistToggle }) {
   const { addItem } = useCart();
+  const [compared, setCompared] = useState(false);
 
   const id = product._id || product.id;
   const name = product.name || "Untitled Product";
   const category = product.category || "General";
   const price = product.price || 0;
+  const originalPrice = product.originalPrice || price;
+  const discount = product.discount || 0;
   const rating = Math.round(product.rating || 0);
   const numReviews = product.numReviews || 0;
+  const badge = product.badge || "";
+  const stock = product.stock ?? 0;
+  const brand = product.brand || "Unbranded";
 
   const image = (Array.isArray(product.images) && product.images.length > 0)
     ? product.images[0]
     : product.image || FALLBACK_PRODUCT_IMAGE;
 
-  // Mock discount
-  const originalPrice = price * 1.25;
-  const discountPercent = 20;
-
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (stock === 0) return;
     addItem({
       productId: id,
       name,
       image,
       price,
-      countInStock: product.stock || 10
+      countInStock: stock
     }, 1);
   };
 
-  return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-md">
-      {/* Discount Badge */}
-      <span className="absolute left-3 top-3 z-10 rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
-        {discountPercent}% OFF
-      </span>
+  const handleCompareToggle = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCompared(!compared);
+  };
 
-      {/* Wishlist Button */}
+  return (
+    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-gray-150 bg-white shadow-xs transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-gray-200/80">
+      {/* Product Badges (Top Left) */}
+      <div className="absolute left-3 top-3 z-10 flex flex-col gap-1.5 items-start">
+        {badge && (
+          <span className="rounded-md bg-indigo-600 px-2.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-white shadow-xs">
+            {badge}
+          </span>
+        )}
+        {discount > 0 && (
+          <span className="rounded-md bg-rose-500 px-2.5 py-0.5 text-[8px] font-black tracking-wider text-white shadow-xs">
+            {discount}% OFF
+          </span>
+        )}
+      </div>
+
+      {/* Wishlist Button (Top Right) */}
       <button
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
           onWishlistToggle(id);
         }}
-        className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 backdrop-blur-xs text-gray-500 shadow-sm transition hover:bg-white hover:text-red-500"
+        className={`absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/95 backdrop-blur-xs shadow-xs transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer ${
+          isWishlisted ? "text-rose-500 bg-rose-50/80" : "text-gray-400 hover:text-rose-500"
+        }`}
+        aria-label="Toggle Wishlist"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          fill={isWishlisted ? "#EF4444" : "none"}
+          fill={isWishlisted ? "currentColor" : "none"}
           viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          stroke={isWishlisted ? "#EF4444" : "currentColor"}
-          className="h-5 w-5 transition duration-200"
+          strokeWidth={2}
+          stroke="currentColor"
+          className="h-4.5 w-4.5 transition duration-200"
         >
           <path
             strokeLinecap="round"
@@ -64,59 +86,136 @@ export default function ProductCard({ product, isWishlisted, onWishlistToggle })
         </svg>
       </button>
 
-      {/* Image Block */}
-      <Link to={`/products/${id}`} className="block overflow-hidden bg-gray-50 aspect-square">
+      {/* Compare Button (Floating Below Wishlist) */}
+      <button
+        onClick={handleCompareToggle}
+        className={`absolute right-3 top-[52px] z-10 flex h-8 w-8 items-center justify-center rounded-full shadow-xs transition-all duration-300 hover:scale-110 hover:rotate-12 active:scale-95 cursor-pointer ${
+          compared
+            ? "bg-indigo-600 text-white shadow-indigo-100"
+            : "bg-white/95 backdrop-blur-xs text-gray-400 hover:text-indigo-650"
+        }`}
+        title={compared ? "Compared" : "Compare Product"}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={2.2}
+          stroke="currentColor"
+          className="h-4 w-4"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0-4.5 4.5M21 7.5H7.5"
+          />
+        </svg>
+      </button>
+
+      {/* Image Block with Zoom on Hover */}
+      <Link to={`/products/${id}`} className="block overflow-hidden bg-gray-50 aspect-square relative">
         <img
           src={image}
           alt={name}
           loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-108"
           onError={(e) => {
             e.target.onerror = null;
             e.target.src = FALLBACK_PRODUCT_IMAGE;
           }}
         />
+        
+        {/* Out of Stock Overlay */}
+        {stock === 0 && (
+          <div className="absolute inset-0 bg-white/75 backdrop-blur-xs flex items-center justify-center">
+            <span className="rounded-lg bg-red-600 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-white shadow-sm">
+              Out of Stock
+            </span>
+          </div>
+        )}
       </Link>
 
       {/* Body details */}
-      <div className="flex flex-1 flex-col p-4">
-        {/* Category */}
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">
-          {category}
-        </span>
+      <div className="flex flex-1 flex-col p-4 text-left">
+        {/* Brand & Category */}
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[9px] font-extrabold uppercase tracking-wider text-indigo-600">
+            {brand}
+          </span>
+          <span className="text-[9px] font-black text-indigo-750 bg-indigo-50 px-2 py-0.5 rounded-full">
+            {category}
+          </span>
+        </div>
 
         {/* Name */}
         <Link
           to={`/products/${id}`}
-          className="mt-1 line-clamp-2 text-sm font-semibold text-gray-800 hover:text-indigo-600"
+          className="mt-2 line-clamp-2 text-sm font-bold text-gray-805 hover:text-indigo-650 transition-colors leading-snug"
         >
           {name}
         </Link>
 
-        {/* Star rating */}
+        {/* Star rating & Reviews count */}
         <div className="mt-2 flex items-center gap-1">
-          <div className="flex text-amber-400">
+          <div className="flex text-amber-450">
             {Array.from({ length: 5 }).map((_, i) => (
               <span key={i} className="text-xs">
                 {i < rating ? "★" : "☆"}
               </span>
             ))}
           </div>
-          <span className="text-[10px] text-gray-500">({numReviews})</span>
+          <span className="text-[10px] text-gray-400 font-bold select-none">
+            ({numReviews.toLocaleString()})
+          </span>
         </div>
 
-        {/* Price grid */}
-        <div className="mt-3 flex items-baseline gap-2">
-          <span className="text-base font-bold text-gray-900">${price.toFixed(2)}</span>
-          <span className="text-xs text-gray-400 line-through">${originalPrice.toFixed(2)}</span>
+        {/* Price grid & Stock warning */}
+        <div className="mt-3 flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-base font-black text-gray-900">${price.toFixed(2)}</span>
+            {discount > 0 && (
+              <span className="text-xs text-gray-400 line-through font-medium">${originalPrice.toFixed(2)}</span>
+            )}
+          </div>
+          
+          {/* Stock Indicator */}
+          {stock > 0 && stock <= 5 && (
+            <span className="text-[9px] font-black text-amber-700 bg-amber-50 border border-amber-100 rounded-full px-2 py-0.5 animate-pulse">
+              Only {stock} Left
+            </span>
+          )}
+          {stock > 5 && (
+            <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 rounded-full px-2 py-0.5">
+              In Stock
+            </span>
+          )}
         </div>
 
         {/* Add to Cart button */}
         <button
           onClick={handleAddToCart}
-          className="mt-4 w-full rounded-lg bg-indigo-600 py-2 text-xs font-semibold text-white transition-all duration-300 hover:bg-indigo-700 active:scale-95"
+          disabled={stock === 0}
+          className={`mt-4 w-full rounded-xl py-2.5 text-xs font-extrabold text-white transition-all duration-300 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs ${
+            stock === 0
+              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+              : "bg-indigo-600 hover:bg-indigo-700 hover:shadow-sm"
+          }`}
         >
-          Add to Cart
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={2.2}
+            stroke="currentColor"
+            className="h-3.8 w-3.8"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
+            />
+          </svg>
+          {stock === 0 ? "Out of Stock" : "Add to Cart"}
         </button>
       </div>
     </div>

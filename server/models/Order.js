@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { ORDER_STATUS, PAYMENT_STATUS } from "../utils/constants.js";
 
 const orderItemSchema = new mongoose.Schema({
   product: {
@@ -71,27 +72,8 @@ const orderSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: [
-        "Placed",
-        "Confirmed",
-        "Packed",
-        "Shipped",
-        "Out For Delivery",
-        "Delivered",
-        "Cancelled",
-        "Return Requested",
-        "Return Approved",
-        "Pickup Scheduled",
-        "Picked Up",
-        "Returned",
-        "Refund Processing",
-        "Refunded",
-        "Replacement Requested",
-        "Replacement Approved",
-        "Replacement Shipped",
-        "Replacement Delivered"
-      ],
-      default: "Placed",
+      enum: Object.values(ORDER_STATUS),
+      default: ORDER_STATUS.PLACED,
     },
     statusHistory: [
       {
@@ -148,8 +130,8 @@ const orderSchema = new mongoose.Schema(
     },
     paymentStatus: {
       type: String,
-      enum: ["pending", "paid", "failed", "refunded", "Refund Processing"],
-      default: "pending",
+      enum: Object.values(PAYMENT_STATUS),
+      default: PAYMENT_STATUS.PENDING,
     },
     isDelivered: {
       type: Boolean,

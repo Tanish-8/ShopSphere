@@ -21,7 +21,15 @@ function normalizeProduct(rawProduct) {
     stock: Number(rawProduct.stock ?? rawProduct.countInStock ?? rawProduct.quantity ?? 0),
     rating: Number(rawProduct.rating ?? rawProduct.averageRating ?? 0),
     category: rawProduct.category?.name || rawProduct.category || "General",
-    numReviews: Number(rawProduct.numReviews ?? 0)
+    numReviews: Number(rawProduct.numReviews ?? 0),
+    brand: rawProduct.brand || "Unbranded",
+    originalPrice: Number(rawProduct.originalPrice || rawProduct.price || 0),
+    discount: Number(rawProduct.discount || 0),
+    badge: rawProduct.badge || "",
+    sku: rawProduct.sku || "",
+    tags: Array.isArray(rawProduct.tags) ? rawProduct.tags : [],
+    features: Array.isArray(rawProduct.features) ? rawProduct.features : [],
+    specifications: rawProduct.specifications || {}
   };
 }
 

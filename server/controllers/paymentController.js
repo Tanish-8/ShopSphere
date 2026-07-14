@@ -2,6 +2,7 @@ import Razorpay from "razorpay";
 import crypto from "crypto";
 import Order from "../models/Order.js";
 import PaymentLog from "../models/PaymentLog.js";
+import { ORDER_STATUS, PAYMENT_STATUS } from "../utils/constants.js";
 
 const PLACEHOLDER_CREDENTIALS = new Set([
   "YOUR_KEY_ID",
@@ -170,7 +171,7 @@ export const handleWebhook = async (req, res, next) => {
     await PaymentLog.create({ orderId: shopOrderId || null, paymentId: paymentId, event, payload });
 
     if (shopOrderId) {
-      const order = await Order.findById(shopOrderId);
+      const order = await Order.findById(shopOrderId).populate("user");
       if (order) {
         if (event === 'payment.captured' || event === 'order.paid') {
           if (order.paymentResult?.paymentId === paymentId) {
@@ -178,7 +179,8 @@ export const handleWebhook = async (req, res, next) => {
           }
           order.isPaid = true;
           order.paidAt = new Date();
-          order.paymentStatus = 'paid';
+          order.paymentStatus = PAYMENT_STATUS.PAID;
+          order.status = ORDER_STATUS.CONFIRMED;
           order.paymentResult = {
             paymentId: paymentId,
             paymentMethod: 'razorpay',
@@ -186,9 +188,35 @@ export const handleWebhook = async (req, res, next) => {
             razorpayOrderId,
             razorpaySignature: signature,
           };
+
+          if (!Array.isArray(order.statusHistory)) order.statusHistory = [];
+          order.statusHistory.push({ status: "Payment Successful", at: Date.now() });
+          order.statusHistory.push({ status: ORDER_STATUS.CONFIRMED, at: Date.now() });
+
+          if (!Array.isArray(order.orderTimeline)) order.orderTimeline = [];
+          order.orderTimeline.push({
+            status: "Payment Successful",
+            updatedAt: Date.now(),
+            note: "Payment successfully captured by webhook",
+          });
+          order.orderTimeline.push({
+            status: ORDER_STATUS.CONFIRMED,
+            updatedAt: Date.now(),
+            note: "Order confirmed automatically after successful payment",
+          });
+
           await order.save();
+
+          try {
+            const { sendStatusUpdateNotification } = await import("../utils/email.js");
+            if (order.user) {
+              await sendStatusUpdateNotification(order.user, order._id, "Order Confirmed", "Order confirmed automatically after successful payment");
+            }
+          } catch (emailErr) {
+            console.warn("Failed to send webhook order confirmation email:", emailErr.message);
+          }
         } else if (event === 'payment.failed') {
-          order.paymentStatus = 'failed';
+          order.paymentStatus = PAYMENT_STATUS.FAILED;
           order.paymentResult = {
             paymentId: paymentId,
             paymentMethod: 'razorpay',
@@ -257,12 +285,39 @@ export const verifyRazorpayPayment = async (req, res, next) => {
       razorpayOrderId: razorpay_order_id,
       razorpaySignature: razorpay_signature,
     };
-    order.paymentStatus = 'paid';
+    order.paymentStatus = PAYMENT_STATUS.PAID;
+    order.status = ORDER_STATUS.CONFIRMED;
+
+    if (!Array.isArray(order.statusHistory)) order.statusHistory = [];
+    order.statusHistory.push({ status: "Payment Successful", at: Date.now(), changedBy: req.user._id });
+    order.statusHistory.push({ status: ORDER_STATUS.CONFIRMED, at: Date.now(), changedBy: req.user._id });
+
+    if (!Array.isArray(order.orderTimeline)) order.orderTimeline = [];
+    order.orderTimeline.push({
+      status: "Payment Successful",
+      updatedAt: Date.now(),
+      note: `Payment of $${order.totalPrice.toFixed(2)} verified successfully via Razorpay`,
+      updatedBy: req.user._id,
+    });
+    order.orderTimeline.push({
+      status: "Confirmed",
+      updatedAt: Date.now(),
+      note: "Order confirmed automatically after successful payment",
+      updatedBy: req.user._id,
+    });
 
     await order.save();
 
     // Log payment details
     await PaymentLog.create({ orderId: order._id, paymentId: razorpay_payment_id, event: 'payment.verified', payload: req.body });
+
+    // Send notifications
+    try {
+      const { sendStatusUpdateNotification } = await import("../utils/email.js");
+      await sendStatusUpdateNotification(req.user, order._id, "Order Confirmed", "Order confirmed automatically after successful payment");
+    } catch (emailErr) {
+      console.warn("Failed to send order confirmation email notification:", emailErr.message);
+    }
 
     res.json({ success: true, message: "Payment verified and order updated", data: order });
   } catch (error) {
