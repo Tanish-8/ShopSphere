@@ -1,13 +1,16 @@
 import { useState, useEffect } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { Sparkles, ChevronDown } from "lucide-react";
 import useAuth from "../../hooks/useAuth";
 import useCart from "../../hooks/useCart";
 import { fetchWishlist } from "../../services/wishlistService";
 import { fetchProducts } from "../../services/productService";
 import { FALLBACK_PRODUCT_IMAGE } from "../../utils/productImage";
+import AnimatedBadge from "../ui/AnimatedBadge";
 
 const navLinkClass = ({ isActive }) =>
-  `transition-colors ${isActive ? "text-indigo-600" : "text-gray-700 hover:text-indigo-600"}`;
+  `relative transition-colors ${isActive ? "text-indigo-600" : "text-gray-700 hover:text-indigo-600"}`;
 
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -17,12 +20,34 @@ function Navbar() {
   const location = useLocation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [closeTimeoutId, setCloseTimeoutId] = useState(null);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Scroll-based animations
+  const { scrollY } = useScroll();
+  const height = useTransform(scrollY, [0, 100], [64, 56]);
+  const backgroundColor = useTransform(
+    scrollY,
+    [0, 100],
+    ['rgba(255, 255, 255, 0.95)', 'rgba(255, 255, 255, 0.8)']
+  );
+  const shadow = useTransform(
+    scrollY,
+    [0, 100],
+    ['none', '0 4px 20px -5px rgba(0, 0, 0, 0.1)']
+  );
+
+  // Scroll detection for navbar effects
+  useEffect(() => {
+    const updateScrolled = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', updateScrolled);
+    return () => window.removeEventListener('scroll', updateScrolled);
+  }, []);
 
   // Debounced search logic for live suggestions
   useEffect(() => {
@@ -184,21 +209,50 @@ function Navbar() {
   }, [isAuthenticated, location.pathname]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur">
+    <motion.header
+      style={{ height, backgroundColor, boxShadow: shadow }}
+      className="sticky top-0 z-50 border-b border-transparent transition-all duration-300"
+    >
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4" style={{ minHeight: height }}>
           <div className="flex items-center gap-8">
-            <Link to="/" className="flex items-center gap-2">
-              <span className="rounded-lg bg-indigo-600 px-2 py-1 text-sm font-bold text-white">SS</span>
-              <span className="text-lg font-semibold text-gray-900">ShopSphere</span>
-            </Link>
+            <motion.div whileHover={{ scale: 1.02 }} className="flex items-center gap-2">
+              <Link to="/" className="flex items-center gap-2">
+                <div className="relative w-10 h-10 flex items-center justify-center bg-zinc-900 rounded-xl overflow-hidden shadow-lg">
+                  <motion.div
+                    animate={{
+                      rotate: [0, 90, 180, 270, 360],
+                      scale: [1, 1.2, 1]
+                    }}
+                    transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                    className="absolute inset-0 bg-gradient-to-tr from-blue-600 via-indigo-500 to-purple-600 opacity-20"
+                  />
+                  <Sparkles className="text-white relative z-10" size={20} />
+                </div>
+                <span className="text-lg font-semibold bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 bg-clip-text text-transparent">
+                  ShopSphere
+                </span>
+              </Link>
+            </motion.div>
 
             <div className="hidden items-center gap-6 text-sm font-medium md:flex">
               <NavLink to="/" className={navLinkClass}>
                 Home
+                <motion.div
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 origin-left"
+                  initial={{ scaleX: 0 }}
+                  whileHover={{ scaleX: 1 }}
+                  transition={{ duration: 0.3 }}
+                />
               </NavLink>
               <NavLink to="/products" className={navLinkClass}>
                 Products
+                <motion.div
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 origin-left"
+                  initial={{ scaleX: 0 }}
+                  whileHover={{ scaleX: 1 }}
+                  transition={{ duration: 0.3 }}
+                />
               </NavLink>
             </div>
           </div>
@@ -206,34 +260,43 @@ function Navbar() {
           <div className="hidden flex-1 items-center justify-end gap-4 md:flex">
             <div className="relative w-full max-w-sm">
               <form onSubmit={handleSearchSubmit}>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onFocus={() => setShowSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  placeholder="Search products..."
-                  className="w-full rounded-full border border-gray-300 bg-gray-50 px-4 py-2 pl-10 pr-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 focus:bg-white"
-                />
-                <button type="submit" className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 hover:text-indigo-650 transition-colors cursor-pointer">
-                  <svg
-                    className="h-4 w-4"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M9 3a6 6 0 104.472 10.001l3.263 3.264a1 1 0 001.414-1.414l-3.264-3.263A6 6 0 009 3zm-4 6a4 4 0 118 0 4 4 0 01-8 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </button>
+                <motion.div
+                  className="relative flex items-center h-10 px-3 transition-all duration-300 ease-out rounded-full border border-black/5 bg-white/40 backdrop-blur-md"
+                  animate={{ width: '100%' }}
+                >
+                  <button type="submit" className="mr-2 text-zinc-400 hover:text-zinc-600 transition-colors cursor-pointer">
+                    <svg
+                      className="h-4 w-4"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M9 3a6 6 0 104.472 10.001l3.263 3.264a1 1 0 001.414-1.414l-3.264-3.263A6 6 0 009 3zm-4 6a4 4 0 118 0 4 4 0 01-8 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => setShowSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                    placeholder="Search products..."
+                    className="flex-1 bg-transparent border-none outline-none text-sm placeholder:text-zinc-400"
+                  />
+                </motion.div>
               </form>
 
               {/* Suggestions overlay */}
               {showSuggestions && searchQuery.trim().length > 1 && (
-                <div className="absolute left-0 right-0 mt-2 rounded-2xl border border-gray-150 bg-white p-2.5 shadow-lg z-50 text-left space-y-1 animate-dropdown">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="absolute left-0 right-0 mt-2 rounded-2xl border border-black/5 bg-white/80 backdrop-blur-xl p-2.5 shadow-xl z-50 text-left space-y-1"
+                >
                   {isSearching ? (
                     <div className="p-3 text-xs text-gray-500 text-center font-bold">Searching products...</div>
                   ) : suggestions.length === 0 ? (
@@ -247,7 +310,7 @@ function Navbar() {
                           setSearchQuery("");
                           setShowSuggestions(false);
                         }}
-                        className="flex items-center gap-3 rounded-xl p-2 hover:bg-indigo-50/50 transition border border-transparent hover:border-indigo-100"
+                        className="flex items-center gap-3 rounded-xl p-2 hover:bg-black/5 transition border border-transparent hover:border-black/10"
                       >
                         <img
                           src={item.image || FALLBACK_PRODUCT_IMAGE}
@@ -268,37 +331,37 @@ function Navbar() {
                       </Link>
                     ))
                   )}
-                </div>
+                </motion.div>
               )}
             </div>
 
-            <Link
-              to="/cart"
-              className="relative rounded-full p-2 text-gray-600 transition hover:bg-gray-100 hover:text-indigo-600"
-              aria-label="Cart"
-            >
-              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <path d="M3 3h2l1.4 8.4a2 2 0 002 1.6h8.6a2 2 0 002-1.6L21 6H7" />
-                <circle cx="10" cy="20" r="1.5" />
-                <circle cx="18" cy="20" r="1.5" />
-              </svg>
-              <span className="absolute -right-0.5 -top-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-indigo-600 px-1 text-xs font-semibold text-white">
-                {totalItemCount}
-              </span>
-            </Link>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link
+                to="/cart"
+                className="relative rounded-full p-2.5 text-gray-600 transition hover:bg-black/5 hover:text-zinc-900"
+                aria-label="Cart"
+              >
+                <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M3 3h2l1.4 8.4a2 2 0 002 1.6h8.6a2 2 0 002-1.6L21 6H7" />
+                  <circle cx="10" cy="20" r="1.5" />
+                  <circle cx="18" cy="20" r="1.5" />
+                </svg>
+                <AnimatedBadge count={totalItemCount} color="indigo" />
+              </Link>
+            </motion.div>
 
-            <Link
-              to="/wishlist"
-              className="relative rounded-full p-2 text-gray-600 transition hover:bg-gray-100 hover:text-indigo-600"
-              aria-label="Wishlist"
-            >
-              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 10-7.8 7.8L12 22l8.8-9.6a5.5 5.5 0 000-7.8z" />
-              </svg>
-              <span className="absolute -right-0.5 -top-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-pink-600 px-1 text-xs font-semibold text-white">
-                {wishlistCount}
-              </span>
-            </Link>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link
+                to="/wishlist"
+                className="relative rounded-full p-2.5 text-gray-600 transition hover:bg-black/5 hover:text-red-500 hover:fill-red-500"
+                aria-label="Wishlist"
+              >
+                <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 10-7.8 7.8L12 22l8.8-9.6a5.5 5.5 0 000-7.8z" />
+                </svg>
+                <AnimatedBadge count={wishlistCount} color="pink" />
+              </Link>
+            </motion.div>
 
             {isAuthenticated ? (
               <div
@@ -328,88 +391,80 @@ function Navbar() {
                   aria-expanded={isDropdownOpen}
                   aria-haspopup="true"
                   onClick={handleTriggerClick}
-                  className="flex items-center gap-3 rounded-full hover:bg-gray-50 p-1.5 transition outline-none cursor-pointer"
+                  className="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-black/5 transition-all group"
                 >
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 font-bold text-white shadow-sm ring-2 ring-white">
-                    {initials}
-                  </div>
-                  <div className="hidden text-left text-xs lg:block">
-                    <span className="block text-[10px] text-gray-400 font-medium leading-none">Hello,</span>
-                    <span className="mt-1.5 font-semibold text-gray-800 flex items-center gap-1 leading-none">
-                      {user?.name?.split(" ")[0]}
-                      <svg
-                        className={`h-3 w-3 text-gray-500 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""}`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                      </svg>
-                    </span>
-                  </div>
-                </button>
-
-                {isDropdownOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-[250px] origin-top-right rounded-2xl border border-gray-150 bg-white p-2.5 shadow-lg focus:outline-none z-50 animate-dropdown">
-                    {/* Header */}
-                    <div className="flex items-center gap-3 p-1.5">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 font-extrabold text-white text-sm shadow-xs ring-2 ring-indigo-100">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-[1px]">
+                    <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 font-bold text-white text-sm">
                         {initials}
                       </div>
-                      <div className="min-w-0 text-left">
-                        <p className="truncate text-sm font-bold text-gray-900 leading-tight">{user?.name}</p>
-                        <p className="truncate text-[10px] text-gray-400 leading-normal">{user?.email}</p>
-                        <span className="mt-1 inline-block rounded-full bg-indigo-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-indigo-700">
-                          {user?.role === "admin" ? "Administrator" : "Customer"}
-                        </span>
-                      </div>
                     </div>
-
-                    <hr className="my-2 border-gray-100" />
-
-                    {/* Menu Items list */}
-                    <div className="space-y-0.5">
-                      {menuItems.map((item, index) =>
-                        item.disabled ? (
-                          <div
-                            key={index}
-                            className="flex items-center gap-3 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-400 cursor-not-allowed opacity-60 text-left"
-                          >
-                            {item.icon}
-                            <span>{item.label}</span>
-                          </div>
-                        ) : (
-                          <Link
-                            key={index}
-                            to={item.to}
-                            onClick={() => setIsDropdownOpen(false)}
-                            className="group flex items-center gap-3 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-indigo-50 hover:text-indigo-700 text-left"
-                          >
-                            {item.icon}
-                            <span>{item.label}</span>
-                          </Link>
-                        )
-                      )}
-                    </div>
-
-                    <hr className="my-2 border-gray-100" />
-
-                    {/* Logout button */}
-                    <button
-                      onClick={() => {
-                        setIsDropdownOpen(false);
-                        logout();
-                      }}
-                      className="group flex w-full items-center gap-3 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 hover:text-red-700 cursor-pointer"
-                    >
-                      <svg className="h-5 w-5 text-red-400 group-hover:text-red-600 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                      </svg>
-                      Logout
-                    </button>
                   </div>
-                )}
+                  <ChevronDown
+                    size={16}
+                    className={`text-zinc-500 transition-transform duration-300 ${isDropdownOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+
+                <AnimatePresence>
+                  {isDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.2, ease: "easeOut" }}
+                      className="absolute right-0 mt-2 w-56 p-2 rounded-2xl border border-black/5 bg-white/80 backdrop-blur-xl shadow-xl z-50 overflow-hidden"
+                    >
+                      <div className="px-3 py-2 border-b border-black/5 mb-2">
+                        <p className="text-sm font-semibold text-zinc-900">{user?.name}</p>
+                        <p className="text-xs text-zinc-500">{user?.email}</p>
+                      </div>
+
+                      <div className="space-y-1">
+                        {menuItems.map((item, index) =>
+                          item.disabled ? (
+                            <div
+                              key={index}
+                              className="flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-semibold text-gray-400 cursor-not-allowed opacity-60 text-left"
+                            >
+                              {item.icon}
+                              <span>{item.label}</span>
+                            </div>
+                          ) : (
+                            <motion.div
+                              key={index}
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: index * 0.05 }}
+                            >
+                              <Link
+                                to={item.to}
+                                onClick={() => setIsDropdownOpen(false)}
+                                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all hover:bg-black/5 group text-zinc-600 hover:text-zinc-900"
+                              >
+                                {item.icon}
+                                <span>{item.label}</span>
+                              </Link>
+                            </motion.div>
+                          )
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setIsDropdownOpen(false);
+                          logout();
+                        }}
+                        className="flex w-full items-center gap-3 px-3 py-2 rounded-lg text-sm font-semibold text-red-500 transition hover:bg-black/5 cursor-pointer"
+                      >
+                        <svg className="h-5 w-5 text-red-400 group-hover:text-red-600 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Logout
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             ) : (
               <div className="flex items-center gap-2">
@@ -429,9 +484,10 @@ function Navbar() {
             )}
           </div>
 
-          <button
+          <motion.button
+            whileTap={{ scale: 0.95 }}
             type="button"
-            className="inline-flex items-center justify-center rounded-md p-2 text-gray-700 transition hover:bg-gray-100 md:hidden"
+            className="inline-flex items-center justify-center rounded-md p-2 text-zinc-600 transition hover:bg-black/5 md:hidden"
             onClick={() => setIsMenuOpen((prev) => !prev)}
             aria-label="Toggle menu"
             aria-expanded={isMenuOpen}
@@ -439,176 +495,228 @@ function Navbar() {
             <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               {isMenuOpen ? <path d="M6 18L18 6M6 6l12 12" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
             </svg>
-          </button>
+          </motion.button>
         </div>
 
-        {isMenuOpen && (
-          <div className="space-y-4 border-t border-gray-200 py-4 md:hidden">
-            <div className="space-y-2 text-sm font-medium">
-              <NavLink to="/" className="block text-gray-700 hover:text-indigo-600" onClick={() => setIsMenuOpen(false)}>
-                Home
-              </NavLink>
-              <NavLink
-                to="/products"
-                className="block text-gray-700 hover:text-indigo-600"
+        <AnimatePresence>
+          {isMenuOpen && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 onClick={() => setIsMenuOpen(false)}
+                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] md:hidden"
+              />
+
+              {/* Mobile Menu */}
+              <motion.div
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                className="fixed top-0 right-0 bottom-0 w-[80%] max-w-sm bg-white z-[101] shadow-2xl flex flex-col md:hidden"
               >
-                Products
-              </NavLink>
-            </div>
-
-            <div className="relative">
-              <form onSubmit={handleSearchSubmit}>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onFocus={() => setShowSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  placeholder="Search products..."
-                  className="w-full rounded-full border border-gray-300 bg-gray-50 px-4 py-2 pl-10 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                />
-                <button type="submit" className="absolute left-3 top-2.5 h-4 w-4 text-gray-400">
-                  <svg
-                    className="h-4 w-4"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M9 3a6 6 0 104.472 10.001l3.263 3.264a1 1 0 001.414-1.414l-3.264-3.263A6 6 0 009 3zm-4 6a4 4 0 118 0 4 4 0 01-8 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </button>
-              </form>
-
-              {showSuggestions && searchQuery.trim().length > 1 && (
-                <div className="absolute left-0 right-0 mt-2 rounded-2xl border border-gray-150 bg-white p-2.5 shadow-lg z-50 text-left space-y-1 animate-dropdown">
-                  {isSearching ? (
-                    <div className="p-3 text-xs text-gray-500 text-center font-bold">Searching products...</div>
-                  ) : suggestions.length === 0 ? (
-                    <div className="p-3 text-xs text-gray-500 text-center font-bold">No products found</div>
-                  ) : (
-                    suggestions.map((item) => (
-                      <Link
-                        key={item._id || item.id}
-                        to={`/products/${item._id || item.id}`}
-                        onClick={() => {
-                          setSearchQuery("");
-                          setShowSuggestions(false);
-                          setIsMenuOpen(false);
+                <div className="flex items-center justify-between p-4 border-b border-gray-100">
+                  <motion.div whileHover={{ scale: 1.02 }} className="flex items-center gap-2">
+                    <div className="relative w-8 h-8 flex items-center justify-center bg-zinc-900 rounded-lg overflow-hidden">
+                      <motion.div
+                        animate={{
+                          rotate: [0, 90, 180, 270, 360],
+                          scale: [1, 1.2, 1]
                         }}
-                        className="flex items-center gap-3 rounded-xl p-2 hover:bg-indigo-50/50 transition border border-transparent hover:border-indigo-100"
-                      >
-                        <img
-                          src={item.image || FALLBACK_PRODUCT_IMAGE}
-                          alt={item.name}
-                          className="h-9 w-9 rounded-lg object-cover bg-gray-50 shrink-0 border border-gray-100"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = FALLBACK_PRODUCT_IMAGE;
-                          }}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-xs font-bold text-gray-900 leading-tight">{item.name}</p>
-                          <p className="text-[10px] font-bold text-indigo-650 mt-0.5">${item.price.toFixed(2)}</p>
-                        </div>
-                      </Link>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between">
-              <Link
-                to="/cart"
-                onClick={() => setIsMenuOpen(false)}
-                className="inline-flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700"
-              >
-                Cart
-                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-indigo-600 px-1 text-xs font-semibold text-white">
-                  {totalItemCount}
-                </span>
-              </Link>
-              {isAuthenticated ? (
-                <div className="w-full space-y-4">
-                  <div className="flex items-center gap-3 border-b border-gray-100 pb-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 font-extrabold text-white text-sm shadow-xs ring-2 ring-indigo-100">
-                      {initials}
+                        transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                        className="absolute inset-0 bg-gradient-to-tr from-blue-600 via-indigo-500 to-purple-600 opacity-20"
+                      />
+                      <Sparkles className="text-white relative z-10" size={16} />
                     </div>
-                    <div className="min-w-0 text-left">
-                      <p className="truncate text-sm font-bold text-gray-900 leading-tight">{user?.name}</p>
-                      <p className="truncate text-[10px] text-gray-400 leading-normal">{user?.email}</p>
-                      <span className="mt-1 inline-block rounded-full bg-indigo-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-indigo-700">
-                        {user?.role === "admin" ? "Administrator" : "Customer"}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-[10px] font-bold text-gray-700 text-left">
-                    {menuItems.map((item, index) =>
-                      item.disabled ? (
-                        <div
-                          key={index}
-                          className="flex items-center gap-2 rounded-xl border border-gray-100 p-2 opacity-50 cursor-not-allowed bg-gray-50"
-                        >
-                          {item.icon}
-                          <span className="truncate">{item.label.split(" (")[0]}</span>
-                        </div>
-                      ) : (
-                        <Link
-                          key={index}
-                          to={item.to}
-                          onClick={() => setIsMenuOpen(false)}
-                          className="flex items-center gap-2 rounded-xl border border-gray-150 p-2 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition"
-                        >
-                          {item.icon}
-                          <span className="truncate">{item.label}</span>
-                        </Link>
-                      )
-                    )}
-                  </div>
-
+                    <span className="text-lg font-semibold bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 bg-clip-text text-transparent">
+                      ShopSphere
+                    </span>
+                  </motion.div>
                   <button
-                    type="button"
-                    onClick={() => {
-                      logout();
-                      setIsMenuOpen(false);
-                    }}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 py-2.5 text-xs font-bold text-red-600 transition hover:bg-red-100 cursor-pointer"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="p-2 -mr-2 text-zinc-600 hover:text-zinc-900"
                   >
-                    <svg className="h-4.5 w-4.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                    Logout
                   </button>
                 </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Link
-                    to="/login"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="rounded-full border border-gray-300 px-5 py-2 text-sm font-medium text-gray-700"
-                  >
-                    Login
-                  </Link>
-                  <Link
-                    to="/register"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="rounded-full bg-indigo-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
-                  >
-                    Register
-                  </Link>
+
+                <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                  {/* Mobile Search */}
+                  <div className="relative">
+                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="11" cy="11" r="8" />
+                      <path d="M21 21l-4.35-4.35" />
+                    </svg>
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search products..."
+                      className="w-full pl-10 pr-4 py-2 bg-zinc-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
+                    />
+                  </div>
+
+                  {/* Main Links */}
+                  <nav className="space-y-1">
+                    <motion.div
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.05 }}
+                    >
+                      <NavLink
+                        to="/"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="flex items-center justify-between p-3 rounded-xl transition-colors text-zinc-700 hover:bg-zinc-50"
+                      >
+                        Home
+                        <ChevronRight size={18} className="text-zinc-400" />
+                      </NavLink>
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 }}
+                    >
+                      <NavLink
+                        to="/products"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="flex items-center justify-between p-3 rounded-xl transition-colors text-zinc-700 hover:bg-zinc-50"
+                      >
+                        Products
+                        <ChevronRight size={18} className="text-zinc-400" />
+                      </NavLink>
+                    </motion.div>
+                  </nav>
+
+                  <hr className="border-zinc-100" />
+
+                  {/* Secondary Links */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.15 }}
+                    >
+                      <Link
+                        to="/wishlist"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="flex flex-col items-center justify-center p-4 rounded-2xl bg-zinc-50 text-zinc-700 gap-2"
+                      >
+                        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                          <path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 10-7.8 7.8L12 22l8.8-9.6a5.5 5.5 0 000-7.8z" />
+                        </svg>
+                        <span className="text-xs font-medium">Wishlist</span>
+                      </Link>
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <Link
+                        to="/cart"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="flex flex-col items-center justify-center p-4 rounded-2xl bg-zinc-50 text-zinc-700 gap-2"
+                      >
+                        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                          <path d="M3 3h2l1.4 8.4a2 2 0 002 1.6h8.6a2 2 0 002-1.6L21 6H7" />
+                          <circle cx="10" cy="20" r="1.5" />
+                          <circle cx="18" cy="20" r="1.5" />
+                        </svg>
+                        <span className="text-xs font-medium">Cart</span>
+                      </Link>
+                    </motion.div>
+                  </div>
+
+                  {isAuthenticated ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3 border-b border-gray-100 pb-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 font-extrabold text-white text-sm shadow-xs ring-2 ring-indigo-100">
+                          {initials}
+                        </div>
+                        <div className="min-w-0 text-left">
+                          <p className="truncate text-sm font-bold text-gray-900 leading-tight">{user?.name}</p>
+                          <p className="truncate text-[10px] text-gray-400 leading-normal">{user?.email}</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-[10px] font-bold text-gray-700 text-left">
+                        {menuItems.map((item, index) =>
+                          item.disabled ? (
+                            <div
+                              key={index}
+                              className="flex items-center gap-2 rounded-xl border border-gray-100 p-2 opacity-50 cursor-not-allowed bg-gray-50"
+                            >
+                              {item.icon}
+                              <span className="truncate">{item.label.split(" (")[0]}</span>
+                            </div>
+                          ) : (
+                            <motion.div
+                              key={index}
+                              initial={{ opacity: 0, x: 10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: 0.25 + index * 0.05 }}
+                            >
+                              <Link
+                                to={item.to}
+                                onClick={() => setIsMenuOpen(false)}
+                                className="flex items-center gap-2 rounded-xl border border-gray-150 p-2 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition"
+                              >
+                                {item.icon}
+                                <span className="truncate">{item.label}</span>
+                              </Link>
+                            </motion.div>
+                          )
+                        )}
+                      </div>
+
+                      <motion.button
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.35 }}
+                        type="button"
+                        onClick={() => {
+                          logout();
+                          setIsMenuOpen(false);
+                        }}
+                        className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 py-2.5 text-xs font-bold text-red-600 transition hover:bg-red-100 cursor-pointer"
+                      >
+                        <svg className="h-4.5 w-4.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Logout
+                      </motion.button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Link
+                        to="/login"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="rounded-full border border-gray-300 px-5 py-2 text-sm font-medium text-gray-700"
+                      >
+                        Login
+                      </Link>
+                      <Link
+                        to="/register"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="rounded-full bg-indigo-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
+                      >
+                        Register
+                      </Link>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
-        )}
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </nav>
-    </header>
+    </motion.header>
   );
 }
 
