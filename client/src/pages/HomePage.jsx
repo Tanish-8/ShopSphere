@@ -7,8 +7,26 @@ import { addToWishlist, removeFromWishlist, fetchWishlist } from "../services/wi
 import ProductCard from "../components/product/ProductCard";
 import { useToast } from "../contexts/ToastContext";
 import Hero from "../components/hero/Hero";
+import CategorySection from "../components/categories/CategorySection";
+import { FeaturedSection, FeaturedProductCard, AnimatedProductGrid, ProductSkeleton } from "../components/featured";
 
 const ProductCardSkeleton = () => (
+  <div className="flex flex-col overflow-hidden rounded-2xl border border-gray-150 bg-white p-4 space-y-4 animate-pulse">
+    <div className="aspect-square w-full rounded-xl bg-gray-100"></div>
+    <div className="space-y-2">
+      <div className="h-3 w-1/3 rounded bg-gray-200"></div>
+      <div className="h-5 w-3/4 rounded bg-gray-200"></div>
+      <div className="h-3.5 w-1/2 rounded bg-gray-200"></div>
+    </div>
+    <div className="flex justify-between items-center pt-2 gap-4">
+      <div className="h-6 w-1/3 rounded bg-gray-200"></div>
+      <div className="h-8 w-1/3 rounded-xl bg-gray-200"></div>
+    </div>
+  </div>
+);
+
+// Legacy skeleton for backward compatibility
+const LegacyProductCardSkeleton = () => (
   <div className="flex flex-col overflow-hidden rounded-2xl border border-gray-150 bg-white p-4 space-y-4 animate-pulse">
     <div className="aspect-square w-full rounded-xl bg-gray-100"></div>
     <div className="space-y-2">
@@ -204,71 +222,7 @@ export default function HomePage() {
       </section>
 
       {/* 3. Shop by Category Section */}
-      <section>
-        <h2 className="mb-6 text-2xl font-bold text-gray-900">Shop by Category</h2>
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            {
-              name: "Electronics",
-              count: "120+ items",
-              bg: "from-blue-500 to-indigo-600",
-              icon: (
-                <svg className="absolute bottom-[-15px] right-[-15px] w-28 h-28 text-white/10 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7l-2 3v1h8v-1l-2-3h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 12H3V4h18v10z"/>
-                </svg>
-              )
-            },
-            {
-              name: "Fashion",
-              count: "80+ items",
-              bg: "from-pink-500 to-rose-600",
-              icon: (
-                <svg className="absolute bottom-[-15px] right-[-15px] w-28 h-28 text-white/10 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2c1.1 0 2 .9 2 2H10c0-1.1.9-2 2-2zm6.6 6.3L12 3.6 5.4 8.3c-.6.4-.9 1.1-.9 1.8V20c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V10.1c0-.7-.3-1.4-.9-1.8z"/>
-                </svg>
-              )
-            },
-            {
-              name: "Home & Living",
-              count: "95+ items",
-              bg: "from-amber-500 to-orange-600",
-              icon: (
-                <svg className="absolute bottom-[-15px] right-[-15px] w-28 h-28 text-white/10 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M19 10H5c-1.66 0-3 1.34-3 3v5h2v-2h16v2h2v-5c0-1.66-1.34-3-3-3zm-7-5c-2.76 0-5 2.24-5 5h10c0-2.76-2.24-5-5-5z"/>
-                </svg>
-              )
-            },
-            {
-              name: "Beauty",
-              count: "60+ items",
-              bg: "from-emerald-500 to-teal-600",
-              icon: (
-                <svg className="absolute bottom-[-15px] right-[-15px] w-28 h-28 text-white/10 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
-                </svg>
-              )
-            }
-          ].map((cat) => (
-            <Link
-              key={cat.name}
-              to={`/products?category=${cat.name}`}
-              className="group relative flex h-36 flex-col justify-end overflow-hidden rounded-2xl bg-gradient-to-r p-5 text-white shadow-xs transition-all duration-300 hover:scale-103 hover:shadow-md"
-            >
-              <div className={`absolute inset-0 bg-gradient-to-br ${cat.bg} opacity-90 transition-opacity duration-300 group-hover:opacity-100`} />
-              {cat.icon}
-              <div className="relative z-10 flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-bold">{cat.name}</h3>
-                  <p className="text-xs text-white/80">{cat.count}</p>
-                </div>
-                <span className="text-xl transition-transform duration-300 group-hover:translate-x-2">
-                  &#8594;
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+      <CategorySection />
 
       {/* 4. Flash Deals Section */}
       <section className="overflow-hidden rounded-3xl border border-red-200 bg-red-50 p-6 sm:p-8 flex flex-col lg:flex-row items-center gap-8">
@@ -304,8 +258,8 @@ export default function HomePage() {
         <div className="w-full lg:w-3/5 grid gap-4 sm:grid-cols-2">
           {loading ? (
             <>
-              <ProductCardSkeleton />
-              <ProductCardSkeleton />
+              <LegacyProductCardSkeleton />
+              <LegacyProductCardSkeleton />
             </>
           ) : flashDeals.slice(0, 2).map((prod) => (
             <ProductCard
@@ -318,38 +272,34 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 5. Featured Products Section */}
-      <section>
-        <div className="mb-6 flex items-end justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Featured Products</h2>
-            <p className="text-xs text-gray-500 mt-1">Our curated selection of top-performing items.</p>
-          </div>
-          <Link to="/products?featured=true" className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition">
-            View All &rarr;
-          </Link>
-        </div>
-
+      {/* 5. Featured Products Section - Arena Design */}
+      <FeaturedSection
+        title="Featured Products"
+        subtitle="Handpicked products selected for you. Discover our latest innovations and timeless classics."
+        badge="Curated Collection"
+        showViewAll={true}
+        viewAllText="View All Products"
+        onViewAllClick={() => navigate('/products?featured=true')}
+      >
         {loading ? (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            <ProductCardSkeleton />
-            <ProductCardSkeleton />
-            <ProductCardSkeleton />
-            <ProductCardSkeleton />
-          </div>
+          <AnimatedProductGrid>
+            {[...Array(4)].map((_, i) => (
+              <ProductSkeleton key={i} />
+            ))}
+          </AnimatedProductGrid>
         ) : (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <AnimatedProductGrid columns={4}>
             {featuredProducts.map((product) => (
-              <ProductCard
+              <FeaturedProductCard
                 key={product._id || product.id}
                 product={product}
                 isWishlisted={wishlistIds.includes(product._id || product.id)}
                 onWishlistToggle={handleWishlistToggle}
               />
             ))}
-          </div>
+          </AnimatedProductGrid>
         )}
-      </section>
+      </FeaturedSection>
 
       {/* 6. Best Sellers Section */}
       <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
@@ -362,10 +312,10 @@ export default function HomePage() {
 
         {loading ? (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            <ProductCardSkeleton />
-            <ProductCardSkeleton />
-            <ProductCardSkeleton />
-            <ProductCardSkeleton />
+            <LegacyProductCardSkeleton />
+            <LegacyProductCardSkeleton />
+            <LegacyProductCardSkeleton />
+            <LegacyProductCardSkeleton />
           </div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
