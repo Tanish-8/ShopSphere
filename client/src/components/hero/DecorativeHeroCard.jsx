@@ -1,4 +1,3 @@
-import { useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Star, ShoppingBag } from "lucide-react";
 
@@ -33,30 +32,9 @@ export default function DecorativeHeroCard({
   style,
 }) {
   const shouldReduceMotion = useReducedMotion();
-  const cardRef = useRef(null);
-  const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0 });
-  const [isHovered, setIsHovered] = useState(false);
-
-  const handleMouseMove = (e) => {
-    if (shouldReduceMotion) return;
-    const card = cardRef.current;
-    if (!card) return;
-    const rect = card.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    const rotateX = ((e.clientY - centerY) / (rect.height / 2)) * -8;
-    const rotateY = ((e.clientX - centerX) / (rect.width / 2)) * 8;
-    setTilt({ rotateX, rotateY });
-  };
-
-  const handleMouseLeave = () => {
-    setTilt({ rotateX: 0, rotateY: 0 });
-    setIsHovered(false);
-  };
 
   return (
     <motion.div
-      ref={cardRef}
       className={`absolute ${className}`}
       style={style}
       initial={{ opacity: 0, y: 30, scale: 0.9 }}
@@ -78,22 +56,8 @@ export default function DecorativeHeroCard({
           ease: "easeInOut",
         }}
       >
-        {/* Tilt wrapper */}
-        <motion.div
-          onMouseMove={handleMouseMove}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={handleMouseLeave}
-          animate={{
-            rotateX: tilt.rotateX,
-            rotateY: tilt.rotateY,
-            scale: isHovered ? 1.05 : 1,
-          }}
-          transition={{ type: "spring", stiffness: 300, damping: 25 }}
-          style={{ transformStyle: "preserve-3d", perspective: 800 }}
-          className="cursor-pointer"
-        >
-          {/* Card body */}
-          <div className="relative overflow-hidden rounded-2xl border border-white/[0.12] bg-white/[0.06] p-4 shadow-2xl shadow-black/40 backdrop-blur-2xl text-left">
+        {/* Card body */}
+        <div className="relative overflow-hidden rounded-2xl border border-white/[0.12] bg-white/[0.06] p-4 shadow-2xl shadow-black/40 backdrop-blur-2xl text-left">
             {/* Gradient border shimmer */}
             <div
               className="pointer-events-none absolute inset-0 rounded-2xl opacity-60"
@@ -113,12 +77,10 @@ export default function DecorativeHeroCard({
 
             {/* Product image */}
             <div className="relative mb-3 flex h-36 items-center justify-center overflow-hidden rounded-xl bg-white/5">
-              <motion.img
+              <img
                 src={image}
                 alt={name}
                 className="h-full w-full object-contain drop-shadow-2xl"
-                animate={isHovered ? { scale: 1.08 } : { scale: 1 }}
-                transition={{ duration: 0.3 }}
               />
               {/* Glow under image */}
               <div className="pointer-events-none absolute bottom-0 left-1/2 h-10 w-3/4 -translate-x-1/2 rounded-full bg-violet-600/20 blur-xl" aria-hidden="true" />
@@ -136,18 +98,12 @@ export default function DecorativeHeroCard({
               </div>
               <div className="flex items-center justify-between pt-1">
                 <span className="text-base font-bold text-white">{price}</span>
-                <motion.button
-                  whileHover={{ scale: 1.15 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/40 cursor-pointer"
-                  aria-label={`Add ${name} to bag`}
-                >
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/40">
                   <ShoppingBag className="h-3.5 w-3.5 text-white" />
-                </motion.button>
+                </div>
               </div>
             </div>
           </div>
-        </motion.div>
       </motion.div>
     </motion.div>
   );

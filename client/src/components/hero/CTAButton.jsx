@@ -6,6 +6,7 @@ export default function CTAButton({
   variant = "primary",
   children,
   icon = "arrow",
+  onClick,
 }) {
   const [ripples, setRipples] = useState([]);
   const buttonRef = useRef(null);
@@ -21,6 +22,11 @@ export default function CTAButton({
     setTimeout(() => {
       setRipples((prev) => prev.filter((r) => r.id !== id));
     }, 700);
+    
+    // Call provided onClick handler if exists
+    if (onClick) {
+      onClick(e);
+    }
   };
 
   const Icon = icon === "arrow" ? ArrowRight : Zap;
@@ -33,6 +39,7 @@ export default function CTAButton({
         whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.97 }}
         className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-500/30 transition-shadow hover:shadow-violet-500/50 cursor-pointer"
+        type="button"
       >
         {/* Shimmer overlay */}
         <motion.span
@@ -73,6 +80,7 @@ export default function CTAButton({
       whileHover={{ scale: 1.03 }}
       whileTap={{ scale: 0.97 }}
       className="group relative overflow-hidden rounded-xl border border-white/15 bg-white/5 px-7 py-3.5 text-sm font-semibold text-slate-200 backdrop-blur-sm transition-colors hover:bg-white/10 hover:border-white/25 cursor-pointer"
+      type="button"
     >
       <AnimatePresence>
         {ripples.map((ripple) => (

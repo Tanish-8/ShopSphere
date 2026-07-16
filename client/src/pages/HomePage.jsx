@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import useCart from "../hooks/useCart";
 import useAuth from "../hooks/useAuth";
@@ -83,6 +83,7 @@ const features = [
 export default function HomePage() {
   const toast = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated } = useAuth();
 
   // Dynamic products states
@@ -153,6 +154,20 @@ export default function HomePage() {
     }, 1000);
     return () => clearInterval(countdownTimer);
   }, []);
+
+  // Handle scroll to flash deals when navigated from other pages
+  useEffect(() => {
+    if (location.state?.scrollToFlashDeals) {
+      // Small delay to ensure DOM is rendered
+      const timer = setTimeout(() => {
+        const flashDealsSection = document.getElementById('flash-deals');
+        if (flashDealsSection) {
+          flashDealsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [location.state]);
 
   const handleWishlistToggle = async (productId) => {
     if (!isAuthenticated) return navigate("/login");
@@ -225,7 +240,7 @@ export default function HomePage() {
       <CategorySection />
 
       {/* 4. Flash Deals Section */}
-      <section className="overflow-hidden rounded-3xl border border-red-200 bg-red-50 p-6 sm:p-8 flex flex-col lg:flex-row items-center gap-8">
+      <section id="flash-deals" className="overflow-hidden rounded-3xl border border-red-200 bg-red-50 p-6 sm:p-8 flex flex-col lg:flex-row items-center gap-8">
         <div className="flex-1 space-y-4 text-center lg:text-left">
           <div className="inline-flex items-center gap-2 rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">
             <span className="animate-pulse rounded-full h-2.5 w-2.5 bg-red-600"></span>

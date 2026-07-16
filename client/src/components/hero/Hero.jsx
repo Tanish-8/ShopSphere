@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   motion,
   useScroll,
@@ -44,7 +45,7 @@ function SupportingText() {
   );
 }
 
-function CTAGroup() {
+function CTAGroup({ onShopNow, onExploreDeals }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -52,10 +53,10 @@ function CTAGroup() {
       transition={{ delay: 0.7, duration: 0.6 }}
       className="flex flex-wrap items-center gap-3"
     >
-      <CTAButton variant="primary" icon="arrow">
+      <CTAButton variant="primary" icon="arrow" onClick={onShopNow}>
         Shop Now
       </CTAButton>
-      <CTAButton variant="secondary" icon="zap">
+      <CTAButton variant="secondary" icon="zap" onClick={onExploreDeals}>
         Explore Deals
       </CTAButton>
     </motion.div>
@@ -105,6 +106,8 @@ function GradientOverlays() {
 export default function Hero() {
   const shouldReduceMotion = useReducedMotion();
   const sectionRef = useRef(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -115,6 +118,23 @@ export default function Hero() {
   const leftOpacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
   const rightY = useTransform(scrollYProgress, [0, 1], [0, shouldReduceMotion ? 0 : -40]);
   const rightOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
+
+  const handleShopNow = () => {
+    navigate('/products');
+  };
+
+  const handleExploreDeals = () => {
+    if (location.pathname === '/') {
+      // Already on home page, scroll to flash deals
+      const flashDealsSection = document.getElementById('flash-deals');
+      if (flashDealsSection) {
+        flashDealsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    } else {
+      // Navigate to home page with state to trigger scroll after mount
+      navigate('/', { state: { scrollToFlashDeals: true } });
+    }
+  };
 
   return (
     <section
@@ -145,7 +165,7 @@ export default function Hero() {
             <SupportingText />
 
             {/* CTA buttons */}
-            <CTAGroup />
+            <CTAGroup onShopNow={handleShopNow} onExploreDeals={handleExploreDeals} />
 
             {/* Trust badges */}
             <motion.div
