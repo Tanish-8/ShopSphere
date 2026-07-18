@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Link } from "react-router-dom";
 import useCart from "../../hooks/useCart";
 import { FALLBACK_PRODUCT_IMAGE } from "../../utils/productImage";
@@ -43,16 +43,16 @@ export default function ProductCard({ product, isWishlisted, onWishlistToggle })
   };
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-gray-150 bg-white shadow-xs transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-gray-200/80">
+    <div className="group relative flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 hover:border-gray-300">
       {/* Product Badges (Top Left) */}
-      <div className="absolute left-3 top-3 z-10 flex flex-col gap-1.5 items-start">
+      <div className="absolute left-3 top-3 z-10 flex flex-col gap-1 items-start">
         {badge && (
-          <span className="rounded-md bg-indigo-600 px-2.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-white shadow-xs">
+          <span className="rounded-md bg-indigo-600 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-white shadow-xs">
             {badge}
           </span>
         )}
         {discount > 0 && (
-          <span className="rounded-md bg-rose-500 px-2.5 py-0.5 text-[8px] font-black tracking-wider text-white shadow-xs">
+          <span className="rounded-md bg-rose-500 px-2 py-0.5 text-xs font-semibold tracking-wider text-white shadow-xs">
             {discount}% OFF
           </span>
         )}
@@ -65,9 +65,7 @@ export default function ProductCard({ product, isWishlisted, onWishlistToggle })
           e.stopPropagation();
           onWishlistToggle(id);
         }}
-        className={`absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/95 backdrop-blur-xs shadow-xs transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer ${
-          isWishlisted ? "text-rose-500 bg-rose-50/80" : "text-gray-400 hover:text-rose-500"
-        }`}
+        className={`absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 backdrop-blur-xs shadow-xs transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer ${isWishlisted ? "text-rose-500 bg-rose-50/80" : "text-gray-400 hover:text-rose-500"}`}
         aria-label="Toggle Wishlist"
       >
         <svg
@@ -76,7 +74,7 @@ export default function ProductCard({ product, isWishlisted, onWishlistToggle })
           viewBox="0 0 24 24"
           strokeWidth={2}
           stroke="currentColor"
-          className="h-4.5 w-4.5 transition duration-200"
+          className="h-5 w-5 transition duration-200"
         >
           <path
             strokeLinecap="round"
@@ -89,11 +87,7 @@ export default function ProductCard({ product, isWishlisted, onWishlistToggle })
       {/* Compare Button (Floating Below Wishlist) */}
       <button
         onClick={handleCompareToggle}
-        className={`absolute right-3 top-[52px] z-10 flex h-8 w-8 items-center justify-center rounded-full shadow-xs transition-all duration-300 hover:scale-110 hover:rotate-12 active:scale-95 cursor-pointer ${
-          compared
-            ? "bg-indigo-600 text-white shadow-indigo-100"
-            : "bg-white/95 backdrop-blur-xs text-gray-400 hover:text-indigo-650"
-        }`}
+        className={`absolute right-3 top-[56px] z-10 flex h-9 w-9 items-center justify-center rounded-full shadow-xs transition-all duration-300 hover:scale-105 hover:rotate-12 active:scale-95 cursor-pointer ${compared ? "bg-indigo-600 text-white shadow-indigo-100" : "bg-white/95 backdrop-blur-xs text-gray-400 hover:text-indigo-650"}`}
         title={compared ? "Compared" : "Compare Product"}
       >
         <svg
@@ -102,7 +96,7 @@ export default function ProductCard({ product, isWishlisted, onWishlistToggle })
           viewBox="0 0 24 24"
           strokeWidth={2.2}
           stroke="currentColor"
-          className="h-4 w-4"
+          className="h-5 w-5"
         >
           <path
             strokeLinecap="round"
@@ -118,7 +112,7 @@ export default function ProductCard({ product, isWishlisted, onWishlistToggle })
           src={image}
           alt={name}
           loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-108"
+          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
           onError={(e) => {
             e.target.onerror = null;
             e.target.src = FALLBACK_PRODUCT_IMAGE;
@@ -128,7 +122,7 @@ export default function ProductCard({ product, isWishlisted, onWishlistToggle })
         {/* Out of Stock Overlay */}
         {stock === 0 && (
           <div className="absolute inset-0 bg-white/75 backdrop-blur-xs flex items-center justify-center">
-            <span className="rounded-lg bg-red-600 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-white shadow-sm">
+            <span className="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-white shadow-sm">
               Out of Stock
             </span>
           </div>
@@ -136,13 +130,13 @@ export default function ProductCard({ product, isWishlisted, onWishlistToggle })
       </Link>
 
       {/* Body details */}
-      <div className="flex flex-1 flex-col p-4 text-left">
+      <div className="flex flex-1 flex-col p-4 text-left space-y-3">
         {/* Brand & Category */}
         <div className="flex items-center justify-between gap-2">
-          <span className="text-[9px] font-extrabold uppercase tracking-wider text-indigo-600">
+          <span className="text-xs font-extrabold uppercase tracking-wider text-indigo-600">
             {brand}
           </span>
-          <span className="text-[9px] font-black text-indigo-750 bg-indigo-50 px-2 py-0.5 rounded-full">
+          <span className="text-xs font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full">
             {category}
           </span>
         </div>
@@ -150,42 +144,42 @@ export default function ProductCard({ product, isWishlisted, onWishlistToggle })
         {/* Name */}
         <Link
           to={`/products/${id}`}
-          className="mt-2 line-clamp-2 text-sm font-bold text-gray-805 hover:text-indigo-650 transition-colors leading-snug"
+          className="mt-1 line-clamp-2 text-base font-semibold text-gray-900 hover:text-indigo-600 transition-colors leading-snug"
         >
           {name}
         </Link>
 
         {/* Star rating & Reviews count */}
-        <div className="mt-2 flex items-center gap-1">
-          <div className="flex text-amber-450">
+        <div className="mt-1 flex items-center gap-1">
+          <div className="flex text-amber-400">
             {Array.from({ length: 5 }).map((_, i) => (
               <span key={i} className="text-xs">
-                {i < rating ? "★" : "☆"}
+                {i < rating ? "â˜…" : "â˜†"}
               </span>
             ))}
           </div>
-          <span className="text-[10px] text-gray-400 font-bold select-none">
+          <span className="text-xs text-gray-500 font-medium select-none">
             ({numReviews.toLocaleString()})
           </span>
         </div>
 
         {/* Price grid & Stock warning */}
-        <div className="mt-3 flex items-center justify-between gap-2 flex-wrap">
+        <div className="mt-2 flex items-baseline justify-between gap-3 flex-wrap">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-base font-black text-gray-900">${price.toFixed(2)}</span>
+            <span className="text-xl font-bold text-gray-900">${price.toFixed(2)}</span>
             {discount > 0 && (
-              <span className="text-xs text-gray-400 line-through font-medium">${originalPrice.toFixed(2)}</span>
+              <span className="text-sm text-gray-400 line-through">${originalPrice.toFixed(2)}</span>
             )}
           </div>
           
           {/* Stock Indicator */}
           {stock > 0 && stock <= 5 && (
-            <span className="text-[9px] font-black text-amber-700 bg-amber-50 border border-amber-100 rounded-full px-2 py-0.5 animate-pulse">
+            <span className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 rounded-full px-2 py-0.5 animate-pulse">
               Only {stock} Left
             </span>
           )}
           {stock > 5 && (
-            <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 rounded-full px-2 py-0.5">
+            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-full px-2 py-0.5">
               In Stock
             </span>
           )}
@@ -195,24 +189,20 @@ export default function ProductCard({ product, isWishlisted, onWishlistToggle })
         <button
           onClick={handleAddToCart}
           disabled={stock === 0}
-          className={`mt-4 w-full rounded-xl py-2.5 text-xs font-extrabold text-white transition-all duration-300 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs ${
-            stock === 0
-              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-              : "bg-indigo-600 hover:bg-indigo-700 hover:shadow-sm"
-          }`}
+          className={`mt-auto w-full rounded-lg py-3 text-xs font-bold text-white transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 cursor-pointer shadow-xs ${stock === 0 ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700 hover:shadow-md"}`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
-            strokeWidth={2.2}
+            strokeWidth={1.8}
             stroke="currentColor"
-            className="h-3.8 w-3.8"
+            className="h-4 w-4"
           >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
+              d="M15.75 10.5V6a3.75 3.75 0 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
             />
           </svg>
           {stock === 0 ? "Out of Stock" : "Add to Cart"}

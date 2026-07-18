@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Bell, Sparkles } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '../../utils/cn';
 import { SearchBar } from './SearchBar';
 import { ProfileDropdown } from './ProfileDropdown';
@@ -14,11 +15,14 @@ const navLinks = [
   { label: 'Men', href: '#' },
   { label: 'Women', href: '#' },
   { label: 'Sale', href: '#', highlighted: true },
+  { label: 'Categories', href: '#', highlighted: false }, // Added Categories link
 ];
 
 export const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const { scrollY } = useScroll();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Animations based on scroll
   const height = useTransform(scrollY, [0, 100], [88, 64]);
@@ -38,6 +42,32 @@ export const Navbar = () => {
     window.addEventListener('scroll', updateScrolled);
     return () => window.removeEventListener('scroll', updateScrolled);
   }, []);
+
+  const handleCategoriesClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+
+    const { pathname } = location;
+    if (pathname === '/') {
+      // Already on home page, scroll to categories
+      scrollToCategories();
+    } else {
+      // Not on home page, navigate home and then scroll
+      navigate('/', { state: { scrollToCategories: true } });
+    }
+  };
+
+  const scrollToCategories = () => {
+    const element = document.getElementById('categories');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  useEffect(() => {
+    if (location.pathname === '/' && location.state?.scrollToCategories) {
+      scrollToCategories();
+    }
+  }, [location]);
 
   return (
     <motion.header
@@ -73,24 +103,47 @@ export const Navbar = () => {
           </motion.a>
 
           <nav className="hidden lg:flex items-center gap-6">
-            {navLinks.map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                className={cn(
-                  "relative py-2 text-sm font-medium transition-colors hover:text-blue-600",
-                  link.highlighted ? "text-red-500" : "text-zinc-600"
-                )}
-              >
-                {link.label}
-                <motion.div
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 origin-left"
-                  initial={{ scaleX: 0 }}
-                  whileHover={{ scaleX: 1 }}
-                  transition={{ duration: 0.3 }}
-                />
-              </a>
-            ))}
+            {navLinks.map((link) => {
+              if (link.label === 'Categories') {
+                return (
+                  <a
+                    key={link.label}
+                    href="#" // Keep href for accessibility, but we handle click
+                    onClick={handleCategoriesClick}
+                    className={cn(
+                      "relative py-2 text-sm font-medium transition-colors hover:text-blue-600",
+                      link.highlighted ? "text-red-500" : "text-zinc-600"
+                    )}
+                  >
+                    {link.label}
+                    <motion.div
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 origin-left"
+                      initial={{ scaleX: 0 }}
+                      whileHover={{ scaleX: 1 }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </a>
+                );
+              }
+              return (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  className={cn(
+                    "relative py-2 text-sm font-medium transition-colors hover:text-blue-600",
+                    link.highlighted ? "text-red-500" : "text-zinc-600"
+                  )}
+                >
+                  {link.label}
+                  <motion.div
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 origin-left"
+                    initial={{ scaleX: 0 }}
+                    whileHover={{ scaleX: 1 }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </a>
+              );
+            })}
           </nav>
         </div>
 

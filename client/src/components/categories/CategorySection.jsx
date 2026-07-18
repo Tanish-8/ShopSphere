@@ -89,7 +89,7 @@ const CATEGORIES = [
 
 export const CategorySection = () => {
   return (
-    <section className="py-24 px-6 md:px-12 lg:px-20 bg-[#050505] -mx-4 sm:-mx-6 lg:-mx-8">
+    <section id="categories" className="py-24 px-6 md:px-12 lg:px-20 bg-[#050505] -mx-4 sm:-mx-6 lg:-mx-8 scroll-mt-20">
       <div className="max-w-screen-2xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
           <motion.div

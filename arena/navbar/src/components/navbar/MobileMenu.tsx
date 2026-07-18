@@ -1,19 +1,43 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Search, ShoppingCart, Heart, User, ChevronRight } from 'lucide-react';
-import { cn } from '../../utils/cn';
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Menu, X, Search, ShoppingCart, Heart, User, ChevronRight } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { cn } from "../../utils/cn";
 
 const mobileLinks = [
-  { label: 'New Arrivals', href: '#' },
-  { label: 'Collections', href: '#' },
-  { label: 'Mens', href: '#' },
-  { label: 'Womens', href: '#' },
-  { label: 'Accessories', href: '#' },
-  { label: 'Sale', href: '#', highlighted: true },
+  { label: "New Arrivals", href: "#" },
+  { label: "Collections", href: "#" },
+  { label: "Mens", href: "#" },
+  { label: "Womens", href: "#" },
+  { label: "Accessories", href: "#" },
+  { label: "Sale", href: "#", highlighted: true },
+  { label: "Categories", href: "#", highlighted: false }, // Added Categories link
 ];
 
 export const MobileMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleCategoriesClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+
+    const { pathname } = location;
+    if (pathname === "/") {
+      // Already on home page, scroll to categories
+      scrollToCategories();
+    } else {
+      // Not on home page, navigate home and then scroll
+      navigate("/", { state: { scrollToCategories: true } });
+    }
+  };
+
+  const scrollToCategories = () => {
+    const element = document.getElementById("categories");
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   return (
     <div className="lg:hidden">
@@ -39,10 +63,10 @@ export const MobileMenu = () => {
 
             {/* Drawer */}
             <motion.div
-              initial={{ x: '100%' }}
+              initial={{ x: "100%" }}
               animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
               className="fixed top-0 right-0 bottom-0 w-[80%] max-w-sm bg-white z-[101] shadow-2xl flex flex-col"
             >
               <div className="flex items-center justify-between p-4 border-b">
@@ -70,22 +94,43 @@ export const MobileMenu = () => {
 
                 {/* Main Links */}
                 <nav className="space-y-1">
-                  {mobileLinks.map((link, index) => (
-                    <motion.a
-                      key={link.label}
-                      href={link.href}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className={cn(
-                        "flex items-center justify-between p-3 rounded-xl transition-colors",
-                        link.highlighted ? "text-red-500 font-semibold bg-red-50" : "text-zinc-700 hover:bg-zinc-50"
-                      )}
-                    >
-                      {link.label}
-                      <ChevronRight size={18} className="text-zinc-400" />
-                    </motion.a>
-                  ))}
+                  {mobileLinks.map((link, index) => {
+                    if (link.label === "Categories") {
+                      return (
+                        <motion.a
+                          key={link.label}
+                          href="#" // Keep href for accessibility, but we handle click
+                          onClick={handleCategoriesClick}
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          className={cn(
+                            "flex items-center justify-between p-3 rounded-xl transition-colors",
+                            link.highlighted ? "text-red-500 font-semibold bg-red-50" : "text-zinc-700 hover:bg-zinc-50"
+                          )}
+                        >
+                          {link.label}
+                          <ChevronRight size={18} className="text-zinc-400" />
+                        </motion.a>
+                      );
+                    }
+                    return (
+                      <motion.a
+                        key={link.label}
+                        href={link.href}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className={cn(
+                          "flex items-center justify-between p-3 rounded-xl transition-colors",
+                          link.highlighted ? "text-red-500 font-semibold bg-red-50" : "text-zinc-700 hover:bg-zinc-50"
+                        )}
+                      >
+                        {link.label}
+                        <ChevronRight size={18} className="text-zinc-400" />
+                      </motion.a>
+                    );
+                  })}
                 </nav>
 
                 <hr className="border-zinc-100" />

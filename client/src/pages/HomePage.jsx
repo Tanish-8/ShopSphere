@@ -9,6 +9,7 @@ import { useToast } from "../contexts/ToastContext";
 import Hero from "../components/hero/Hero";
 import CategorySection from "../components/categories/CategorySection";
 import { FeaturedSection, FeaturedProductCard, AnimatedProductGrid, ProductSkeleton } from "../components/featured";
+import { CATEGORIES_HASH, scrollToCategoriesSection } from "../utils/scrollToCategories";
 
 const ProductCardSkeleton = () => (
   <div className="flex flex-col overflow-hidden rounded-2xl border border-gray-150 bg-white p-4 space-y-4 animate-pulse">
@@ -99,6 +100,12 @@ export default function HomePage() {
   // Newsletter state
   const [email, setEmail] = useState("");
   const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
+
+  useEffect(() => {
+    if (location.pathname === "/" && location.hash === CATEGORIES_HASH) {
+      scrollToCategoriesSection();
+    }
+  }, [location.pathname, location.hash]);
 
   useEffect(() => {
     // Dynamic products fetching

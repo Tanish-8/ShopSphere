@@ -17,7 +17,8 @@ const AnimatedBadge = ({ count, className, color = 'indigo' }) => {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0, opacity: 0 }}
           className={cn(
-            "absolute -right-0.5 -top-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold text-white border-2 border-white shadow-sm",
+            "absolute -right-1 -top-1 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none text-white",
+            "ring-2 ring-white dark:ring-gray-900 shadow-md shadow-black/10",
             colorClasses[color] || colorClasses.indigo,
             className
           )}
