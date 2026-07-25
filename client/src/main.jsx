@@ -6,6 +6,7 @@ import AuthProvider from "./contexts/AuthContext";
 import CartProvider from "./contexts/CartContext";
 import ThemeProvider from "./contexts/ThemeContext";
 import ToastProvider from "./contexts/ToastContext";
+import CurrencyProvider from "./contexts/CurrencyContext";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -13,11 +14,13 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <ToastProvider>
-            <CartProvider>
-              <App />
-            </CartProvider>
-          </ToastProvider>
+          <CurrencyProvider>
+            <ToastProvider>
+              <CartProvider>
+                <App />
+              </CartProvider>
+            </ToastProvider>
+          </CurrencyProvider>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

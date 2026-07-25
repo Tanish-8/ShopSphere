@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useCurrency } from "../contexts/CurrencyContext";
 import { Link, useNavigate } from "react-router-dom";
 import useCart from "../hooks/useCart";
 import useAuth from "../hooks/useAuth";
@@ -14,6 +15,7 @@ function CartPage() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { cartItems, updateQuantity, removeItem, clearCart, totalPrice, totalItemCount } = useCart();
+  const { convertPrice, formatCurrency } = useCurrency();
 
   // Coupon state
   const [couponCode, setCouponCode] = useState("");
@@ -239,7 +241,7 @@ function CartPage() {
                   </div>
 
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-sm font-black text-indigo-600">${Number(item.price).toFixed(2)}</span>
+                    <span className="text-sm font-black text-indigo-600">{formatCurrency(convertPrice(Number(item.price)))}</span>
                   </div>
 
                   <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-gray-50">
@@ -313,7 +315,7 @@ function CartPage() {
               </div>
               <p className="text-[10px] font-bold text-gray-500 leading-normal">
                 {amountLeft > 0 ? (
-                  <>Add <span className="text-indigo-600">${amountLeft.toFixed(2)}</span> more to qualify for FREE shipping!</>
+                  <>Add <span className="text-indigo-600">{formatCurrency(convertPrice(amountLeft))}</span> more to qualify for FREE shipping!</>
                 ) : (
                   <span className="text-emerald-700 font-extrabold">Congratulations! Your order qualifies for free shipping.</span>
                 )}
@@ -331,17 +333,17 @@ function CartPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Items Subtotal</span>
-                  <span className="font-bold text-gray-800">${totalPrice.toFixed(2)}</span>
+                  <span className="font-bold text-gray-800">{formatCurrency(convertPrice(totalPrice))}</span>
                 </div>
                 {discount > 0 && (
                   <div className="flex items-center justify-between text-emerald-650">
                     <span>Coupon Discount</span>
-                    <span>-${discount.toFixed(2)}</span>
+                    <span>-{formatCurrency(convertPrice(discount))}</span>
                   </div>
                 )}
                 <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-sm font-black text-gray-900">
                   <span>Estimated Total</span>
-                  <span className="text-base text-indigo-650">${(totalPrice - discount).toFixed(2)}</span>
+                  <span className="text-base text-indigo-650">{formatCurrency(convertPrice(totalPrice - discount))}</span>
                 </div>
               </div>
 
@@ -460,3 +462,4 @@ function CartPage() {
 }
 
 export default CartPage;
+

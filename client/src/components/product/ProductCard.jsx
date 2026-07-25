@@ -1,13 +1,14 @@
-﻿import { useState } from "react";
 import { Link } from "react-router-dom";
 import useCart from "../../hooks/useCart";
+import { useCurrency } from "../../contexts/CurrencyContext";
 import { FALLBACK_PRODUCT_IMAGE } from "../../utils/productImage";
-import { Heart, GitCompare, ShoppingCart, Star } from "lucide-react";
+import { useToast } from "../../contexts/ToastContext";
+import { Heart, Share2, ShoppingCart, Star } from "lucide-react";
 
 export default function ProductCard({ product, isWishlisted, onWishlistToggle }) {
   const { addItem } = useCart();
-  const [compared, setCompared] = useState(false);
-
+  const toast = useToast();
+  const { convertPrice, formatCurrency } = useCurrency();
   const id = product._id || product.id;
   const name = product.name || "Untitled Product";
   const category = product.category || "General";
@@ -37,10 +38,25 @@ export default function ProductCard({ product, isWishlisted, onWishlistToggle })
     }, 1);
   };
 
-  const handleCompareToggle = (e) => {
+  const handleShare = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setCompared(!compared);
+  
+    const url = `${window.location.origin}/products/${id}`;
+  
+    try {
+      await navigator.clipboard.writeText(url);
+  
+      // Optional toast if your ProductCard already has access to useToast()
+      // toast.success("Product link copied!");
+  
+      toast.success("Product link copied!");
+    } catch {
+      // Optional toast
+      // toast.error("Failed to copy link.");
+  
+      toast.error("Failed to copy product link.");
+    }
   };
 
   return (
@@ -64,28 +80,32 @@ export default function ProductCard({ product, isWishlisted, onWishlistToggle })
           e.stopPropagation();
           onWishlistToggle(id);
         }}
-        className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full shadow-xs transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
+        className={`absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm border border-white/70 shadow-lg transition-all duration-300 hover:scale-105 ${
+          isWishlisted
+            ? "text-rose-600"
+            : "text-gray-600 hover:text-rose-600"
+        }`}
         aria-label="Toggle Wishlist"
       >
         <Heart
-          className={`h-5 w-5 transition duration-200 ${isWishlisted ? "text-white" : "text-gray-400 hover:text-rose-500"}`}
-          fill={isWishlisted ? "currentColor" : "none"}
-          stroke={isWishlisted ? "none" : "currentColor"}
-        />
+  className="h-5 w-5 transition-colors duration-200"
+  fill={isWishlisted ? "currentColor" : "none"}
+  stroke="currentColor"
+  strokeWidth={2}
+/>
       </button>
 
-      {/* Compare Button (Floating Below Wishlist) */}
+      {/* Share Button (Floating Below Wishlist) */}
       <button
-        onClick={handleCompareToggle}
-        className="absolute right-3 top-[56px] z-10 flex h-9 w-9 items-center justify-center rounded-full shadow-xs transition-all duration-300 hover:scale-105 hover:rotate-12 active:scale-95 cursor-pointer"
-        title={compared ? "Compared" : "Compare Product"}
-      >
-        <GitCompare
-          className={`h-5 w-5 transition duration-200 ${compared ? "text-white" : "text-gray-400 hover:text-indigo-650"}`}
-          fill={compared ? "currentColor" : "none"}
-          stroke={compared ? "none" : "currentColor"}
-        />
-      </button>
+  onClick={handleShare}
+  className="absolute right-3 top-[56px] z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm border border-white/70 shadow-lg text-gray-600 transition-all duration-300 hover:scale-105 hover:text-indigo-600 hover:bg-white"
+  title="Share Product"
+>
+  <Share2
+    className="h-5 w-5"
+    strokeWidth={2}
+  />
+</button>
 
       {/* Image Block with Zoom on Hover */}
       <Link to={`/products/${id}`} className="block overflow-hidden bg-gray-50 aspect-square relative">
@@ -131,13 +151,14 @@ export default function ProductCard({ product, isWishlisted, onWishlistToggle })
         {/* Star rating & Reviews count */}
         <div className="mt-1 flex items-center gap-2">
           <div className="flex items-center gap-1 text-amber-400">
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                className={i < rating ? "text-amber-400" : "text-amber-200"}
-                size={12}
-              />
-            ))}
+          {[...Array(5)].map((_, i) => (
+  <Star
+    key={i}
+    size={12}
+    fill={i < rating ? "currentColor" : "none"}
+    className={i < rating ? "text-amber-400" : "text-gray-300"}
+  />
+))}
           </div>
           <span className="text-xs text-gray-500 font-medium select-none dark:text-gray-400">
             ({numReviews.toLocaleString()})
@@ -147,9 +168,9 @@ export default function ProductCard({ product, isWishlisted, onWishlistToggle })
         {/* Price grid & Stock warning */}
         <div className="mt-2 flex items-baseline justify-between gap-4 flex-wrap">
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">${price.toFixed(2)}</span>
+            <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(convertPrice(price))}</span>
             {discount > 0 && (
-              <span className="text-sm text-gray-400 line-through dark:text-gray-500 ml-1">${originalPrice.toFixed(2)}</span>
+              <span className="text-sm text-gray-400 line-through dark:text-gray-500 ml-1">{formatCurrency(convertPrice(originalPrice))}</span>
             )}
           </div>
           <div className="flex items-baseline gap-2">
@@ -179,3 +200,6 @@ export default function ProductCard({ product, isWishlisted, onWishlistToggle })
     </div>
   );
 }
+
+
+

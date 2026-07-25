@@ -1,4 +1,5 @@
 import { motion, useReducedMotion } from "framer-motion";
+import { useCurrency } from "../../contexts/CurrencyContext";
 import { Star, ShoppingBag } from "lucide-react";
 
 function StarRating({ rating }) {
@@ -32,6 +33,7 @@ export default function DecorativeHeroCard({
   style,
 }) {
   const shouldReduceMotion = useReducedMotion();
+  const { convertPrice, formatCurrency } = useCurrency();
 
   return (
     <motion.div
@@ -97,7 +99,7 @@ export default function DecorativeHeroCard({
                 <span className="text-[10px] text-slate-400">({rating})</span>
               </div>
               <div className="flex items-center justify-between pt-1">
-                <span className="text-base font-bold text-white">{price}</span>
+                <span className="text-base font-bold text-white">{formatCurrency(convertPrice(price))}</span>
                 <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/40">
                   <ShoppingBag className="h-3.5 w-3.5 text-white" />
                 </div>
@@ -108,3 +110,5 @@ export default function DecorativeHeroCard({
     </motion.div>
   );
 }
+
+

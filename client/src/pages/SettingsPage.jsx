@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import useTheme from "../hooks/useTheme";
 import { updateProfile } from "../services/authService";
+import CurrencySelector from "../components/common/CurrencySelector";
 
 export default function SettingsPage() {
   const navigate = useNavigate();
@@ -352,6 +353,21 @@ export default function SettingsPage() {
 
           {currentTab === "preferences" && (
             <section id="preferences" className="rounded-2xl border border-gray-150 bg-white p-6 shadow-xs space-y-6">
+              <div>
+                <h2 className="text-lg font-bold text-gray-800 border-b border-gray-50 pb-2">Display Preferences</h2>
+                <div className="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <span className="block text-xs font-bold text-gray-800">🌍 Currency & Region</span>
+                    <span className="block text-[10px] text-gray-400 max-w-md">
+                      Choose the currency used to display prices throughout ShopSphere. Product prices are converted automatically using current exchange rates.
+                    </span>
+                  </div>
+                  <div className="shrink-0">
+                    <CurrencySelector />
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <h2 className="text-lg font-bold text-gray-800 border-b border-gray-50 pb-2">Appearance</h2>
                 <div className="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

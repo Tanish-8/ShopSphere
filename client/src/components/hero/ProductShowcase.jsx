@@ -14,7 +14,7 @@ const products = [
     image: "/images/product-headphones.png",
     name: "AuraSound Pro X",
     category: "Audio",
-    price: "$349",
+    price: 349,
     rating: 4.9,
     badge: "New",
     className: "top-4 left-8 w-52",
@@ -28,7 +28,7 @@ const products = [
     image: "/images/product-watch.png",
     name: "Chrono Elite 5",
     category: "Wearables",
-    price: "$599",
+    price: 599,
     rating: 4.8,
     badge: "Hot",
     className: "top-2 right-4 w-48",
@@ -42,7 +42,7 @@ const products = [
     image: "/images/product-sneakers.png",
     name: "UrbanStep Air",
     category: "Footwear",
-    price: "$189",
+    price: 189,
     rating: 4.7,
     badge: "Sale",
     className: "bottom-16 left-4 w-52",
@@ -56,7 +56,7 @@ const products = [
     image: "/images/product-bag.png",
     name: "Luxe Tote Signature",
     category: "Accessories",
-    price: "$279",
+    price: 279,
     rating: 4.6,
     className: "bottom-8 right-2 w-48",
     delay: 1.1,
@@ -165,3 +165,4 @@ export default function ProductShowcase() {
     </div>
   );
 }
+

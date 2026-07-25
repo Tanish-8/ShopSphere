@@ -189,7 +189,7 @@ function NavbarSearchForm({
                       {item.name}
                     </p>
                     <p className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
-                      ${item.price.toFixed(2)}
+                      {formatCurrency(convertPrice(item.price))}
                     </p>
                   </div>
                   <span className="shrink-0 rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">
@@ -210,6 +210,7 @@ function Navbar() {
   const { isAuthenticated, user, logout } = useAuth();
   const { totalItemCount } = useCart();
   const { theme, setTheme } = useTheme();
+  const { convertPrice, formatCurrency } = useCurrency();
   const [wishlistCount, setWishlistCount] = useState(0);
   const location = useLocation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -926,3 +927,6 @@ function Navbar() {
 }
 
 export default Navbar;
+
+
+
