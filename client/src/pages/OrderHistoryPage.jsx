@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchMyOrders, downloadInvoice, cancelOrder } from "../services/orderService";
+import { useCurrency } from "../contexts/CurrencyContext";
 import CancelOrderModal from "../components/order/CancelOrderModal";
 import { ORDER_STATUS, PAYMENT_STATUS, CANCELLABLE_STATUSES } from "../utils/constants";
 
@@ -10,6 +11,7 @@ function formatDate(value) {
 }
 
 function OrderHistoryPage() {
+  const { convertPrice, formatCurrency } = useCurrency();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -119,7 +121,7 @@ function OrderHistoryPage() {
                       </Link>
                     </td>
                     <td className="px-4 py-3 text-gray-600">{formatDate(order.createdAt)}</td>
-                    <td className="px-4 py-3 font-semibold text-indigo-600">${Number(order.totalPrice || 0).toFixed(2)}</td>
+                    <td className="px-4 py-3 font-semibold text-indigo-600">{formatCurrency(convertPrice(Number(order.totalPrice || 0)))}</td>
                     <td className="px-4 py-3">
                       <span className={`rounded-full px-2.5 py-1 text-2xs font-bold uppercase tracking-wider ${
                         order.status === ORDER_STATUS.DELIVERED ? "bg-emerald-50 text-emerald-700" :
@@ -207,7 +209,7 @@ function OrderHistoryPage() {
                   </div>
                   <div>
                     <p className="text-[10px] uppercase font-bold text-gray-400">Total</p>
-                    <p className="font-bold text-indigo-600">${Number(order.totalPrice || 0).toFixed(2)}</p>
+                    <p className="font-bold text-indigo-600">{formatCurrency(convertPrice(Number(order.totalPrice || 0)))}</p>
                   </div>
                 </div>
 

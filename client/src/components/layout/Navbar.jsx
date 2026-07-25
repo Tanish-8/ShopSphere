@@ -20,6 +20,7 @@ import { fetchWishlist } from "../../services/wishlistService";
 import { fetchProducts } from "../../services/productService";
 import { FALLBACK_PRODUCT_IMAGE } from "../../utils/productImage";
 import { cn } from "../../utils/cn";
+import { useCurrency } from "../../contexts/CurrencyContext";
 import { CATEGORIES_HASH, scrollToCategoriesSection } from "../../utils/scrollToCategories";
 import AnimatedBadge from "../ui/AnimatedBadge";
 

@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { fetchAllOrders, updateOrderStatus, downloadInvoice, adminProcessRefund, cancelOrder } from "../../services/orderService";
 import { ORDER_STATUS, PAYMENT_STATUS, CANCELLABLE_STATUSES } from "../../utils/constants";
+import { useCurrency } from "../../contexts/CurrencyContext";
 
 export default function OrdersPage() {
+  const { convertPrice, formatCurrency } = useCurrency();
   const [orders, setOrders] = useState([]);
   
   // Search & Filter States
@@ -278,7 +280,7 @@ export default function OrdersPage() {
 
                     <div className="text-[10px] font-semibold text-gray-500 space-y-0.5 leading-normal">
                       <p>Customer: <span className="font-bold text-gray-800">{o.user?.name || "Deleted User"}</span> &bull; {o.user?.email}</p>
-                      <p>Total: <span className="font-bold text-gray-800">${Number(o.totalPrice || 0).toFixed(2)}</span> &bull; Method: <span className="uppercase">{o.paymentMethod}</span></p>
+                      <p>Total: <span className="font-bold text-gray-800">{formatCurrency(convertPrice(Number(o.totalPrice || 0)))}</span> &bull; Method: <span className="uppercase">{o.paymentMethod}</span></p>
                       <div className="flex flex-wrap gap-1.5 pt-1">
                         <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-bold border uppercase ${
                           o.isPaid || o.paymentStatus === PAYMENT_STATUS.PAID
@@ -476,7 +478,7 @@ export default function OrdersPage() {
 
             <div className="space-y-3">
               <div className="space-y-1">
-                <label className="block text-[10px] font-bold uppercase text-gray-500 tracking-wider">Refund Amount ($)</label>
+                <label className="block text-[10px] font-bold uppercase text-gray-500 tracking-wider">Refund Amount</label>
                 <input
                   type="number"
                   step="0.01"

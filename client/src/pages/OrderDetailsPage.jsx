@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { fetchOrderById, downloadInvoice, cancelOrder, requestOrderReturn } from "../services/orderService";
 import { createRazorpayOrder, verifyRazorpayPayment } from "../services/paymentService";
 import { ORDER_STATUS, PAYMENT_STATUS, CANCELLABLE_STATUSES } from "../utils/constants";
+import { useCurrency } from "../contexts/CurrencyContext";
 import OrderTimeline from "../components/order/OrderTimeline";
 import CancelOrderModal from "../components/order/CancelOrderModal";
 
@@ -24,7 +25,8 @@ function formatDateTime(value) {
 }
 
 function Money({ value }) {
-  return <span className="font-semibold text-gray-950">${Number(value || 0).toFixed(2)}</span>;
+  const { convertPrice, formatCurrency } = useCurrency();
+  return <span className="font-semibold text-gray-950">{formatCurrency(convertPrice(Number(value || 0)))}</span>;
 }
 
 function statusBadgeClass(status) {
@@ -54,6 +56,7 @@ const RETURN_REASONS = [
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function OrderDetailsPage() {
+  const { convertPrice, formatCurrency } = useCurrency();
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -442,7 +445,7 @@ export default function OrderDetailsPage() {
                 </div>
                 <div>
                   <p className="text-gray-400 text-[10px]">Amount</p>
-                  <p className="font-bold text-emerald-700 mt-0.5">${Number(order.refundResult.amount).toFixed(2)}</p>
+                  <p className="font-bold text-emerald-700 mt-0.5">{formatCurrency(convertPrice(Number(order.refundResult.amount)))}</p>
                 </div>
                 <div>
                   <p className="text-gray-400 text-[10px]">Method</p>
@@ -479,7 +482,7 @@ export default function OrderDetailsPage() {
                     <div className="min-w-0">
                       <h4 className="text-xs font-extrabold text-gray-900 leading-snug">{it.name}</h4>
                       <p className="text-[10px] text-gray-400 font-bold mt-1">
-                        Qty: {it.quantity} &bull; Unit: ${Number(it.price).toFixed(2)}
+                        Qty: {it.quantity} &bull; Unit: {formatCurrency(convertPrice(Number(it.price)))}
                       </p>
                     </div>
                   </div>
@@ -576,14 +579,14 @@ export default function OrderDetailsPage() {
                     <div className="bg-teal-50/50 border border-teal-150 rounded-xl p-2.5 text-[10px] text-teal-800 space-y-1 mt-2">
                       <p className="font-bold flex items-center gap-1"><span>✓</span> Refund Completed</p>
                       <p>Txn: <span className="font-mono select-all font-semibold">{order.refundResult.refundId}</span></p>
-                      <p>Amount: <span className="font-bold">${Number(order.refundResult.amount).toFixed(2)}</span></p>
+                      <p>Amount: <span className="font-bold">{formatCurrency(convertPrice(Number(order.refundResult.amount)))}</span></p>
                       <p>Date: <span>{formatDateTime(order.refundResult.date)}</span></p>
                     </div>
                   )}
                   {order.paymentStatus === PAYMENT_STATUS.REFUND_PENDING && (
                     <div className="bg-amber-50/50 border border-amber-150 rounded-xl p-2.5 text-[10px] text-amber-800 space-y-1 mt-2">
                       <p className="font-bold flex items-center gap-1"><span>🕒</span> Refund Initiated</p>
-                      <p>Amount: <span className="font-bold">${Number(order.totalPrice).toFixed(2)}</span></p>
+                      <p>Amount: <span className="font-bold">{formatCurrency(convertPrice(Number(order.totalPrice)))}</span></p>
                       <p>Status: <span className="font-bold uppercase">Pending Release</span></p>
                     </div>
                   )}
@@ -600,7 +603,7 @@ export default function OrderDetailsPage() {
               {order.discountApplied > 0 && (
                 <div className="flex justify-between text-emerald-700 font-bold">
                   <span>Discount {order.couponCode ? `(${order.couponCode})` : ""}</span>
-                  <span>−${Number(order.discountApplied).toFixed(2)}</span>
+                  <span>−{formatCurrency(convertPrice(Number(order.discountApplied)))}</span>
                 </div>
               )}
               <div className="flex justify-between"><span>Shipping</span><Money value={shipping} /></div>
@@ -739,7 +742,7 @@ export default function OrderDetailsPage() {
                       <img src={item.image} alt={item.name} className="h-10 w-10 rounded-lg object-cover border border-gray-150 flex-shrink-0" />
                       <div className="min-w-0 flex-1 text-left">
                         <p className="text-xs font-bold text-gray-900 truncate leading-snug">{item.name}</p>
-                        <p className="text-[10px] text-gray-400 font-semibold mt-0.5">Qty: {item.quantity} &bull; Price: ${Number(item.price).toFixed(2)}</p>
+                        <p className="text-[10px] text-gray-400 font-semibold mt-0.5">Qty: {item.quantity} &bull; Price: {formatCurrency(convertPrice(Number(item.price)))}</p>
                       </div>
                     </label>
                   ))}

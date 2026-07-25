@@ -8,6 +8,7 @@ import ThemeProvider from "./contexts/ThemeContext";
 import ToastProvider from "./contexts/ToastContext";
 import CurrencyProvider from "./contexts/CurrencyContext";
 import "./index.css";
+import "@fontsource/inter";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

@@ -273,7 +273,7 @@ function CartPage() {
                     </div>
 
                     <p className="text-sm font-black text-gray-900">
-                      Subtotal: ${(Number(item.price || 0) * Number(item.quantity || 0)).toFixed(2)}
+                      Subtotal: {formatCurrency(convertPrice(Number(item.price || 0) * Number(item.quantity || 0)))}
                     </p>
                   </div>
                 </div>
@@ -305,7 +305,7 @@ function CartPage() {
                 <span className="flex items-center gap-1.5">
                   🚚 {amountLeft > 0 ? "Free Shipping Goal" : "Goal Unlocked!"}
                 </span>
-                <span>${totalPrice.toFixed(0)} / $500</span>
+                <span>{formatCurrency(convertPrice(totalPrice))} / {formatCurrency(convertPrice(FREE_SHIPPING_THRESHOLD))}</span>
               </div>
               <div className="h-2 w-full rounded-full bg-gray-150 overflow-hidden">
                 <div
@@ -411,7 +411,7 @@ function CartPage() {
                 <div className="flex items-center justify-between border-b border-gray-50 pb-2">
                   <div className="flex flex-col text-left">
                     <span>Standard Shipping</span>
-                    <span className="text-[10px] text-gray-400 font-medium">Free on orders above $500</span>
+                    <span className="text-[10px] text-gray-400 font-medium">Free on orders above {formatCurrency(convertPrice(500))}</span>
                   </div>
                   <span className="text-right text-gray-905">{getDeliveryDateRange(3, 5)}</span>
                 </div>
