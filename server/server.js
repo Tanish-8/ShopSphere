@@ -23,6 +23,8 @@ import uploadRoutes from "./routes/uploadRoutes.js";
 import couponRoutes from "./routes/couponRoutes.js";
 import { handleWebhook } from './controllers/paymentController.js';
 import migrateAddresses from "./utils/migrateAddresses.js";
+import migrateOrders from "./utils/migrateOrders.js";
+import migrateCategories from "./utils/migrateCategories.js";
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 import swaggerUi from "swagger-ui-express";
 import { swaggerDocument } from "./config/swagger.js";
@@ -199,8 +201,10 @@ const startServer = async () => {
     // Wait for MongoDB connection before accepting HTTP requests
     await connectDB();
         
-        // Run address migration (idempotent) to preserve legacy single address
+        // Run address, order, and category migrations (idempotent)
         await migrateAddresses();
+        await migrateOrders();
+        await migrateCategories();
 
     app.listen(PORT, () => {
       console.log(`\n🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);

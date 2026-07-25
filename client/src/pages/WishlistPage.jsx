@@ -1,54 +1,102 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { fetchWishlist, removeFromWishlist } from '../services/wishlistService';
-import useCart from '../hooks/useCart';
-import { FALLBACK_PRODUCT_IMAGE } from '../utils/productImage';
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { fetchWishlist, removeFromWishlist } from "../services/wishlistService";
+import ProductCard from "../components/product/ProductCard";
+import { useToast } from "../contexts/ToastContext";
 
-export default function WishlistPage(){
+const WishlistSkeleton = () => (
+  <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    {Array.from({ length: 4 }).map((_, i) => (
+      <div key={i} className="flex flex-col overflow-hidden rounded-2xl border border-gray-150 bg-white p-4 space-y-4 animate-pulse">
+        <div className="aspect-square w-full rounded-xl bg-gray-100"></div>
+        <div className="space-y-2">
+          <div className="h-3 w-1/3 rounded bg-gray-200"></div>
+          <div className="h-5 w-3/4 rounded bg-gray-200"></div>
+          <div className="h-3.5 w-1/2 rounded bg-gray-200"></div>
+        </div>
+        <div className="flex justify-between items-center pt-2 gap-4">
+          <div className="h-6 w-1/3 rounded bg-gray-200"></div>
+          <div className="h-8 w-1/3 rounded-xl bg-gray-200"></div>
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+export default function WishlistPage() {
+  const toast = useToast();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { addItem } = useCart();
 
-  const load = async()=>{
+  const load = async () => {
     setLoading(true);
-    try{
+    try {
       const list = await fetchWishlist();
       setItems(list);
-    }catch(e){
-      console.error(e);
-    }finally{setLoading(false)}
+    } catch (e) {
+      console.error("Wishlist load error:", e);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(()=>{ load(); }, []);
-
-  const handleRemove = async(id)=>{
-    await removeFromWishlist(id);
+  useEffect(() => {
     load();
+  }, []);
+
+  const handleRemove = async (id) => {
+    const item = items.find((i) => (i._id || i.id) === id);
+    const prodName = item ? item.name : "Product";
+    const toastId = toast.loading("Updating Wishlist...");
+    try {
+      await removeFromWishlist(id);
+      toast.dismiss(toastId);
+      toast.info("Removed from Wishlist", (
+        <p className="font-bold text-gray-905">{prodName}</p>
+      ));
+      // Dispatch event to update navbar count
+      window.dispatchEvent(new Event("wishlist-updated"));
+      load();
+    } catch (e) {
+      toast.dismiss(toastId);
+      toast.error("Something went wrong.", "Please try again.");
+    }
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Your Wishlist</h1>
-      {loading ? <div>Loading...</div> : (
-        items.length===0 ? <div className="text-center text-gray-500">No items in wishlist.</div> : (
-          <div className="space-y-3">
-            {items.map(p=> (
-              <div key={p._id} className="flex items-center justify-between rounded border bg-white p-3">
-                <div className="flex items-center gap-3">
-                  <img src={p.image || p.images?.[0] || FALLBACK_PRODUCT_IMAGE} className="h-16 w-16 object-cover" />
-                  <div>
-                    <Link to={`/products/${p._id}`} className="font-medium">{p.name}</Link>
-                    <div className="text-sm text-gray-500">${Number(p.price||0).toFixed(2)} • ★ {Number(p.rating||0).toFixed(1)}</div>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={()=>{ addItem({ productId: p._id, name: p.name, image: p.image||p.images?.[0], price: p.price, countInStock: p.stock }, 1); }} className="px-3 py-1 rounded border">Add to Cart</button>
-                  <button onClick={()=>handleRemove(p._id)} className="px-3 py-1 rounded bg-red-600 text-white">Remove</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )
+    <div className="space-y-8 animate-dropdown text-left">
+      <header>
+        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Your Wishlist</h1>
+        <p className="mt-2 text-sm text-gray-600">Saved items you want to keep an eye on.</p>
+      </header>
+
+      {loading ? (
+        <WishlistSkeleton />
+      ) : items.length === 0 ? (
+        <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center shadow-sm max-w-xl mx-auto space-y-4">
+          <div className="text-5xl">❤️</div>
+          <h2 className="text-lg font-bold text-gray-850">Your wishlist is empty</h2>
+          <p className="text-xs text-gray-500 max-w-xs mx-auto leading-relaxed">
+            Tap the heart icon on any product to save it here, making it easier to find and purchase later!
+          </p>
+          <Link
+            to="/products"
+            className="inline-flex rounded-xl bg-indigo-650 px-6 py-3 text-xs font-extrabold text-white transition-all duration-300 hover:bg-indigo-750 active:scale-95 shadow-sm cursor-pointer"
+          >
+            Discover Products
+          </Link>
+        </div>
+      ) : (
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {items.map((p) => (
+            <ProductCard
+              key={p._id || p.id}
+              product={p}
+              isWishlisted={true}
+              onWishlistToggle={handleRemove}
+            />
+          ))}
+        </div>
       )}
     </div>
   );

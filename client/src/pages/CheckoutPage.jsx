@@ -1,12 +1,14 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useCart from "../hooks/useCart";
+import { useCurrency } from "../contexts/CurrencyContext";
 import { createOrder, calculateOrderPrices } from "../services/orderService";
 import * as addressService from "../services/addressService";
 import { createRazorpayOrder, verifyRazorpayPayment } from "../services/paymentService";
 
 export default function CheckoutPage() {
   const { cartItems, clearCart } = useCart();
+  const { convertPrice, formatCurrency } = useCurrency();
   const navigate = useNavigate();
 
   const [shippingAddress, setShippingAddress] = useState({
@@ -26,7 +28,7 @@ export default function CheckoutPage() {
   const [error, setError] = useState("");
 
   const [couponCode, setCouponCode] = useState("");
-  const [appliedCoupon, setAppliedCoupon] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(() => localStorage.getItem("shopsphere_applied_coupon") || "");
   const [couponError, setCouponError] = useState("");
   const [couponSuccess, setCouponSuccess] = useState("");
 
@@ -67,7 +69,7 @@ export default function CheckoutPage() {
         if (mounted) {
           setPrices(data);
           if (appliedCoupon) {
-            setCouponSuccess(`Coupon "${appliedCoupon}" applied! Saved $${data.discountApplied.toFixed(2)}`);
+            setCouponSuccess(`Coupon "${appliedCoupon}" applied! Saved ${formatCurrency(convertPrice(data.discountApplied))}`);
           }
         }
       } catch (err) {
@@ -618,7 +620,7 @@ export default function CheckoutPage() {
                   <p className="truncate font-bold text-gray-800">{item.name}</p>
                   <p className="text-[10px] text-gray-400 font-semibold">Qty: {item.quantity}</p>
                 </div>
-                <p className="font-bold text-gray-800">${(Number(item.price || 0) * Number(item.quantity || 0)).toFixed(2)}</p>
+                <p className="font-bold text-gray-800">{formatCurrency(convertPrice(Number(item.price || 0) * Number(item.quantity || 0)))}</p>
               </div>
             ))}
           </div>
@@ -679,25 +681,25 @@ export default function CheckoutPage() {
           <div className="border-t border-gray-150 pt-4 space-y-2 text-xs font-semibold text-gray-600">
             <div className="flex justify-between">
               <span>Items Total</span>
-              <span>${prices.itemsPrice.toFixed(2)}</span>
+              <span>{formatCurrency(convertPrice(prices.itemsPrice))}</span>
             </div>
             {prices.discountApplied > 0 && (
               <div className="flex justify-between text-emerald-600">
                 <span>Discount</span>
-                <span>-${prices.discountApplied.toFixed(2)}</span>
+                <span>-{formatCurrency(convertPrice(prices.discountApplied))}</span>
               </div>
             )}
             <div className="flex justify-between">
               <span>Tax (GST)</span>
-              <span>${prices.taxPrice.toFixed(2)}</span>
+              <span>{formatCurrency(convertPrice(prices.taxPrice))}</span>
             </div>
             <div className="flex justify-between">
               <span>Shipping Fee</span>
-              <span>${prices.shippingPrice.toFixed(2)}</span>
+              <span>{formatCurrency(convertPrice(prices.shippingPrice))}</span>
             </div>
             <div className="flex justify-between text-base font-bold text-gray-900 border-t border-gray-150 pt-2.5">
               <span>Grand Total</span>
-              <span>${prices.totalPrice.toFixed(2)}</span>
+              <span>{formatCurrency(convertPrice(prices.totalPrice))}</span>
             </div>
           </div>
 
@@ -745,7 +747,7 @@ export default function CheckoutPage() {
               </div>
               <div className="flex justify-between border-t border-gray-150 pt-2 text-sm text-gray-950 font-extrabold">
                 <span>Total Amount:</span>
-                <span>${(simulatedRpOrder.amount / 100).toFixed(2)}</span>
+                <span>{formatCurrency(convertPrice(simulatedRpOrder.amount / 100))}</span>
               </div>
             </div>
 

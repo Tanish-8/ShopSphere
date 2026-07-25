@@ -1,124 +1,205 @@
 import { Link } from "react-router-dom";
 import useCart from "../../hooks/useCart";
+import { useCurrency } from "../../contexts/CurrencyContext";
 import { FALLBACK_PRODUCT_IMAGE } from "../../utils/productImage";
+import { useToast } from "../../contexts/ToastContext";
+import { Heart, Share2, ShoppingCart, Star } from "lucide-react";
 
 export default function ProductCard({ product, isWishlisted, onWishlistToggle }) {
   const { addItem } = useCart();
-
+  const toast = useToast();
+  const { convertPrice, formatCurrency } = useCurrency();
   const id = product._id || product.id;
   const name = product.name || "Untitled Product";
   const category = product.category || "General";
   const price = product.price || 0;
+  const originalPrice = product.originalPrice || price;
+  const discount = product.discount || 0;
   const rating = Math.round(product.rating || 0);
   const numReviews = product.numReviews || 0;
+  const badge = product.badge || "";
+  const stock = product.stock ?? 0;
+  const brand = product.brand || "Unbranded";
 
   const image = (Array.isArray(product.images) && product.images.length > 0)
     ? product.images[0]
     : product.image || FALLBACK_PRODUCT_IMAGE;
 
-  // Mock discount
-  const originalPrice = price * 1.25;
-  const discountPercent = 20;
-
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (stock === 0) return;
     addItem({
       productId: id,
       name,
       image,
       price,
-      countInStock: product.stock || 10
+      countInStock: stock
     }, 1);
   };
 
-  return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-md">
-      {/* Discount Badge */}
-      <span className="absolute left-3 top-3 z-10 rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
-        {discountPercent}% OFF
-      </span>
+  const handleShare = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  
+    const url = `${window.location.origin}/products/${id}`;
+  
+    try {
+      await navigator.clipboard.writeText(url);
+  
+      // Optional toast if your ProductCard already has access to useToast()
+      // toast.success("Product link copied!");
+  
+      toast.success("Product link copied!");
+    } catch {
+      // Optional toast
+      // toast.error("Failed to copy link.");
+  
+      toast.error("Failed to copy product link.");
+    }
+  };
 
-      {/* Wishlist Button */}
+  return (
+    <div className="group relative flex flex-col overflow-hidden rounded-[18px] border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-[6px] dark:bg-gray-800">
+      {/* Product Badges (Top Left) */}
+      {badge && (
+        <span className="absolute left-3 top-3 z-10 rounded-md bg-indigo-600 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-white shadow-xs">
+          {badge}
+        </span>
+      )}
+      {discount > 0 && (
+        <span className="absolute left-3 top-[28px] z-10 rounded-md bg-rose-500 px-2 py-0.5 text-xs font-semibold tracking-wider text-white shadow-xs">
+          {discount}% OFF
+        </span>
+      )}
+
+      {/* Wishlist Button (Top Right) */}
       <button
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
           onWishlistToggle(id);
         }}
-        className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 backdrop-blur-xs text-gray-500 shadow-sm transition hover:bg-white hover:text-red-500"
+        className={`absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm border border-white/70 shadow-lg transition-all duration-300 hover:scale-105 ${
+          isWishlisted
+            ? "text-rose-600"
+            : "text-gray-600 hover:text-rose-600"
+        }`}
+        aria-label="Toggle Wishlist"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill={isWishlisted ? "#EF4444" : "none"}
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          stroke={isWishlisted ? "#EF4444" : "currentColor"}
-          className="h-5 w-5 transition duration-200"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-          />
-        </svg>
+        <Heart
+  className="h-5 w-5 transition-colors duration-200"
+  fill={isWishlisted ? "currentColor" : "none"}
+  stroke="currentColor"
+  strokeWidth={2}
+/>
       </button>
 
-      {/* Image Block */}
-      <Link to={`/products/${id}`} className="block overflow-hidden bg-gray-50 aspect-square">
+      {/* Share Button (Floating Below Wishlist) */}
+      <button
+  onClick={handleShare}
+  className="absolute right-3 top-[56px] z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm border border-white/70 shadow-lg text-gray-600 transition-all duration-300 hover:scale-105 hover:text-indigo-600 hover:bg-white"
+  title="Share Product"
+>
+  <Share2
+    className="h-5 w-5"
+    strokeWidth={2}
+  />
+</button>
+
+      {/* Image Block with Zoom on Hover */}
+      <Link to={`/products/${id}`} className="block overflow-hidden bg-gray-50 aspect-square relative">
         <img
           src={image}
           alt={name}
           loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="h-full w-full object-cover rounded-t-[18px] transition-transform duration-700 ease-out group-hover:scale-105"
           onError={(e) => {
             e.target.onerror = null;
             e.target.src = FALLBACK_PRODUCT_IMAGE;
           }}
         />
+        {stock === 0 && (
+          <div className="absolute inset-0 bg-white/75 backdrop-blur-xs flex items-center justify-center dark:bg-black/75 dark:backdrop-blur-xs">
+            <span className="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-white shadow-sm">
+              Out of Stock
+            </span>
+          </div>
+        )}
       </Link>
 
       {/* Body details */}
-      <div className="flex flex-1 flex-col p-4">
-        {/* Category */}
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">
-          {category}
-        </span>
+      <div className="flex flex-1 flex-col p-4 text-left space-y-4">
+        {/* Brand & Category */}
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+            {brand}
+          </span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            {category}
+          </span>
+        </div>
 
         {/* Name */}
         <Link
           to={`/products/${id}`}
-          className="mt-1 line-clamp-2 text-sm font-semibold text-gray-800 hover:text-indigo-600"
+          className="mt-1 line-clamp-2 text-base font-semibold text-gray-900 hover:text-indigo-600 transition-colors leading-snug dark:text-gray-100 dark:hover:text-indigo-300"
         >
           {name}
         </Link>
 
-        {/* Star rating */}
-        <div className="mt-2 flex items-center gap-1">
-          <div className="flex text-amber-400">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <span key={i} className="text-xs">
-                {i < rating ? "★" : "☆"}
-              </span>
-            ))}
+        {/* Star rating & Reviews count */}
+        <div className="mt-1 flex items-center gap-2">
+          <div className="flex items-center gap-1 text-amber-400">
+          {[...Array(5)].map((_, i) => (
+  <Star
+    key={i}
+    size={12}
+    fill={i < rating ? "currentColor" : "none"}
+    className={i < rating ? "text-amber-400" : "text-gray-300"}
+  />
+))}
           </div>
-          <span className="text-[10px] text-gray-500">({numReviews})</span>
+          <span className="text-xs text-gray-500 font-medium select-none dark:text-gray-400">
+            ({numReviews.toLocaleString()})
+          </span>
         </div>
 
-        {/* Price grid */}
-        <div className="mt-3 flex items-baseline gap-2">
-          <span className="text-base font-bold text-gray-900">${price.toFixed(2)}</span>
-          <span className="text-xs text-gray-400 line-through">${originalPrice.toFixed(2)}</span>
+        {/* Price grid & Stock warning */}
+        <div className="mt-2 flex items-baseline justify-between gap-4 flex-wrap">
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(convertPrice(price))}</span>
+            {discount > 0 && (
+              <span className="text-sm text-gray-400 line-through dark:text-gray-500 ml-1">{formatCurrency(convertPrice(originalPrice))}</span>
+            )}
+          </div>
+          <div className="flex items-baseline gap-2">
+            {stock > 0 && stock <= 5 && (
+              <span className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 rounded-full px-2 py-0.5 animate-pulse dark:bg-amber-900/20 dark:text-amber-300">
+                Only {stock} Left
+              </span>
+            )}
+            {stock > 5 && (
+              <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-full px-2 py-0.5 dark:bg-emerald-900/20 dark:text-emerald-300">
+                In Stock
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Add to Cart button */}
         <button
           onClick={handleAddToCart}
-          className="mt-4 w-full rounded-lg bg-indigo-600 py-2 text-xs font-semibold text-white transition-all duration-300 hover:bg-indigo-700 active:scale-95"
+          disabled={stock === 0}
+          className={`mt-auto w-full h-11 rounded-lg flex items-center justify-center gap-2 text-sm font-bold text-white transition-all duration-300 active:scale-95 shadow-xs ${stock === 0 ? "bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-600 dark:text-gray-300" : "bg-indigo-600 hover:bg-indigo-700 hover:shadow-md dark:bg-indigo-500 dark:hover:bg-indigo-600"}`}
         >
-          Add to Cart
+          <ShoppingCart className="h-4 w-4" />
+          {stock === 0 ? "Out of Stock" : "Add to Cart"}
         </button>
       </div>
     </div>
   );
 }
+
+
+

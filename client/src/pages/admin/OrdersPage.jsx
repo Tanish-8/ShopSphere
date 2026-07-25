@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
-import { fetchAllOrders, updateOrderStatus, downloadInvoice, adminProcessRefund } from "../../services/orderService";
+import { fetchAllOrders, updateOrderStatus, downloadInvoice, adminProcessRefund, cancelOrder } from "../../services/orderService";
+import { ORDER_STATUS, PAYMENT_STATUS, CANCELLABLE_STATUSES } from "../../utils/constants";
+import { useCurrency } from "../../contexts/CurrencyContext";
 
 export default function OrdersPage() {
+  const { convertPrice, formatCurrency } = useCurrency();
   const [orders, setOrders] = useState([]);
   
   // Search & Filter States
@@ -104,15 +107,16 @@ export default function OrdersPage() {
     if (statusFilter && o.status !== statusFilter) return false;
     // Filter by Payment Status
     if (paymentFilter) {
+      const paymentStatusUpper = (o.paymentStatus || "").toUpperCase();
       const isPaidCheck = paymentFilter === "paid";
       const isRefundedCheck = paymentFilter === "refunded";
       const isProcessingCheck = paymentFilter === "Refund Processing";
       const isUnpaidCheck = paymentFilter === "unpaid";
 
-      if (isPaidCheck && !o.isPaid) return false;
-      if (isRefundedCheck && o.paymentStatus !== "refunded") return false;
-      if (isProcessingCheck && o.paymentStatus !== "Refund Processing") return false;
-      if (isUnpaidCheck && (o.isPaid || o.paymentStatus === "refunded")) return false;
+      if (isPaidCheck && !o.isPaid && paymentStatusUpper !== PAYMENT_STATUS.PAID) return false;
+      if (isRefundedCheck && paymentStatusUpper !== PAYMENT_STATUS.REFUNDED) return false;
+      if (isProcessingCheck && paymentStatusUpper !== PAYMENT_STATUS.REFUND_PENDING) return false;
+      if (isUnpaidCheck && (o.isPaid || paymentStatusUpper === PAYMENT_STATUS.PAID || paymentStatusUpper === PAYMENT_STATUS.REFUNDED)) return false;
     }
     // Filter by Date
     if (dateFilter) {
@@ -138,14 +142,14 @@ export default function OrdersPage() {
   };
 
   orders.forEach((o) => {
-    const status = (o.status || "").toLowerCase();
-    if (["placed", "confirmed"].includes(status)) stats.pending++;
-    else if (status === "packed") stats.packed++;
-    else if (["shipped", "out for delivery"].includes(status)) stats.shipped++;
-    else if (status === "delivered") stats.delivered++;
-    else if (status === "cancelled") stats.cancelled++;
-    else if (status.startsWith("return")) stats.returns++;
-    else if (status.startsWith("refund")) stats.refunds++;
+    const statusUpper = (o.status || "").toUpperCase();
+    if ([ORDER_STATUS.PLACED, ORDER_STATUS.CONFIRMED].includes(statusUpper)) stats.pending++;
+    else if (statusUpper === ORDER_STATUS.PACKED) stats.packed++;
+    else if ([ORDER_STATUS.SHIPPED, ORDER_STATUS.OUT_FOR_DELIVERY].includes(statusUpper)) stats.shipped++;
+    else if (statusUpper === ORDER_STATUS.DELIVERED) stats.delivered++;
+    else if (statusUpper === ORDER_STATUS.CANCELLED) stats.cancelled++;
+    else if (statusUpper === ORDER_STATUS.RETURNED) stats.returns++;
+    else if (statusUpper === ORDER_STATUS.REFUNDED) stats.refunds++;
   });
 
   return (
@@ -256,12 +260,13 @@ export default function OrdersPage() {
           </div>
         ) : (
           orders.filter(applyFilter).map((o) => {
+            const statusUpper = (o.status || ORDER_STATUS.PLACED).toUpperCase();
+            const isCancelable = CANCELLABLE_STATUSES.includes(statusUpper);
+            const isReturnRequested = false;
+            const isReturnApproved = false;
+            const isRefundable = (statusUpper === ORDER_STATUS.RETURNED || statusUpper === ORDER_STATUS.CANCELLED) &&
+              o.paymentStatus === PAYMENT_STATUS.REFUND_PENDING;
             const isExpanded = expandedOrders.has(o._id);
-            const isCancelable = ["placed", "confirmed", "packed"].includes((o.status || "").toLowerCase());
-            const isReturnRequested = (o.status || "").toLowerCase() === "return requested";
-            const isReturnApproved = (o.status || "").toLowerCase() === "return approved";
-            const isRefundable = ((o.status === "Cancelled" && o.paymentStatus === "Refund Processing") ||
-              ["Return Requested", "Return Approved", "Returned", "Refund Processing"].includes(o.status)) && o.paymentStatus !== "refunded";
 
             return (
               <div key={o._id} className="rounded-2xl border border-gray-150 bg-white shadow-3xs hover:border-gray-300 transition overflow-hidden">
@@ -275,19 +280,23 @@ export default function OrdersPage() {
 
                     <div className="text-[10px] font-semibold text-gray-500 space-y-0.5 leading-normal">
                       <p>Customer: <span className="font-bold text-gray-800">{o.user?.name || "Deleted User"}</span> &bull; {o.user?.email}</p>
-                      <p>Total: <span className="font-bold text-gray-800">${Number(o.totalPrice || 0).toFixed(2)}</span> &bull; Method: <span className="uppercase">{o.paymentMethod}</span></p>
+                      <p>Total: <span className="font-bold text-gray-800">{formatCurrency(convertPrice(Number(o.totalPrice || 0)))}</span> &bull; Method: <span className="uppercase">{o.paymentMethod}</span></p>
                       <div className="flex flex-wrap gap-1.5 pt-1">
                         <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-bold border uppercase ${
-                          o.isPaid || o.paymentStatus === "paid"
+                          o.isPaid || o.paymentStatus === PAYMENT_STATUS.PAID
                             ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                            : o.paymentStatus === "refunded"
+                            : o.paymentStatus === PAYMENT_STATUS.REFUNDED
                             ? "bg-teal-50 text-teal-700 border-teal-100"
                             : "bg-red-50 text-red-700 border-red-100"
                         }`}>
-                          {o.paymentStatus || (o.isPaid ? "Paid" : "Unpaid")}
+                          {o.paymentStatus || (o.isPaid ? "PAID" : "UNPAID")}
                         </span>
-                        <span className="inline-flex items-center rounded bg-indigo-50 text-indigo-700 border border-indigo-100 px-1.5 py-0.5 text-[9px] font-bold uppercase">
-                          {o.status || "Placed"}
+                        <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-bold border uppercase ${
+                          statusUpper === ORDER_STATUS.DELIVERED ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
+                          statusUpper === ORDER_STATUS.CANCELLED ? "bg-red-50 text-red-700 border-red-100" :
+                          "bg-indigo-50 text-indigo-700 border-indigo-100"
+                        }`}>
+                          {statusUpper.replace(/_/g, " ")}
                         </span>
                       </div>
                     </div>
@@ -297,24 +306,68 @@ export default function OrdersPage() {
                   <div className="flex flex-wrap items-center gap-1.5 justify-end">
                     
                     {/* Status Dropdown */}
-                    <select
-                      value={o.status || "Placed"}
-                      onChange={(e) => handleUpdate(o._id, e.target.value)}
-                      className="h-9 rounded-xl border border-gray-300 bg-white px-2.5 text-[10px] font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-150 cursor-pointer"
-                    >
-                      <option value="Placed">Placed</option>
-                      <option value="Confirmed">Confirmed</option>
-                      <option value="Packed">Packed</option>
-                      <option value="Shipped">Shipped</option>
-                      <option value="Out For Delivery">Out For Delivery</option>
-                      <option value="Delivered">Delivered</option>
-                      <option value="Cancelled">Cancelled</option>
-                      <option value="Return Requested">Return Requested</option>
-                      <option value="Return Approved">Return Approved</option>
-                      <option value="Returned">Returned</option>
-                      <option value="Refund Processing">Refund Processing</option>
-                      <option value="Refunded">Refunded</option>
-                    </select>
+                    {(() => {
+                      const currentStatusUpper = (o.status || ORDER_STATUS.PLACED).toUpperCase();
+                      const coreFlow = [
+                        ORDER_STATUS.PLACED,
+                        ORDER_STATUS.CONFIRMED,
+                        ORDER_STATUS.PACKED,
+                        ORDER_STATUS.SHIPPED,
+                        ORDER_STATUS.OUT_FOR_DELIVERY,
+                        ORDER_STATUS.DELIVERED
+                      ];
+                      const currentCoreIdx = coreFlow.indexOf(currentStatusUpper);
+
+                      const isNextCore = (optVal) => {
+                        const optUpper = optVal.toUpperCase();
+                        const optIdx = coreFlow.indexOf(optUpper);
+                        if (currentCoreIdx !== -1 && optIdx !== -1) {
+                          return optIdx === currentCoreIdx + 1;
+                        }
+                        return false;
+                      };
+
+                      const isOptionDisabled = (optVal) => {
+                        const optUpper = optVal.toUpperCase();
+                        if (optUpper === currentStatusUpper) return false;
+
+                        if (coreFlow.includes(optUpper)) {
+                          return !isNextCore(optVal);
+                        }
+
+                        if (optUpper === ORDER_STATUS.CANCELLED) {
+                          return !CANCELLABLE_STATUSES.includes(currentStatusUpper);
+                        }
+
+                        if (optUpper === ORDER_STATUS.RETURNED) {
+                          return currentStatusUpper !== ORDER_STATUS.DELIVERED;
+                        }
+
+                        if (optUpper === ORDER_STATUS.REFUNDED) {
+                          return ![ORDER_STATUS.RETURNED, ORDER_STATUS.CANCELLED].includes(currentStatusUpper);
+                        }
+
+                        return true;
+                      };
+
+                      return (
+                        <select
+                          value={o.status || ORDER_STATUS.PLACED}
+                          onChange={(e) => handleUpdate(o._id, e.target.value)}
+                          className="h-9 rounded-xl border border-gray-300 bg-white px-2.5 text-[10px] font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-150 cursor-pointer"
+                        >
+                          <option value="PLACED" disabled={isOptionDisabled("PLACED")}>Placed</option>
+                          <option value="CONFIRMED" disabled={isOptionDisabled("CONFIRMED")}>Confirmed</option>
+                          <option value="PACKED" disabled={isOptionDisabled("PACKED")}>Packed</option>
+                          <option value="SHIPPED" disabled={isOptionDisabled("SHIPPED")}>Shipped</option>
+                          <option value="OUT_FOR_DELIVERY" disabled={isOptionDisabled("OUT_FOR_DELIVERY")}>Out For Delivery</option>
+                          <option value="DELIVERED" disabled={isOptionDisabled("DELIVERED")}>Delivered</option>
+                          <option value="CANCELLED" disabled={isOptionDisabled("CANCELLED")}>Cancelled</option>
+                          <option value="RETURNED" disabled={isOptionDisabled("RETURNED")}>Returned</option>
+                          <option value="REFUNDED" disabled={isOptionDisabled("REFUNDED")}>Refunded</option>
+                        </select>
+                      );
+                    })()}
 
                     {/* Timeline Expansion Toggle */}
                     <button
@@ -328,13 +381,13 @@ export default function OrdersPage() {
                       onClick={() => handleDownloadInvoice(o._id)}
                       className="h-9 px-3 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-[10px] font-bold text-gray-700 transition cursor-pointer flex items-center gap-1"
                     >
-                      <span>📥</span> Invoice
+                      <span>📥</span> Download Invoice
                     </button>
 
                     {/* Direct Dynamic Actions */}
                     {isCancelable && (
                       <button
-                        onClick={() => handleUpdate(o._id, "Cancelled", "Cancelled directly by administrator.")}
+                        onClick={() => handleUpdate(o._id, ORDER_STATUS.CANCELLED, "Cancelled directly by administrator.")}
                         className="h-9 px-3 rounded-xl bg-red-50 hover:bg-red-100 text-[10px] font-bold text-red-700 transition cursor-pointer"
                       >
                         Cancel Order
@@ -425,7 +478,7 @@ export default function OrdersPage() {
 
             <div className="space-y-3">
               <div className="space-y-1">
-                <label className="block text-[10px] font-bold uppercase text-gray-500 tracking-wider">Refund Amount ($)</label>
+                <label className="block text-[10px] font-bold uppercase text-gray-500 tracking-wider">Refund Amount</label>
                 <input
                   type="number"
                   step="0.01"

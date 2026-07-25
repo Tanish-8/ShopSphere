@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { fetchOrderById } from "../services/orderService";
+import { ORDER_STATUS, PAYMENT_STATUS, TRACKING_STEPS } from "../utils/constants";
 
 export default function OrderTrackingPage() {
   const { id } = useParams();
@@ -57,44 +58,35 @@ export default function OrderTrackingPage() {
   };
 
   const estDelivery = getEstimatedDeliveryDate();
-  const currentStatus = order.status || "ordered";
+  const currentStatus = (order.status || ORDER_STATUS.PLACED).toUpperCase();
 
-  const stages = [
-    { key: "ordered", label: "Order Placed" },
-    { key: "confirmed", label: "Payment Confirmed" },
-    { key: "processing", label: "Processing" },
-    { key: "packed", label: "Packed" },
-    { key: "shipped", label: "Shipped" },
-    { key: "out_for_delivery", label: "Out For Delivery" },
-    { key: "delivered", label: "Delivered" }
-  ];
-
-  const isCancelled = currentStatus === "cancelled";
+  const isCancelled = currentStatus === ORDER_STATUS.CANCELLED;
   const activeStages = isCancelled
     ? [
-        { key: "ordered", label: "Order Placed" },
-        { key: "cancelled", label: "Cancelled" }
+        { key: ORDER_STATUS.PLACED, label: "Order Placed" },
+        { key: ORDER_STATUS.CANCELLED, label: "Cancelled" }
       ]
-    : stages;
-
-  const history = order.statusHistory || [];
+    : TRACKING_STEPS;
 
   const getStageInfo = (key) => {
-    if (key === "confirmed" && (order.isPaid || order.paymentStatus === "paid")) {
-      const paidLog = history.find(h => h.status === "confirmed") || { at: order.paidAt || order.updatedAt };
-      return { completed: true, at: paidLog.at };
-    }
-    const log = history.find(h => h.status === key);
+    const orderStages = TRACKING_STEPS.map(s => s.key);
+    const keyIndex = orderStages.indexOf(key.toUpperCase());
+    const currentStatusIndex = orderStages.indexOf(currentStatus);
+
+    const sourceHistory = Array.isArray(order.orderTimeline) && order.orderTimeline.length > 0
+      ? order.orderTimeline
+      : order.statusHistory || [];
+
+    const log = sourceHistory.find(h => (h.status || "").toUpperCase() === key.toUpperCase());
+
     if (log) {
-      return { completed: true, at: log.at };
+      return { completed: true, at: log.updatedAt || log.at };
     }
-    if ((key === "ordered" || key === "placed") && history.some(h => h.status === "ordered" || h.status === "placed")) {
-      const firstLog = history.find(h => h.status === "ordered" || h.status === "placed") || { at: order.createdAt };
-      return { completed: true, at: firstLog.at };
-    }
-    if (currentStatus === key) {
+
+    if (currentStatusIndex >= keyIndex && keyIndex !== -1) {
       return { completed: true, at: order.updatedAt || order.createdAt };
     }
+
     return { completed: false };
   };
 
@@ -223,8 +215,8 @@ export default function OrderTrackingPage() {
             <p><strong>Payment Method:</strong> <span className="capitalize">{order.paymentMethod}</span></p>
             <p>
               <strong>Payment Status:</strong>{" "}
-              <span className={`inline-flex rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${order.isPaid || order.paymentStatus === "paid" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
-                {order.isPaid || order.paymentStatus === "paid" ? "Paid" : "Pending"}
+              <span className={`inline-flex rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${order.isPaid || (order.paymentStatus || "").toUpperCase() === PAYMENT_STATUS.PAID ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+                {order.isPaid || (order.paymentStatus || "").toUpperCase() === PAYMENT_STATUS.PAID ? "Paid" : "Pending"}
               </span>
             </p>
             <p><strong>Invoice Number:</strong> {getFriendlyInvoiceNumber()}</p>

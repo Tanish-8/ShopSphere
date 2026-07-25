@@ -468,3 +468,10 @@ body {
 .dark .btn-ghost:hover {
   background-color: #1E293B;
 }
+
+/* ─── Featured Categories: 3D card utilities (Tailwind v3 compat) ─── */
+@layer utilities {
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+}

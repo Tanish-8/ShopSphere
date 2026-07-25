@@ -41,10 +41,16 @@ export const getProducts = async (req, res, next) => {
     // Build dynamic filter
     const filter = {};
 
-    // Keyword / Search query
+    // Keyword / Search query (matches name, brand, category, description, and tags)
     const search = req.query.search || req.query.keyword;
     if (search) {
-      filter.name = { $regex: search, $options: "i" };
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { brand: { $regex: search, $options: "i" } },
+        { category: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+        { tags: { $in: [new RegExp(search, "i")] } },
+      ];
     }
 
     // Category filter (ignore 'All' category button click)
@@ -57,9 +63,12 @@ export const getProducts = async (req, res, next) => {
       filter.isFeatured = true;
     }
 
-    // Brand filter
+    // Brand filter (supports comma-separated multiple brands)
     if (req.query.brand) {
-      filter.brand = { $regex: req.query.brand, $options: "i" };
+      const brands = req.query.brand.split(",").map(b => b.trim()).filter(Boolean);
+      if (brands.length > 0) {
+        filter.brand = { $in: brands.map(b => new RegExp("^" + b + "$", "i")) };
+      }
     }
 
     // Price range filter
@@ -74,9 +83,35 @@ export const getProducts = async (req, res, next) => {
       filter.rating = { $gte: Number(req.query.rating) };
     }
 
-    // Stock filtering
-    if (req.query.inStock === "true") {
+    // Availability filter (supports comma-separated: in_stock, low_stock, out_of_stock)
+    if (req.query.availability) {
+      const avList = req.query.availability.split(",").map(a => a.trim()).filter(Boolean);
+      const avFilters = [];
+      if (avList.includes("in_stock")) {
+        avFilters.push({ stock: { $gt: 5 } });
+      }
+      if (avList.includes("low_stock")) {
+        avFilters.push({ stock: { $gt: 0, $lte: 5 } });
+      }
+      if (avList.includes("out_of_stock")) {
+        avFilters.push({ stock: 0 });
+      }
+      if (avFilters.length > 0) {
+        filter.$and = filter.$and || [];
+        filter.$and.push({ $or: avFilters });
+      }
+    } else if (req.query.inStock === "true") {
       filter.stock = { $gt: 0 };
+    }
+
+    // Discount filter (minimum discount percentage)
+    if (req.query.discount) {
+      filter.discount = { $gte: Number(req.query.discount) };
+    }
+
+    // Badge filter
+    if (req.query.badge) {
+      filter.badge = { $regex: req.query.badge, $options: "i" };
     }
 
     // Sorting
@@ -89,7 +124,11 @@ export const getProducts = async (req, res, next) => {
         priceHigh: { price: -1 },
         rating: { rating: -1 },
         newest: { createdAt: -1 },
-        popularity: { rating: -1 },
+        popularity: { numReviews: -1, rating: -1 },
+        highestRated: { rating: -1 },
+        mostReviewed: { numReviews: -1 },
+        discount: { discount: -1 },
+        az: { name: 1 },
       };
       sort = sortMap[req.query.sort] || sort;
     }
@@ -107,7 +146,6 @@ export const getProducts = async (req, res, next) => {
       page,
       pages: Math.ceil(total / limit),
       data: products,
-      // User-requested metadata standard fields:
       products,
       totalProducts: total,
       totalPages: Math.ceil(total / limit),

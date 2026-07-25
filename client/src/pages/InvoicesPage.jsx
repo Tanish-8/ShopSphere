@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchMyOrders, downloadInvoice } from "../services/orderService";
+import { useCurrency } from "../contexts/CurrencyContext";
+import { ORDER_STATUS, PAYMENT_STATUS } from "../utils/constants";
 
 export default function InvoicesPage() {
+  const { convertPrice, formatCurrency } = useCurrency();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -66,8 +69,8 @@ export default function InvoicesPage() {
     if (!matchesSearch) return false;
     if (filterStatus === "All") return true;
     
-    const isPaid = order.isPaid || order.paymentStatus?.toLowerCase() === "paid";
-    const isCancelled = order.status?.toLowerCase() === "cancelled";
+    const isPaid = order.isPaid || (order.paymentStatus || "").toUpperCase() === PAYMENT_STATUS.PAID;
+    const isCancelled = (order.status || "").toUpperCase() === ORDER_STATUS.CANCELLED;
     const isPending = !isPaid && !isCancelled;
 
     if (filterStatus === "Paid") return isPaid;
@@ -195,8 +198,8 @@ export default function InvoicesPage() {
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {filteredOrders.map((order) => {
-                      const isPaid = order.isPaid || order.paymentStatus?.toLowerCase() === "paid";
-                      const isCancelled = order.status?.toLowerCase() === "cancelled";
+                       const isPaid = order.isPaid || (order.paymentStatus || "").toUpperCase() === PAYMENT_STATUS.PAID;
+                       const isCancelled = (order.status || "").toUpperCase() === ORDER_STATUS.CANCELLED;
                       
                       return (
                         <tr key={order._id || order.id} className="hover:bg-gray-50/50 transition">
@@ -214,8 +217,8 @@ export default function InvoicesPage() {
                               {isPaid ? "Paid" : isCancelled ? "Cancelled" : "Pending"}
                             </span>
                           </td>
-                          <td className="px-6 py-4 font-bold text-gray-900">
-                            ${Number(order.totalPrice || 0).toFixed(2)}
+                          <td className="px-6 py-4 font-bold text-indigo-650">
+                            {formatCurrency(convertPrice(Number(order.totalPrice || 0)))}
                           </td>
                           <td className="px-6 py-4 text-right">
                             <button
@@ -246,9 +249,9 @@ export default function InvoicesPage() {
               {/* Mobile Card List View */}
               <div className="md:hidden divide-y divide-gray-100">
                 {filteredOrders.map((order) => {
-                  const isPaid = order.isPaid || order.paymentStatus?.toLowerCase() === "paid";
-                  const isCancelled = order.status?.toLowerCase() === "cancelled";
-                  const idStr = order._id || order.id;
+                   const isPaid = order.isPaid || (order.paymentStatus || "").toUpperCase() === PAYMENT_STATUS.PAID;
+                   const isCancelled = (order.status || "").toUpperCase() === ORDER_STATUS.CANCELLED;
+                   const idStr = order._id || order.id;
 
                   return (
                     <div key={idStr} className="p-4 space-y-3 bg-white text-xs">
@@ -264,7 +267,7 @@ export default function InvoicesPage() {
 
                       <div className="flex justify-between text-gray-600 font-medium">
                         <span>Date: {order.createdAt ? new Date(order.createdAt).toLocaleDateString(undefined, { dateStyle: "short" }) : "-"}</span>
-                        <span className="font-bold text-gray-900">Total: ${Number(order.totalPrice || 0).toFixed(2)}</span>
+                        <span className="font-bold text-gray-900">Total: {formatCurrency(convertPrice(Number(order.totalPrice || 0)))}</span>
                       </div>
 
                       <div className="pt-2 border-t border-gray-50 flex justify-end">

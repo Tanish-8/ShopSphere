@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { fetchOrderById, downloadInvoice, cancelOrder, requestOrderReturn } from "../services/orderService";
 import { createRazorpayOrder, verifyRazorpayPayment } from "../services/paymentService";
+import { ORDER_STATUS, PAYMENT_STATUS, CANCELLABLE_STATUSES } from "../utils/constants";
+import { useCurrency } from "../contexts/CurrencyContext";
 import OrderTimeline from "../components/order/OrderTimeline";
+import CancelOrderModal from "../components/order/CancelOrderModal";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -22,38 +25,23 @@ function formatDateTime(value) {
 }
 
 function Money({ value }) {
-  return <span className="font-semibold text-gray-950">${Number(value || 0).toFixed(2)}</span>;
+  const { convertPrice, formatCurrency } = useCurrency();
+  return <span className="font-semibold text-gray-950">{formatCurrency(convertPrice(Number(value || 0)))}</span>;
 }
 
 function statusBadgeClass(status) {
-  switch ((status || "").toLowerCase()) {
-    case "delivered":       return "bg-emerald-50 text-emerald-700 border-emerald-200";
-    case "cancelled":       return "bg-red-50 text-red-700 border-red-200";
-    case "shipped":
-    case "out for delivery": return "bg-blue-50 text-blue-700 border-blue-200";
-    case "return requested":
-    case "return approved":
-    case "pickup scheduled":
-    case "picked up":
-    case "returned":        return "bg-purple-50 text-purple-700 border-purple-200";
-    case "refund processing":
-    case "refunded":        return "bg-teal-50 text-teal-700 border-teal-200";
-    case "replacement requested":
-    case "replacement approved":
-    case "replacement shipped":
-    case "replacement delivered": return "bg-pink-50 text-pink-700 border-pink-200";
+  switch ((status || "").toUpperCase()) {
+    case "DELIVERED":       return "bg-emerald-50 text-emerald-700 border-emerald-200";
+    case "CANCELLED":       return "bg-red-50 text-red-700 border-red-200";
+    case "SHIPPED":
+    case "OUT_FOR_DELIVERY": return "bg-blue-50 text-blue-700 border-blue-200";
+    case "RETURNED":        return "bg-purple-50 text-purple-700 border-purple-200";
+    case "REFUNDED":        return "bg-teal-50 text-teal-700 border-teal-200";
     default:                return "bg-indigo-50 text-indigo-700 border-indigo-200";
   }
 }
 
-const CANCEL_REASONS = [
-  "Changed my mind",
-  "Ordered by mistake",
-  "Found lower price",
-  "Delivery taking too long",
-  "Need different product",
-  "Other",
-];
+
 
 const RETURN_REASONS = [
   "Damaged",
@@ -68,6 +56,7 @@ const RETURN_REASONS = [
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function OrderDetailsPage() {
+  const { convertPrice, formatCurrency } = useCurrency();
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -80,10 +69,6 @@ export default function OrderDetailsPage() {
 
   // Cancellation modal
   const [showCancelModal, setShowCancelModal] = useState(false);
-  const [cancelReason, setCancelReason] = useState(CANCEL_REASONS[0]);
-  const [customReason, setCustomReason] = useState("");
-  const [cancelling, setCancelling] = useState(false);
-  const [cancelError, setCancelError] = useState("");
 
   // Cancel details panel toggle
   const [showCancelDetails, setShowCancelDetails] = useState(false);
@@ -147,23 +132,9 @@ export default function OrderDetailsPage() {
     }
   };
 
-  const handleCancelSubmit = async (e) => {
-    e.preventDefault();
-    setCancelling(true);
-    setCancelError("");
-    const finalReason = cancelReason === "Other" ? customReason.trim() : cancelReason;
-    if (!finalReason) { setCancelError("Please describe your reason."); setCancelling(false); return; }
-    try {
-      await cancelOrder(order._id, finalReason);
-      await loadOrder();
-      setShowCancelModal(false);
-      setCancelReason(CANCEL_REASONS[0]);
-      setCustomReason("");
-    } catch (err) {
-      setCancelError(err?.response?.data?.message || err.message || "Failed to cancel order.");
-    } finally {
-      setCancelling(false);
-    }
+  const handleCancelConfirm = async (finalReason) => {
+    await cancelOrder(order._id, finalReason);
+    await loadOrder();
   };
 
   const handleAddImageInput = () => {
@@ -236,44 +207,45 @@ export default function OrderDetailsPage() {
   if (!order) return null;
 
   // ─── Derived state ─────────────────────────────────────────────────────────
-  const status = order.status || "Placed";
-  const statusLower = status.toLowerCase();
+  const status = order.status || ORDER_STATUS.PLACED;
+  const statusUpper = status.toUpperCase();
 
   const subtotal = order.itemsPrice || 0;
   const shipping = order.shippingPrice || 0;
   const tax = order.taxPrice || 0;
   const total = order.totalPrice || (subtotal + shipping + tax);
 
-  const CANCELABLE_STATUSES = ["placed", "confirmed", "packed"];
-  const NON_CANCELABLE_SHIPPED_MSG = ["shipped", "out for delivery", "delivered",
-    "return requested", "return approved", "pickup scheduled", "picked up",
-    "returned", "refund processing", "refunded",
-    "replacement requested", "replacement approved", "replacement shipped", "replacement delivered"];
-
-  const isCancelable = CANCELABLE_STATUSES.includes(statusLower);
-  const isShippedNonCancelable = NON_CANCELABLE_SHIPPED_MSG.includes(statusLower);
-  const isCancelled = statusLower === "cancelled";
+  const isCancelable = CANCELLABLE_STATUSES.includes(statusUpper);
+  const isShippedNonCancelable = [
+    ORDER_STATUS.SHIPPED,
+    ORDER_STATUS.OUT_FOR_DELIVERY,
+    ORDER_STATUS.DELIVERED,
+    ORDER_STATUS.RETURNED,
+    ORDER_STATUS.REFUNDED
+  ].includes(statusUpper);
+  const isCancelled = statusUpper === ORDER_STATUS.CANCELLED;
 
   const isReturnable = (() => {
-    if (statusLower !== "delivered") return false;
+    if (statusUpper !== ORDER_STATUS.DELIVERED) return false;
     const d = new Date(order.deliveredAt || order.updatedAt);
     return Math.ceil(Math.abs(new Date() - d) / 86400000) <= 7;
   })();
 
-  const isRefundTrackable = ["returned", "refund processing", "refunded"].includes(statusLower) && order.refundResult;
+  const isRefundTrackable = [ORDER_STATUS.RETURNED, ORDER_STATUS.REFUNDED].includes(statusUpper) && order.refundResult;
 
   // Dynamic tracking step lists
   let trackingSteps = ["Placed", "Confirmed", "Packed", "Shipped", "Out For Delivery", "Delivered"];
-  const isReplacementFlow = statusLower.startsWith("replacement");
-  const isReturnFlow = statusLower.startsWith("return") || statusLower.startsWith("refund") || statusLower === "pickup scheduled" || statusLower === "picked up";
+  const isReplacementFlow = false;
+  const isReturnFlow = [ORDER_STATUS.RETURNED, ORDER_STATUS.REFUNDED].includes(statusUpper);
 
-  if (isReplacementFlow) {
-    trackingSteps = ["Replacement Requested", "Replacement Approved", "Replacement Shipped", "Replacement Delivered"];
-  } else if (isReturnFlow) {
-    trackingSteps = ["Return Requested", "Return Approved", "Pickup Scheduled", "Picked Up", "Returned", "Refund Processing", "Refunded"];
+  if (isReturnFlow) {
+    trackingSteps = ["Placed", "Confirmed", "Packed", "Shipped", "Out For Delivery", "Delivered", "Returned", "Refunded"];
   }
 
-  const currentStepIndex = trackingSteps.findIndex(s => s.toLowerCase() === statusLower);
+  const currentStepIndex = trackingSteps.findIndex(s => {
+    const sNorm = s.toUpperCase().replace(/ /g, "_");
+    return sNorm === statusUpper;
+  });
 
   const cancellationTimelineEntry = order.orderTimeline?.find(h => h.status === "Cancelled")
     || order.statusHistory?.find(h => h.status === "Cancelled");
@@ -384,7 +356,7 @@ export default function OrderDetailsPage() {
               {order.isPaid && order.paymentMethod !== "cod" && (
                 <div className="bg-white/70 rounded-xl border border-amber-100 px-4 py-2.5 text-xs text-amber-700 font-semibold flex items-center gap-2">
                   <span>💳</span>
-                  {order.paymentStatus === "refunded"
+                  {(order.paymentStatus || "").toLowerCase() === "refunded"
                     ? "Your refund has been processed successfully."
                     : "A refund request has been created and is being processed."}
                 </div>
@@ -473,7 +445,7 @@ export default function OrderDetailsPage() {
                 </div>
                 <div>
                   <p className="text-gray-400 text-[10px]">Amount</p>
-                  <p className="font-bold text-emerald-700 mt-0.5">${Number(order.refundResult.amount).toFixed(2)}</p>
+                  <p className="font-bold text-emerald-700 mt-0.5">{formatCurrency(convertPrice(Number(order.refundResult.amount)))}</p>
                 </div>
                 <div>
                   <p className="text-gray-400 text-[10px]">Method</p>
@@ -510,7 +482,7 @@ export default function OrderDetailsPage() {
                     <div className="min-w-0">
                       <h4 className="text-xs font-extrabold text-gray-900 leading-snug">{it.name}</h4>
                       <p className="text-[10px] text-gray-400 font-bold mt-1">
-                        Qty: {it.quantity} &bull; Unit: ${Number(it.price).toFixed(2)}
+                        Qty: {it.quantity} &bull; Unit: {formatCurrency(convertPrice(Number(it.price)))}
                       </p>
                     </div>
                   </div>
@@ -539,31 +511,87 @@ export default function OrderDetailsPage() {
         {/* ── Right Column ──────────────────────────────────────────────────── */}
         <aside className="space-y-4">
 
-          {/* Delivery Address + Payment */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm text-left space-y-4">
-            <div>
-              <h4 className="text-[10px] font-bold uppercase text-gray-400 tracking-wider mb-2">Delivery Address</h4>
-              <p className="text-xs font-extrabold text-gray-900">{order.shippingAddress?.fullName}</p>
-              <p className="text-xs font-semibold text-gray-600 mt-1 leading-relaxed">
-                {order.shippingAddress?.street}<br />
-                {order.shippingAddress?.city}, {order.shippingAddress?.state} {order.shippingAddress?.zipCode}<br />
-                {order.shippingAddress?.country}
+          {/* Delivery Address */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm text-left space-y-2">
+            <h4 className="text-[10px] font-bold uppercase text-gray-400 tracking-wider mb-2">Delivery Address</h4>
+            <p className="text-xs font-extrabold text-gray-900">{order.shippingAddress?.fullName}</p>
+            <p className="text-xs font-semibold text-gray-600 leading-relaxed">
+              {order.shippingAddress?.street}<br />
+              {order.shippingAddress?.city}, {order.shippingAddress?.state} {order.shippingAddress?.zipCode}<br />
+              {order.shippingAddress?.country}
+            </p>
+            {order.shippingAddress?.phone && (
+              <p className="text-[10px] text-gray-400 font-semibold mt-1.5">📞 {order.shippingAddress.phone}</p>
+            )}
+          </div>
+
+          {/* Payment Information Card */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm text-left space-y-3.5">
+            <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Payment Information</h3>
+            <div className="text-xs space-y-2">
+              <p className="flex justify-between">
+                <span className="text-gray-500 font-semibold">Method:</span>
+                <span className="font-bold text-gray-900 capitalize">{order.paymentMethod === "cod" ? "Cash On Delivery (COD)" : order.paymentResult?.paymentMethod || order.paymentMethod}</span>
               </p>
-              {order.shippingAddress?.phone && (
-                <p className="text-[10px] text-gray-400 font-semibold mt-1.5">📞 {order.shippingAddress.phone}</p>
+
+              {order.paymentMethod === "cod" ? (
+                <>
+                  <p className="flex justify-between">
+                    <span className="text-gray-500 font-semibold">Status:</span>
+                    {order.status === ORDER_STATUS.DELIVERED ? (
+                      <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full text-[9px] uppercase">Paid</span>
+                    ) : (
+                      <span className="font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full text-[9px] uppercase">Payment Pending</span>
+                    )}
+                  </p>
+                  {order.status !== ORDER_STATUS.DELIVERED && (
+                    <p className="bg-amber-50/40 border border-amber-100 rounded-xl px-3 py-1.5 text-[10px] text-amber-800 font-semibold flex items-center gap-1.5">
+                      <span>Pay on Delivery</span>
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p className="flex justify-between">
+                    <span className="text-gray-500 font-semibold">Status:</span>
+                    <span className={`font-bold px-2 py-0.5 rounded-full text-[9px] uppercase ${
+                      order.paymentStatus === PAYMENT_STATUS.PAID ? "bg-emerald-50 text-emerald-700" :
+                      order.paymentStatus === PAYMENT_STATUS.REFUNDED ? "bg-teal-50 text-teal-700" :
+                      order.paymentStatus === PAYMENT_STATUS.REFUND_PENDING ? "bg-amber-50 text-amber-700" :
+                      "bg-rose-50 text-rose-700"
+                    }`}>
+                      {(order.paymentStatus || (order.isPaid ? "PAID" : "PENDING")).replace(/_/g, " ")}
+                    </span>
+                  </p>
+                  {order.paidAt && (
+                    <p className="flex justify-between text-[10px] text-gray-500">
+                      <span>Paid Date:</span>
+                      <span className="font-mono">{formatDateTime(order.paidAt)}</span>
+                    </p>
+                  )}
+                  {order.paymentResult?.paymentId && (
+                    <p className="flex justify-between text-[10px] text-gray-550">
+                      <span>Transaction ID:</span>
+                      <span className="font-mono select-all bg-gray-50 px-1 py-0.5 rounded border border-gray-100">{order.paymentResult.paymentId}</span>
+                    </p>
+                  )}
+                  {order.paymentStatus === PAYMENT_STATUS.REFUNDED && order.refundResult && (
+                    <div className="bg-teal-50/50 border border-teal-150 rounded-xl p-2.5 text-[10px] text-teal-800 space-y-1 mt-2">
+                      <p className="font-bold flex items-center gap-1"><span>✓</span> Refund Completed</p>
+                      <p>Txn: <span className="font-mono select-all font-semibold">{order.refundResult.refundId}</span></p>
+                      <p>Amount: <span className="font-bold">{formatCurrency(convertPrice(Number(order.refundResult.amount)))}</span></p>
+                      <p>Date: <span>{formatDateTime(order.refundResult.date)}</span></p>
+                    </div>
+                  )}
+                  {order.paymentStatus === PAYMENT_STATUS.REFUND_PENDING && (
+                    <div className="bg-amber-50/50 border border-amber-150 rounded-xl p-2.5 text-[10px] text-amber-800 space-y-1 mt-2">
+                      <p className="font-bold flex items-center gap-1"><span>🕒</span> Refund Initiated</p>
+                      <p>Amount: <span className="font-bold">{formatCurrency(convertPrice(Number(order.totalPrice)))}</span></p>
+                      <p>Status: <span className="font-bold uppercase">Pending Release</span></p>
+                    </div>
+                  )}
+                </>
               )}
-            </div>
-            <div className="border-t border-gray-100 pt-4">
-              <h4 className="text-[10px] font-bold uppercase text-gray-400 tracking-wider mb-2">Payment</h4>
-              <p className="text-xs font-extrabold text-gray-900 capitalize">{order.paymentResult?.paymentMethod || order.paymentMethod || "—"}</p>
-              <div className="mt-1 space-y-0.5">
-                <p className="text-[10px] text-gray-400 font-semibold">
-                  Status: <span className="uppercase text-gray-700 font-bold">{order.paymentStatus || (order.isPaid ? "Paid" : "Unpaid")}</span>
-                </p>
-                {order.paymentResult?.paymentId && (
-                  <p className="text-[10px] text-gray-400 font-medium select-all">Txn: {order.paymentResult.paymentId}</p>
-                )}
-              </div>
             </div>
           </div>
 
@@ -575,7 +603,7 @@ export default function OrderDetailsPage() {
               {order.discountApplied > 0 && (
                 <div className="flex justify-between text-emerald-700 font-bold">
                   <span>Discount {order.couponCode ? `(${order.couponCode})` : ""}</span>
-                  <span>−${Number(order.discountApplied).toFixed(2)}</span>
+                  <span>−{formatCurrency(convertPrice(Number(order.discountApplied)))}</span>
                 </div>
               )}
               <div className="flex justify-between"><span>Shipping</span><Money value={shipping} /></div>
@@ -669,66 +697,11 @@ export default function OrderDetailsPage() {
       {/* ══════════════════════════════════════════════════════════════════
           CANCELLATION MODAL
       ════════════════════════════════════════════════════════════════════ */}
-      {showCancelModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <form
-            onSubmit={handleCancelSubmit}
-            className="w-full max-w-md rounded-2xl border border-gray-200 bg-white shadow-2xl overflow-hidden"
-          >
-            <div className="bg-red-50 border-b border-red-100 px-6 py-5">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center text-lg">🚫</div>
-                <div>
-                  <h3 className="text-sm font-extrabold text-gray-900">Cancel Order</h3>
-                  <p className="text-[10px] text-gray-500 font-medium mt-0.5">This action cannot be undone.</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="px-6 py-5 space-y-4">
-              <div className="space-y-2">
-                <label className="block text-[10px] font-bold uppercase text-gray-500 tracking-wider">
-                  Why are you cancelling?
-                </label>
-                <div className="space-y-2">
-                  {CANCEL_REASONS.map((r) => (
-                    <label key={r} className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 cursor-pointer transition ${
-                      cancelReason === r ? "border-red-300 bg-red-50" : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                    }`}>
-                      <input
-                        type="radio" name="cancelReason" value={r}
-                        checked={cancelReason === r} onChange={() => setCancelReason(r)}
-                        className="accent-red-600 flex-shrink-0"
-                      />
-                      <span className="text-xs font-semibold text-gray-700">{r}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {cancelReason === "Other" && (
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-bold uppercase text-gray-500 tracking-wider">Please describe</label>
-                  <textarea
-                    value={customReason} onChange={(e) => setCustomReason(e.target.value)}
-                    placeholder="Tell us more…" required rows={3}
-                    className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-xs outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 transition resize-none"
-                  />
-                </div>
-              )}
-
-              {cancelError && <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs font-semibold text-red-600">{cancelError}</div>}
-            </div>
-
-            <div className="px-6 pb-5 flex gap-3 justify-end">
-              <button type="button" onClick={() => setShowCancelModal(false)} disabled={cancelling} className="btn-secondary">Keep Order</button>
-              <button type="submit" disabled={cancelling} className="h-11 px-6 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50">
-                {cancelling ? "Processing…" : "Confirm Cancellation"}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+      <CancelOrderModal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        onConfirm={handleCancelConfirm}
+      />
 
       {/* ══════════════════════════════════════════════════════════════════
           RETURN & REPLACEMENT MODAL
@@ -769,7 +742,7 @@ export default function OrderDetailsPage() {
                       <img src={item.image} alt={item.name} className="h-10 w-10 rounded-lg object-cover border border-gray-150 flex-shrink-0" />
                       <div className="min-w-0 flex-1 text-left">
                         <p className="text-xs font-bold text-gray-900 truncate leading-snug">{item.name}</p>
-                        <p className="text-[10px] text-gray-400 font-semibold mt-0.5">Qty: {item.quantity} &bull; Price: ${Number(item.price).toFixed(2)}</p>
+                        <p className="text-[10px] text-gray-400 font-semibold mt-0.5">Qty: {item.quantity} &bull; Price: {formatCurrency(convertPrice(Number(item.price)))}</p>
                       </div>
                     </label>
                   ))}

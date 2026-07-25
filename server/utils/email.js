@@ -92,8 +92,47 @@ export const getResetPasswordEmailTemplate = (name, url) => {
   `;
 };
 
+export const sendStatusUpdateNotification = async (user, orderId, status, note = "") => {
+  if (!user || !user.email) return;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h1 style="color: #4f46e5; margin: 0; font-size: 28px;">ShopSphere</h1>
+        <p style="color: #6b7280; font-size: 14px; margin-top: 5px;">Order Status Update</p>
+      </div>
+      <div style="background-color: #f9fafb; padding: 20px; border-radius: 6px; color: #374151;">
+        <p style="font-size: 16px; margin-top: 0;">Hello <strong>${user.name || "Customer"}</strong>,</p>
+        <p style="font-size: 14px; line-height: 1.5;">Your order with ID <strong>${orderId}</strong> has been updated to:</p>
+        <div style="text-align: center; margin: 20px 0;">
+          <span style="background-color: #e0e7ff; color: #4338ca; padding: 10px 20px; border-radius: 9999px; font-weight: bold; font-size: 16px; display: inline-block; border: 1px solid #c7d2fe;">
+            ${status}
+          </span>
+        </div>
+        ${note ? `<p style="font-size: 13px; color: #4b5563; background: #fff; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-style: italic;">Note: ${note}</p>` : ""}
+        <p style="font-size: 14px; line-height: 1.5; margin-top: 20px;">You can track your order status directly on our platform by visiting your order details page.</p>
+      </div>
+      <div style="text-align: center; margin-top: 25px; font-size: 12px; color: #9ca3af;">
+        <p>This is an automated notification. Please do not reply directly to this email.</p>
+        <p>&copy; ${new Date().getFullYear()} ShopSphere. All rights reserved.</p>
+      </div>
+    </div>
+  `;
+
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: `[ShopSphere] Order Update: ${status}`,
+      html,
+    });
+  } catch (error) {
+    console.error("Failed to send status update notification email:", error.message);
+  }
+};
+
 export default {
   sendEmail,
   getVerificationEmailTemplate,
   getResetPasswordEmailTemplate,
+  sendStatusUpdateNotification,
 };

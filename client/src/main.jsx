@@ -5,16 +5,23 @@ import App from "./App";
 import AuthProvider from "./contexts/AuthContext";
 import CartProvider from "./contexts/CartContext";
 import ThemeProvider from "./contexts/ThemeContext";
+import ToastProvider from "./contexts/ToastContext";
+import CurrencyProvider from "./contexts/CurrencyContext";
 import "./index.css";
+import "@fontsource/inter";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <CartProvider>
-            <App />
-          </CartProvider>
+          <CurrencyProvider>
+            <ToastProvider>
+              <CartProvider>
+                <App />
+              </CartProvider>
+            </ToastProvider>
+          </CurrencyProvider>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

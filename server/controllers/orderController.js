@@ -1,6 +1,8 @@
 import { validationResult, body } from "express-validator";
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
+import User from "../models/User.js";
+import { ORDER_STATUS, PAYMENT_STATUS, CANCELLABLE_STATUSES } from "../utils/constants.js";
 
 // ---------------------------------------------------------------------------
 // Validation rules
@@ -133,6 +135,29 @@ export const createOrder = async (req, res, next) => {
     const { couponCode } = req.body;
     const prices = await calculateOrderPrices(verifiedItems, couponCode, req.user);
 
+    const isOnlinePrepaid = ["card", "paypal"].includes(paymentMethod);
+    const initialPaymentStatus = isOnlinePrepaid ? PAYMENT_STATUS.PAID : PAYMENT_STATUS.PENDING;
+    const initialIsPaid = isOnlinePrepaid;
+    const initialPaidAt = isOnlinePrepaid ? new Date() : undefined;
+
+    const initialTimeline = [
+      { status: ORDER_STATUS.PLACED, updatedAt: Date.now(), note: "Order placed successfully", updatedBy: req.user._id }
+    ];
+    if (isOnlinePrepaid) {
+      initialTimeline.push({
+        status: "Payment Successful",
+        updatedAt: Date.now(),
+        note: `Payment of $${prices.totalPrice.toFixed(2)} completed successfully via ${paymentMethod}`,
+        updatedBy: req.user._id
+      });
+      initialTimeline.push({
+        status: ORDER_STATUS.CONFIRMED,
+        updatedAt: Date.now(),
+        note: "Order confirmed automatically after successful payment",
+        updatedBy: req.user._id
+      });
+    }
+
     const order = await Order.create({
       user: req.user._id,
       orderItems: verifiedItems,
@@ -146,13 +171,31 @@ export const createOrder = async (req, res, next) => {
       discountType: prices.discountType,
       discountValue: prices.discountValue,
       discountApplied: prices.discountApplied,
-      statusHistory: [
-        { status: "Placed", at: Date.now(), changedBy: req.user._id },
+      isPaid: initialIsPaid,
+      paidAt: initialPaidAt,
+      paymentStatus: initialPaymentStatus,
+      status: isOnlinePrepaid ? ORDER_STATUS.CONFIRMED : ORDER_STATUS.PLACED,
+      statusHistory: isOnlinePrepaid ? [
+        { status: ORDER_STATUS.PLACED, at: Date.now(), changedBy: req.user._id },
+        { status: "Payment Successful", at: Date.now(), changedBy: req.user._id },
+        { status: ORDER_STATUS.CONFIRMED, at: Date.now(), changedBy: req.user._id }
+      ] : [
+        { status: ORDER_STATUS.PLACED, at: Date.now(), changedBy: req.user._id }
       ],
-      orderTimeline: [
-        { status: "Placed", updatedAt: Date.now(), note: "Order placed successfully", updatedBy: req.user._id },
-      ],
+      orderTimeline: initialTimeline,
     });
+
+    if (isOnlinePrepaid) {
+      try {
+        const { sendStatusUpdateNotification } = await import("../utils/email.js");
+        const populatedUser = await User.findById(req.user._id);
+        if (populatedUser) {
+          await sendStatusUpdateNotification(populatedUser, order._id, "Order Confirmed", "Order confirmed automatically after successful payment");
+        }
+      } catch (emailErr) {
+        console.warn("Failed to send order confirmation email:", emailErr.message);
+      }
+    }
 
     // If coupon applied successfully, increment usage count in DB
     if (prices.couponCode) {
@@ -287,70 +330,100 @@ export const updateOrderStatus = async (req, res, next) => {
       throw new Error("Status is required");
     }
 
-    // Validate allowed transitions
-    const allowedStatuses = [
-      "Placed",
-      "Confirmed",
-      "Packed",
-      "Shipped",
-      "Out For Delivery",
-      "Delivered",
-      "Cancelled",
-      "Return Requested",
-      "Return Approved",
-      "Pickup Scheduled",
-      "Picked Up",
-      "Returned",
-      "Refund Processing",
-      "Refunded",
-      "Replacement Requested",
-      "Replacement Approved",
-      "Replacement Shipped",
-      "Replacement Delivered"
-    ];
+    const prevStatusUpper = (order.status || ORDER_STATUS.PLACED).toUpperCase();
+    const newStatusUpper = status.toUpperCase();
 
-    const prevStatus = order.status || "Placed";
+    if (!ORDER_STATUS[newStatusUpper]) {
+      return res.status(400).json({ success: false, message: "Invalid status value" });
+    }
 
     // If same status, nothing to do
-    if (prevStatus.toLowerCase() === status.toLowerCase()) {
+    if (prevStatusUpper === newStatusUpper) {
       return res.json({ success: true, data: order });
     }
 
-    if (!allowedStatuses.some(s => s.toLowerCase() === status.toLowerCase())) {
-      return res.status(400).json({ success: false, message: "Invalid status transition" });
+    // Enforce strict sequential transition for core fulfilment status
+    const coreFlow = [
+      ORDER_STATUS.PLACED,
+      ORDER_STATUS.CONFIRMED,
+      ORDER_STATUS.PACKED,
+      ORDER_STATUS.SHIPPED,
+      ORDER_STATUS.OUT_FOR_DELIVERY,
+      ORDER_STATUS.DELIVERED
+    ];
+    const prevCoreIdx = coreFlow.indexOf(prevStatusUpper);
+    const newCoreIdx = coreFlow.indexOf(newStatusUpper);
+
+    if (prevCoreIdx !== -1 && newCoreIdx !== -1) {
+      if (newCoreIdx !== prevCoreIdx + 1) {
+        res.status(400);
+        throw new Error(`Invalid transition: Cannot move directly from "${prevStatusUpper}" to "${newStatusUpper}". Must follow sequential flow: PLACED -> CONFIRMED -> PACKED -> SHIPPED -> OUT_FOR_DELIVERY -> DELIVERED.`);
+      }
+    }
+
+    // Enforce extra transition constraints
+    if (prevStatusUpper === ORDER_STATUS.CANCELLED && coreFlow.includes(newStatusUpper)) {
+      res.status(400);
+      throw new Error("Cannot progress or ship a cancelled order.");
+    }
+
+    if (prevStatusUpper === ORDER_STATUS.DELIVERED && newStatusUpper === ORDER_STATUS.CANCELLED) {
+      res.status(400);
+      throw new Error("Cannot cancel a delivered order.");
+    }
+
+    if (newStatusUpper === ORDER_STATUS.CANCELLED) {
+      if ([ORDER_STATUS.SHIPPED, ORDER_STATUS.OUT_FOR_DELIVERY, ORDER_STATUS.DELIVERED, ORDER_STATUS.RETURNED, ORDER_STATUS.REFUNDED].includes(prevStatusUpper)) {
+        res.status(400);
+        throw new Error("Order can no longer be cancelled once it has been shipped or completed.");
+      }
     }
 
     // Append to history and update status
     const note = req.body.note;
 
     if (!Array.isArray(order.statusHistory)) order.statusHistory = [];
-    order.statusHistory.push({ status, at: Date.now(), note, changedBy: req.user._id });
+    order.statusHistory.push({ status: newStatusUpper, at: Date.now(), note, changedBy: req.user._id });
 
     if (!Array.isArray(order.orderTimeline)) order.orderTimeline = [];
     order.orderTimeline.push({
-      status,
+      status: newStatusUpper,
       updatedAt: Date.now(),
-      note: note || `Order status updated to ${status}`,
+      note: note || `Order status updated to ${newStatusUpper}`,
       updatedBy: req.user._id,
     });
 
-    // Preserve previous status for potential restore logic
     const previousStatus = order.status;
-    order.status = status;
+    order.status = newStatusUpper;
 
-    // Prepare backend structure for future email notifications
-    // TODO: Integrate sendEmail notifications template here
-    // import { sendStatusUpdateEmail } from "../utils/email.js";
-    // await sendStatusUpdateEmail(order.user, order._id, status);
-
-    // Auto-set delivery fields
-    if (status.toLowerCase() === "delivered") {
+    // Auto-set delivery fields and COD payment collection
+    if (newStatusUpper === ORDER_STATUS.DELIVERED) {
       order.isDelivered = true;
       order.deliveredAt = Date.now();
+
+      if (order.paymentMethod === "cod") {
+        order.isPaid = true;
+        order.paidAt = Date.now();
+        order.paymentStatus = PAYMENT_STATUS.PAID;
+
+        // Push timeline entry for payment collection
+        order.orderTimeline.push({
+          status: "Payment Collected",
+          updatedAt: Date.now(),
+          note: "COD payment collected successfully at the time of delivery",
+          updatedBy: req.user._id
+        });
+        order.statusHistory.push({
+          status: "Payment Collected",
+          at: Date.now(),
+          note: "COD payment collected successfully at the time of delivery",
+          changedBy: req.user._id
+        });
+      }
     }
 
     // If cancelled, restore stock (only when moving into cancelled)
-    if (status.toLowerCase() === "cancelled" && previousStatus?.toLowerCase() !== "cancelled") {
+    if (newStatusUpper === ORDER_STATUS.CANCELLED && previousStatus !== ORDER_STATUS.CANCELLED) {
       for (const item of order.orderItems) {
         await Product.findByIdAndUpdate(item.product, {
           $inc: { stock: item.quantity },
@@ -359,6 +432,30 @@ export const updateOrderStatus = async (req, res, next) => {
     }
 
     const updatedOrder = await order.save();
+
+    // Dispatch status update notifications
+    try {
+      const { sendStatusUpdateNotification } = await import("../utils/email.js");
+      const populatedUser = await User.findById(order.user);
+      if (populatedUser) {
+        let notificationStatus = newStatusUpper;
+        if (newStatusUpper === ORDER_STATUS.CONFIRMED) notificationStatus = "Order Confirmed";
+        else if (newStatusUpper === ORDER_STATUS.PACKED) notificationStatus = "Order Packed";
+        else if (newStatusUpper === ORDER_STATUS.SHIPPED) notificationStatus = "Order Shipped";
+        else if (newStatusUpper === ORDER_STATUS.OUT_FOR_DELIVERY) notificationStatus = "Out For Delivery";
+        else if (newStatusUpper === ORDER_STATUS.DELIVERED) notificationStatus = "Delivered";
+        else if (newStatusUpper === ORDER_STATUS.CANCELLED) notificationStatus = "Cancelled";
+
+        await sendStatusUpdateNotification(
+          populatedUser,
+          order._id,
+          notificationStatus,
+          note || `Your order status has been updated to ${newStatusUpper}.`
+        );
+      }
+    } catch (emailErr) {
+      console.warn("Failed to send status update email notification:", emailErr.message);
+    }
 
     res.json({ success: true, data: updatedOrder });
   } catch (error) {
@@ -389,8 +486,14 @@ export const updateOrderToPaid = async (req, res, next) => {
       throw new Error("Not authorized to update this order");
     }
 
+    if (order.paymentMethod === "cod" && (order.status || "").toUpperCase() !== ORDER_STATUS.DELIVERED) {
+      res.status(400);
+      throw new Error("Cannot mark COD order as Paid before it is Delivered.");
+    }
+
     order.isPaid = true;
     order.paidAt = Date.now();
+    order.paymentStatus = PAYMENT_STATUS.PAID;
 
     const updatedOrder = await order.save();
 
@@ -497,56 +600,26 @@ export const cancelOrder = async (req, res, next) => {
       throw new Error("Not authorized to cancel this order");
     }
 
-    const currentStatus = order.status || "Placed";
-    const isAdmin = req.user.role === "admin";
+    const currentStatusUpper = (order.status || ORDER_STATUS.PLACED).toUpperCase();
 
-    // Configurable: statuses that block customer cancellation once shipped
-    const nonCancelableByCustomer = ["shipped", "out for delivery", "delivered",
-      "return requested", "return approved", "pickup scheduled", "picked up",
-      "returned", "refund processing", "refunded",
-      "replacement requested", "replacement approved", "replacement shipped", "replacement delivered"];
-
-    // Admin can cancel any non-terminal status
-    const nonCancelableByAdmin = ["cancelled", "refunded", "replacement delivered", "delivered"];
-
-    if (isAdmin) {
-      if (nonCancelableByAdmin.includes(currentStatus.toLowerCase())) {
-        res.status(400);
-        throw new Error(`Order cannot be cancelled at this stage: ${currentStatus}`);
-      }
-    } else {
-      // Customer: can only cancel Placed, Confirmed, Packed
-      const cancelableStatuses = ["placed", "confirmed", "packed"];
-      if (!cancelableStatuses.includes(currentStatus.toLowerCase())) {
-        const isShipped = nonCancelableByCustomer.includes(currentStatus.toLowerCase());
-        res.status(400);
-        throw new Error(
-          isShipped
-            ? `This order can no longer be cancelled because it has already been ${currentStatus.toLowerCase()}.`
-            : `Order cannot be cancelled at this stage: ${currentStatus}`
-        );
-      }
+    // Cancellation is allowed ONLY when status is PLACED, CONFIRMED, PACKED
+    if (!CANCELLABLE_STATUSES.includes(currentStatusUpper)) {
+      res.status(400);
+      throw new Error(`This order can no longer be cancelled because it is in status: ${currentStatusUpper}.`);
     }
 
     const { reason } = req.body;
-    const validReasons = [
-      "Changed my mind",
-      "Ordered by mistake",
-      "Found lower price",
-      "Delivery taking too long",
-      "Need different product",
-      "Other"
-    ];
     const cancellationReason = reason || "Changed my mind";
 
     const cancelledAt = new Date();
+    const isAdmin = req.user.role === "admin";
     const cancelledByRole = isAdmin ? "admin" : "customer";
     const cancellerNote = isAdmin
       ? `Cancelled by admin. Reason: ${cancellationReason}`
       : `Cancelled by customer. Reason: ${cancellationReason}`;
 
     // Set order status and cancellation tracking fields
-    order.status = "Cancelled";
+    order.status = ORDER_STATUS.CANCELLED;
     order.cancelledAt = cancelledAt;
     order.cancelledBy = req.user._id;
     order.cancelledByRole = cancelledByRole;
@@ -555,7 +628,7 @@ export const cancelOrder = async (req, res, next) => {
     // Add history log for cancellation
     if (!Array.isArray(order.statusHistory)) order.statusHistory = [];
     order.statusHistory.push({
-      status: "Cancelled",
+      status: ORDER_STATUS.CANCELLED,
       at: cancelledAt,
       note: cancellerNote,
       changedBy: req.user._id,
@@ -563,21 +636,21 @@ export const cancelOrder = async (req, res, next) => {
 
     if (!Array.isArray(order.orderTimeline)) order.orderTimeline = [];
     order.orderTimeline.push({
-      status: "Cancelled",
+      status: ORDER_STATUS.CANCELLED,
       updatedAt: cancelledAt,
       note: cancellerNote,
       updatedBy: req.user._id,
     });
 
     // If prepaid (isPaid is true or paymentMethod is not cod)
-    // Automatically create Refund Processing request or automated Razorpay refund
+    // Automatically create Refund Pending request or automated Razorpay refund
     if (order.paymentMethod === "razorpay" && order.isPaid) {
       const paymentId = order.paymentResult?.paymentId;
       if (paymentId) {
         const isSimulated = paymentId.startsWith("pay_") || paymentId.startsWith("sim_");
         if (isSimulated || process.env.RAZORPAY_KEY_ID.includes("your_") || process.env.RAZORPAY_KEY_ID.includes("placeholder")) {
           // Simulate Razorpay refund
-          order.paymentStatus = "refunded";
+          order.paymentStatus = PAYMENT_STATUS.REFUNDED;
           order.refundResult = {
             refundId: `rfnd_sim_${Math.random().toString(36).substring(2, 11)}`,
             amount: order.totalPrice,
@@ -586,7 +659,7 @@ export const cancelOrder = async (req, res, next) => {
             date: new Date(),
           };
           order.statusHistory.push({
-            status: "Refunded",
+            status: ORDER_STATUS.REFUNDED,
             at: Date.now(),
             note: `Automated Razorpay refund processed. Refund ID: ${order.refundResult.refundId}`,
             changedBy: req.user._id,
@@ -594,7 +667,7 @@ export const cancelOrder = async (req, res, next) => {
 
           if (!Array.isArray(order.orderTimeline)) order.orderTimeline = [];
           order.orderTimeline.push({
-            status: "Refunded",
+            status: ORDER_STATUS.REFUNDED,
             updatedAt: Date.now(),
             note: `Automated Razorpay refund processed. Refund ID: ${order.refundResult.refundId}`,
             updatedBy: req.user._id,
@@ -609,7 +682,7 @@ export const cancelOrder = async (req, res, next) => {
             const refundObj = await client.payments.refund(paymentId, {
               amount: Math.round(order.totalPrice * 100),
             });
-            order.paymentStatus = "refunded";
+            order.paymentStatus = PAYMENT_STATUS.REFUNDED;
             order.refundResult = {
               refundId: refundObj.id,
               amount: order.totalPrice,
@@ -618,7 +691,7 @@ export const cancelOrder = async (req, res, next) => {
               date: new Date(),
             };
             order.statusHistory.push({
-              status: "Refunded",
+              status: ORDER_STATUS.REFUNDED,
               at: Date.now(),
               note: `Automated Razorpay refund processed. Refund ID: ${refundObj.id}`,
               changedBy: req.user._id,
@@ -626,16 +699,16 @@ export const cancelOrder = async (req, res, next) => {
 
             if (!Array.isArray(order.orderTimeline)) order.orderTimeline = [];
             order.orderTimeline.push({
-              status: "Refunded",
+              status: ORDER_STATUS.REFUNDED,
               updatedAt: Date.now(),
               note: `Automated Razorpay refund processed. Refund ID: ${refundObj.id}`,
               updatedBy: req.user._id,
             });
           } catch (err) {
             console.error("Automated Razorpay refund failed:", err.message);
-            order.paymentStatus = "Refund Processing";
+            order.paymentStatus = PAYMENT_STATUS.REFUND_PENDING;
             order.statusHistory.push({
-              status: "Refund Processing",
+              status: PAYMENT_STATUS.REFUND_PENDING,
               at: Date.now(),
               note: `Automated Razorpay refund failed. Reason: ${err.message}`,
               changedBy: req.user._id,
@@ -643,7 +716,7 @@ export const cancelOrder = async (req, res, next) => {
 
             if (!Array.isArray(order.orderTimeline)) order.orderTimeline = [];
             order.orderTimeline.push({
-              status: "Refund Processing",
+              status: PAYMENT_STATUS.REFUND_PENDING,
               updatedAt: Date.now(),
               note: `Automated Razorpay refund failed. Reason: ${err.message}`,
               updatedBy: req.user._id,
@@ -652,9 +725,9 @@ export const cancelOrder = async (req, res, next) => {
         }
       }
     } else if (order.isPaid || order.paymentMethod !== "cod") {
-      order.paymentStatus = "Refund Processing";
+      order.paymentStatus = PAYMENT_STATUS.REFUND_PENDING;
       order.statusHistory.push({
-        status: "Refund Processing",
+        status: PAYMENT_STATUS.REFUND_PENDING,
         at: Date.now(),
         note: `Automatic refund processing request generated.`,
         changedBy: req.user._id,
@@ -662,7 +735,7 @@ export const cancelOrder = async (req, res, next) => {
 
       if (!Array.isArray(order.orderTimeline)) order.orderTimeline = [];
       order.orderTimeline.push({
-        status: "Refund Processing",
+        status: PAYMENT_STATUS.REFUND_PENDING,
         updatedAt: Date.now(),
         note: `Automatic refund processing request generated.`,
         updatedBy: req.user._id,
@@ -690,6 +763,23 @@ export const cancelOrder = async (req, res, next) => {
     }
 
     const updatedOrder = await order.save();
+
+    // Send Cancellation & Refund notifications
+    try {
+      const { sendStatusUpdateNotification } = await import("../utils/email.js");
+      const populatedUser = await User.findById(order.user);
+      if (populatedUser) {
+        await sendStatusUpdateNotification(populatedUser, order._id, "Cancelled", cancellerNote);
+
+        if (order.paymentStatus === PAYMENT_STATUS.REFUNDED) {
+          await sendStatusUpdateNotification(populatedUser, order._id, "Refund Completed", `Refund of $${order.totalPrice.toFixed(2)} completed successfully.`);
+        } else if (order.paymentStatus === PAYMENT_STATUS.REFUND_PENDING) {
+          await sendStatusUpdateNotification(populatedUser, order._id, "Refund Initiated", `Refund of $${order.totalPrice.toFixed(2)} has been initiated.`);
+        }
+      }
+    } catch (emailErr) {
+      console.warn("Failed to send cancellation email notification:", emailErr.message);
+    }
 
     res.json({
       success: true,
@@ -721,10 +811,10 @@ export const requestOrderReturn = async (req, res, next) => {
       throw new Error("Not authorized to return this order");
     }
 
-    const currentStatus = order.status || "Placed";
+    const currentStatusUpper = (order.status || ORDER_STATUS.PLACED).toUpperCase();
 
-    // Only allow returns if order status == Delivered
-    if (currentStatus.toLowerCase() !== "delivered") {
+    // Only allow returns if order status == DELIVERED
+    if (currentStatusUpper !== ORDER_STATUS.DELIVERED) {
       res.status(400);
       throw new Error("Only delivered orders can be returned.");
     }
@@ -746,10 +836,13 @@ export const requestOrderReturn = async (req, res, next) => {
     }
 
     const requestType = type === "replacement" ? "replacement" : "return";
-    const statusText = requestType === "replacement" ? "Replacement Requested" : "Return Requested";
+    const statusText = ORDER_STATUS.RETURNED;
 
     // Set order status
     order.status = statusText;
+    if (requestType === "return") {
+      order.paymentStatus = PAYMENT_STATUS.REFUND_PENDING;
+    }
 
     // Populate return/replacement details
     order.returnReplacementDetails = {
@@ -806,6 +899,18 @@ export const adminProcessRefund = async (req, res, next) => {
       throw new Error("Order not found");
     }
 
+    if (!order.isPaid) {
+      res.status(400);
+      throw new Error("Cannot refund an unpaid order.");
+    }
+
+    const currentStatusUpper = (order.status || "").toUpperCase();
+    const allowedRefundStatuses = [ORDER_STATUS.CANCELLED, ORDER_STATUS.RETURNED, ORDER_STATUS.REFUNDED];
+    if (!allowedRefundStatuses.includes(currentStatusUpper)) {
+      res.status(400);
+      throw new Error("Refunds are only allowed after the order is Cancelled or Returned.");
+    }
+
     const { refundAmount, method, upiId, bankAccount, bankIfsc } = req.body;
     const amount = Number(refundAmount || order.totalPrice);
 
@@ -840,8 +945,8 @@ export const adminProcessRefund = async (req, res, next) => {
       }
     }
 
-    order.paymentStatus = "refunded";
-    order.status = "Refunded";
+    order.paymentStatus = PAYMENT_STATUS.REFUNDED;
+    order.status = ORDER_STATUS.REFUNDED;
 
     order.refundResult = {
       refundId,
@@ -853,7 +958,7 @@ export const adminProcessRefund = async (req, res, next) => {
 
     if (!Array.isArray(order.statusHistory)) order.statusHistory = [];
     order.statusHistory.push({
-      status: "Refunded",
+      status: ORDER_STATUS.REFUNDED,
       at: Date.now(),
       note: refundNote,
       changedBy: req.user._id,
@@ -861,13 +966,24 @@ export const adminProcessRefund = async (req, res, next) => {
 
     if (!Array.isArray(order.orderTimeline)) order.orderTimeline = [];
     order.orderTimeline.push({
-      status: "Refunded",
+      status: ORDER_STATUS.REFUNDED,
       updatedAt: Date.now(),
       note: refundNote,
       updatedBy: req.user._id,
     });
 
     const updatedOrder = await order.save();
+
+    // Trigger Refund Completed notification
+    try {
+      const { sendStatusUpdateNotification } = await import("../utils/email.js");
+      const populatedUser = await User.findById(order.user);
+      if (populatedUser) {
+        await sendStatusUpdateNotification(populatedUser, order._id, "Refund Completed", refundNote);
+      }
+    } catch (emailErr) {
+      console.warn("Failed to send refund completed email notification:", emailErr.message);
+    }
 
     res.json({
       success: true,
