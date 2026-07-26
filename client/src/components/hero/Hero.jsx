@@ -139,7 +139,7 @@ export default function Hero() {
   return (
     <section
       ref={sectionRef}
-      className="relative min-h-screen overflow-hidden bg-[#0a0a12] rounded-3xl"
+      className="relative min-h-screen overflow-hidden rounded-3xl border border-[#E8E1D8] dark:border-gray-800 bg-gradient-to-br from-[#F7F4EF] via-[#F3EFE8] to-[#EEF2FF] dark:from-[#0f172a] dark:via-[#1e1b4b]/60 dark:to-[#0f172a] shadow-sm"
       aria-label="ShopSphere hero section"
     >
       {/* Background */}

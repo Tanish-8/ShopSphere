@@ -40,7 +40,7 @@ function ToastItem({ toast, onDismiss }) {
   const typeConfig = {
     success: { bg: "bg-emerald-50 border-emerald-200 text-emerald-800", bar: "bg-emerald-500", icon: "✅" },
     error: { bg: "bg-rose-50 border-rose-200 text-rose-800", bar: "bg-rose-500", icon: "❌" },
-    warning: { bg: "bg-amber-50 border-amber-250 text-amber-800", bar: "bg-amber-500", icon: "⚠️" },
+    warning: { bg: "bg-amber-50 border-amber-300 text-amber-800", bar: "bg-amber-500", icon: "⚠️" },
     info: { bg: "bg-blue-50 border-blue-200 text-blue-800", bar: "bg-blue-500", icon: "ℹ️" },
     loading: { bg: "bg-gray-50 border-gray-200 text-gray-800", bar: "bg-indigo-500", icon: "⏳" }
   };

@@ -162,7 +162,7 @@ function CartPage() {
         await removeFromWishlist(productId);
         setWishlistIds((prev) => prev.filter((id) => id !== productId));
         toast.dismiss(toastId);
-        toast.info("Removed from Wishlist", <p className="font-bold text-gray-905">{prodName}</p>);
+        toast.info("Removed from Wishlist", <p className="font-bold text-gray-900">{prodName}</p>);
       } else {
         await addToWishlist(productId);
         setWishlistIds((prev) => [...prev, productId]);
@@ -170,7 +170,7 @@ function CartPage() {
         toast.success("Added to Wishlist", (
           <div className="space-y-1">
             <p className="font-extrabold text-gray-900 leading-tight">{prodName}</p>
-            <div className="flex gap-2.5 pt-1 text-[10px] font-black text-indigo-650">
+            <div className="flex gap-2.5 pt-1 text-[10px] font-black text-indigo-600">
               <a href="/wishlist" className="hover:underline">View Wishlist</a>
               <span className="text-gray-300">|</span>
               <a href="/products" className="hover:underline">Continue Shopping</a>
@@ -194,13 +194,13 @@ function CartPage() {
       {cartItems.length === 0 ? (
         <section className="rounded-2xl border border-gray-200 bg-white p-12 text-center shadow-sm max-w-xl mx-auto space-y-4">
           <div className="text-5xl">🛒</div>
-          <h2 className="text-lg font-bold text-gray-805">Your cart is empty</h2>
+          <h2 className="text-lg font-bold text-gray-800">Your cart is empty</h2>
           <p className="text-xs text-gray-500 max-w-xs mx-auto leading-relaxed">
             Looks like you haven't added anything to your cart yet. Explore our top categories to find amazing deals!
           </p>
           <Link
             to="/products"
-            className="inline-flex rounded-xl bg-indigo-600 px-6 py-3 text-xs font-extrabold text-white transition-all duration-300 hover:bg-indigo-750 active:scale-95 shadow-sm"
+            className="inline-flex rounded-xl bg-indigo-600 px-6 py-3 text-xs font-extrabold text-white transition-all duration-300 hover:bg-indigo-700 active:scale-95 shadow-sm"
           >
             Explore Catalog
           </Link>
@@ -212,7 +212,7 @@ function CartPage() {
             {cartItems.map((item) => (
               <article
                 key={item.productId}
-                className="grid gap-4 rounded-2xl border border-gray-150 bg-white p-4.5 shadow-xs sm:grid-cols-[100px_1fr] transition-all hover:border-gray-250"
+                className="grid gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:grid-cols-[100px_1fr] transition-all hover:border-gray-300"
               >
                 <div className="h-24 w-24 rounded-xl overflow-hidden bg-gray-50 shrink-0 border border-gray-100 aspect-square">
                   <img
@@ -228,7 +228,7 @@ function CartPage() {
 
                 <div className="flex flex-col justify-between space-y-3">
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <h2 className="font-bold text-gray-850 hover:text-indigo-650 transition-colors leading-snug max-w-md">
+                    <h2 className="font-bold text-gray-800 hover:text-indigo-600 transition-colors leading-snug max-w-md">
                       {item.name}
                     </h2>
                     <button
@@ -245,10 +245,10 @@ function CartPage() {
                   </div>
 
                   <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-gray-50">
-                    <div className="inline-flex items-center rounded-xl border border-gray-250 bg-gray-50 overflow-hidden">
+                    <div className="inline-flex items-center rounded-xl border border-gray-300 bg-gray-50 overflow-hidden">
                       <button
                         type="button"
-                        className="px-3 py-1.5 text-gray-750 font-bold hover:bg-gray-200 transition-colors cursor-pointer"
+                        className="px-3 py-1.5 text-gray-700 font-bold hover:bg-gray-200 transition-colors cursor-pointer"
                         onClick={() => updateQuantity(item.productId, Math.max(1, item.quantity - 1))}
                       >
                         -
@@ -259,11 +259,11 @@ function CartPage() {
                         max={item.countInStock || 999}
                         value={item.quantity}
                         onChange={(event) => updateQuantity(item.productId, Number(event.target.value))}
-                        className="w-12 border-x border-gray-250 py-1 text-center text-xs outline-none bg-white font-bold text-gray-800"
+                        className="w-12 border-x border-gray-300 py-1 text-center text-xs outline-none bg-white font-bold text-gray-800"
                       />
                       <button
                         type="button"
-                        className="px-3 py-1.5 text-gray-750 font-bold hover:bg-gray-200 transition-colors cursor-pointer"
+                        className="px-3 py-1.5 text-gray-700 font-bold hover:bg-gray-200 transition-colors cursor-pointer"
                         onClick={() =>
                           updateQuantity(item.productId, Math.min(Number(item.countInStock || 999), Number(item.quantity) + 1))
                         }
@@ -290,7 +290,7 @@ function CartPage() {
               </button>
               <Link
                 to="/products"
-                className="text-xs font-extrabold text-indigo-650 hover:underline flex items-center gap-1"
+                className="text-xs font-extrabold text-indigo-600 hover:underline flex items-center gap-1"
               >
                 &larr; Continue Shopping
               </Link>
@@ -300,14 +300,14 @@ function CartPage() {
           {/* Right panel: Order summary and sidebar tools */}
           <aside className="space-y-6">
             {/* Free Shipping Progress Card */}
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-xs space-y-3">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-3">
               <div className="flex items-center justify-between text-xs font-bold text-gray-700">
                 <span className="flex items-center gap-1.5">
                   🚚 {amountLeft > 0 ? "Free Shipping Goal" : "Goal Unlocked!"}
                 </span>
                 <span>{formatCurrency(convertPrice(totalPrice))} / {formatCurrency(convertPrice(FREE_SHIPPING_THRESHOLD))}</span>
               </div>
-              <div className="h-2 w-full rounded-full bg-gray-150 overflow-hidden">
+              <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 transition-all duration-500 rounded-full"
                   style={{ width: `${progressPercentage}%` }}
@@ -323,10 +323,10 @@ function CartPage() {
             </div>
 
             {/* Main Order Summary Card */}
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-xs space-y-5">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-6">
               <h2 className="text-lg font-bold text-gray-900 border-b border-gray-50 pb-2">Order Summary</h2>
 
-              <div className="space-y-3 text-xs font-semibold text-gray-650">
+              <div className="space-y-3 text-xs font-semibold text-gray-600">
                 <div className="flex items-center justify-between">
                   <span>Total Items</span>
                   <span className="font-bold text-gray-800">{totalItemCount}</span>
@@ -336,14 +336,14 @@ function CartPage() {
                   <span className="font-bold text-gray-800">{formatCurrency(convertPrice(totalPrice))}</span>
                 </div>
                 {discount > 0 && (
-                  <div className="flex items-center justify-between text-emerald-650">
+                  <div className="flex items-center justify-between text-emerald-600">
                     <span>Coupon Discount</span>
                     <span>-{formatCurrency(convertPrice(discount))}</span>
                   </div>
                 )}
                 <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-sm font-black text-gray-900">
                   <span>Estimated Total</span>
-                  <span className="text-base text-indigo-650">{formatCurrency(convertPrice(totalPrice - discount))}</span>
+                  <span className="text-base text-indigo-600">{formatCurrency(convertPrice(totalPrice - discount))}</span>
                 </div>
               </div>
 
@@ -351,7 +351,7 @@ function CartPage() {
               <div className="pt-3 border-t border-gray-100 space-y-2">
                 <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400">Apply Promo Code</label>
                 {appliedCoupon ? (
-                  <div className="flex items-center justify-between rounded-xl bg-emerald-50 border border-emerald-250 p-2.5 text-xs text-emerald-800 font-semibold">
+                  <div className="flex items-center justify-between rounded-xl bg-emerald-50 border border-emerald-300 p-2.5 text-xs text-emerald-800 font-semibold">
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm">🎟️</span>
                       <span className="font-extrabold">{appliedCoupon}</span>
@@ -359,7 +359,7 @@ function CartPage() {
                     <button
                       type="button"
                       onClick={handleRemoveCoupon}
-                      className="text-[10px] font-extrabold text-emerald-700 hover:text-rose-600 bg-white shadow-xs rounded px-2 py-1 transition cursor-pointer"
+                      className="text-[10px] font-extrabold text-emerald-700 hover:text-rose-600 bg-white shadow-sm rounded px-2 py-1 transition cursor-pointer"
                     >
                       Remove
                     </button>
@@ -376,7 +376,7 @@ function CartPage() {
                     <button
                       type="submit"
                       disabled={validating || !couponCode.trim()}
-                      className="rounded-xl bg-gray-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-indigo-650 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed cursor-pointer"
+                      className="rounded-xl bg-gray-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-indigo-600 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed cursor-pointer"
                     >
                       {validating ? "Validating..." : "Apply"}
                     </button>
@@ -388,7 +388,7 @@ function CartPage() {
                   </p>
                 )}
                 {couponSuccess && (
-                  <p className="text-[10px] font-semibold text-emerald-750 bg-emerald-50 border border-emerald-100 rounded-lg p-2 leading-relaxed">
+                  <p className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg p-2 leading-relaxed">
                     ✨ {couponSuccess}
                   </p>
                 )}
@@ -396,31 +396,31 @@ function CartPage() {
 
               <Link
                 to="/checkout"
-                className="block w-full rounded-xl bg-indigo-650 py-3 text-center text-xs font-extrabold text-white transition-all duration-300 hover:bg-indigo-750 active:scale-95 shadow-sm"
+                className="block w-full rounded-xl bg-indigo-600 py-3 text-center text-xs font-extrabold text-white transition-all duration-300 hover:bg-indigo-700 active:scale-95 shadow-sm"
               >
                 Proceed to Checkout
               </Link>
             </div>
 
             {/* Delivery Estimates Card */}
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-xs space-y-3.5">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-3.5">
               <h3 className="text-xs font-extrabold text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
                 📅 Delivery Estimates
               </h3>
-              <div className="space-y-3 text-xs text-gray-650 font-semibold">
+              <div className="space-y-3 text-xs text-gray-600 font-semibold">
                 <div className="flex items-center justify-between border-b border-gray-50 pb-2">
                   <div className="flex flex-col text-left">
                     <span>Standard Shipping</span>
                     <span className="text-[10px] text-gray-400 font-medium">Free on orders above {formatCurrency(convertPrice(500))}</span>
                   </div>
-                  <span className="text-right text-gray-905">{getDeliveryDateRange(3, 5)}</span>
+                  <span className="text-right text-gray-900">{getDeliveryDateRange(3, 5)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col text-left">
                     <span>Express Shipping</span>
                     <span className="text-[10px] text-gray-400 font-medium">Next-day local packing</span>
                   </div>
-                  <span className="text-right text-gray-905">{getDeliveryDateRange(1, 2)}</span>
+                  <span className="text-right text-gray-900">{getDeliveryDateRange(1, 2)}</span>
                 </div>
               </div>
             </div>
@@ -430,7 +430,7 @@ function CartPage() {
 
       {/* Recommended Products cross-selling section */}
       {recommendations.length > 0 && (
-        <section className="pt-10 border-t border-gray-150">
+        <section className="pt-10 border-t border-gray-200">
           <div className="mb-6 text-left">
             <h2 className="text-2xl font-bold text-gray-900">You May Also Like</h2>
             <p className="text-xs text-gray-500 mt-1">Recommended matches based on your cart.</p>

@@ -169,7 +169,7 @@ export default function SettingsPage() {
             onClick={() => setSearchParams({ tab: tab.id })}
             className={`flex-1 min-w-[100px] py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
               currentTab === tab.id
-                ? "bg-white text-indigo-700 shadow-xs"
+                ? "bg-white text-indigo-700 shadow-sm"
                 : "text-gray-500 hover:text-gray-800"
             }`}
           >
@@ -180,7 +180,7 @@ export default function SettingsPage() {
 
       <div className="grid gap-8 md:grid-cols-4 items-start">
         {/* Left Column: Premium Sidebar layout */}
-        <aside className="hidden md:block col-span-1 space-y-1.5 bg-white border border-gray-150 p-2.5 rounded-2xl shadow-xs">
+        <aside className="hidden md:block col-span-1 space-y-1.5 bg-white border border-gray-200 p-2.5 rounded-2xl shadow-sm">
           {tabs.map((tab) => {
             const isActive = currentTab === tab.id;
             return (
@@ -189,7 +189,7 @@ export default function SettingsPage() {
                 onClick={() => setSearchParams({ tab: tab.id })}
                 className={`w-full h-11 flex items-center gap-3.5 px-3.5 text-xs font-bold rounded-xl transition text-left cursor-pointer border-l-4 ${
                   isActive
-                    ? "border-indigo-650 bg-indigo-50/30 text-indigo-700 font-bold"
+                    ? "border-indigo-600 bg-indigo-50/30 text-indigo-700 font-bold"
                     : "border-transparent text-gray-500 hover:bg-gray-50/50 hover:text-gray-900"
                 }`}
               >
@@ -203,7 +203,7 @@ export default function SettingsPage() {
         {/* Right Column: Content Card (takes 75% width) */}
         <div key={currentTab} className="md:col-span-3 animate-tab-fade">
           {currentTab === "personal" && (
-            <section id="personal-info" className="rounded-2xl border border-gray-150 bg-white p-6 shadow-xs space-y-4">
+            <section id="personal-info" className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
               <h2 className="text-lg font-bold text-gray-800 border-b border-gray-50 pb-2">Personal Information</h2>
               
               {personalMsg && <p className="text-xs text-emerald-600 font-semibold">{personalMsg}</p>}
@@ -254,7 +254,7 @@ export default function SettingsPage() {
           )}
 
           {currentTab === "security" && (
-            <section id="change-password" className="rounded-2xl border border-gray-150 bg-white p-6 shadow-xs space-y-4">
+            <section id="change-password" className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
               <h2 className="text-lg font-bold text-gray-800 border-b border-gray-50 pb-2">Security & Password</h2>
 
               {passwordMsg && <p className="text-xs text-emerald-600 font-semibold">{passwordMsg}</p>}
@@ -352,7 +352,7 @@ export default function SettingsPage() {
           )}
 
           {currentTab === "preferences" && (
-            <section id="preferences" className="rounded-2xl border border-gray-150 bg-white p-6 shadow-xs space-y-6">
+            <section id="preferences" className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-6">
               <div>
                 <h2 className="text-lg font-bold text-gray-800 border-b border-gray-50 pb-2">Display Preferences</h2>
                 <div className="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -380,7 +380,7 @@ export default function SettingsPage() {
                       <button
                         key={mode}
                         onClick={() => setTheme(mode)}
-                        className={`px-4 py-1.5 text-xs font-bold rounded-lg capitalize transition-all cursor-pointer ${theme === mode ? "bg-white text-indigo-700 shadow-xs" : "text-gray-500 hover:text-gray-800"}`}
+                        className={`px-4 py-1.5 text-xs font-bold rounded-lg capitalize transition-all cursor-pointer ${theme === mode ? "bg-white text-indigo-700 shadow-sm" : "text-gray-500 hover:text-gray-800"}`}
                       >
                         {mode}
                       </button>
@@ -471,8 +471,8 @@ export default function SettingsPage() {
           )}
 
           {currentTab === "danger" && (
-            <section id="danger-zone" className="rounded-2xl border border-red-200 bg-red-50/40 p-6 shadow-xs space-y-4">
-              <h2 className="text-lg font-bold text-red-700 border-b border-red-150 pb-2">Danger Zone</h2>
+            <section id="danger-zone" className="rounded-2xl border border-red-200 bg-red-50/40 p-6 shadow-sm space-y-4">
+              <h2 className="text-lg font-bold text-red-700 border-b border-red-200 pb-2">Danger Zone</h2>
               <p className="text-xs text-gray-600 font-medium">
                 Permanently delete your user profile account and clear all historical orders list data. This action is irreversible.
               </p>
@@ -493,8 +493,8 @@ export default function SettingsPage() {
 
       {/* Delete account Modal Dialog */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs animate-dropdown">
-          <div className="w-full max-w-sm rounded-2xl border border-gray-150 bg-white p-6 shadow-xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-dropdown">
+          <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-xl space-y-4">
             <h3 className="text-base font-bold text-gray-900">Are you absolutely sure?</h3>
             <p className="text-xs text-gray-500">
               This action cannot be undone. To proceed, please type <strong className="text-red-600">DELETE</strong> in the box below:

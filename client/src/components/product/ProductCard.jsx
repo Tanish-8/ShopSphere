@@ -63,12 +63,12 @@ export default function ProductCard({ product, isWishlisted, onWishlistToggle })
     <div className="group relative flex flex-col overflow-hidden rounded-[18px] border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-[6px] dark:bg-gray-800">
       {/* Product Badges (Top Left) */}
       {badge && (
-        <span className="absolute left-3 top-3 z-10 rounded-md bg-indigo-600 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-white shadow-xs">
+        <span className="absolute left-3 top-3 z-10 rounded-md bg-indigo-600 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-white shadow-sm">
           {badge}
         </span>
       )}
       {discount > 0 && (
-        <span className="absolute left-3 top-[28px] z-10 rounded-md bg-rose-500 px-2 py-0.5 text-xs font-semibold tracking-wider text-white shadow-xs">
+        <span className="absolute left-3 top-[28px] z-10 rounded-md bg-rose-500 px-2 py-0.5 text-xs font-semibold tracking-wider text-white shadow-sm">
           {discount}% OFF
         </span>
       )}
@@ -120,7 +120,7 @@ export default function ProductCard({ product, isWishlisted, onWishlistToggle })
           }}
         />
         {stock === 0 && (
-          <div className="absolute inset-0 bg-white/75 backdrop-blur-xs flex items-center justify-center dark:bg-black/75 dark:backdrop-blur-xs">
+          <div className="absolute inset-0 bg-white/75 backdrop-blur-sm flex items-center justify-center dark:bg-black/75 dark:backdrop-blur-sm">
             <span className="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-white shadow-sm">
               Out of Stock
             </span>
@@ -191,7 +191,7 @@ export default function ProductCard({ product, isWishlisted, onWishlistToggle })
         <button
           onClick={handleAddToCart}
           disabled={stock === 0}
-          className={`mt-auto w-full h-11 rounded-lg flex items-center justify-center gap-2 text-sm font-bold text-white transition-all duration-300 active:scale-95 shadow-xs ${stock === 0 ? "bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-600 dark:text-gray-300" : "bg-indigo-600 hover:bg-indigo-700 hover:shadow-md dark:bg-indigo-500 dark:hover:bg-indigo-600"}`}
+          className={`mt-auto w-full h-11 rounded-lg flex items-center justify-center gap-2 text-sm font-bold text-white transition-all duration-300 active:scale-95 shadow-sm ${stock === 0 ? "bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-600 dark:text-gray-300" : "bg-indigo-600 hover:bg-indigo-700 hover:shadow-md dark:bg-indigo-500 dark:hover:bg-indigo-600"}`}
         >
           <ShoppingCart className="h-4 w-4" />
           {stock === 0 ? "Out of Stock" : "Add to Cart"}

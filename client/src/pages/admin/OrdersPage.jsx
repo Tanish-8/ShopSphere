@@ -161,38 +161,38 @@ export default function OrdersPage() {
 
       {/* Statistics Panels */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
-        <div className="bg-white border border-gray-150 rounded-2xl p-4 shadow-3xs text-center space-y-1">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm text-center space-y-1">
           <p className="text-[10px] font-bold uppercase text-gray-400">Pending</p>
-          <p className="text-xl font-extrabold text-indigo-650">{stats.pending}</p>
+          <p className="text-xl font-extrabold text-indigo-600">{stats.pending}</p>
         </div>
-        <div className="bg-white border border-gray-150 rounded-2xl p-4 shadow-3xs text-center space-y-1">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm text-center space-y-1">
           <p className="text-[10px] font-bold uppercase text-gray-400">Packed</p>
           <p className="text-xl font-extrabold text-yellow-600">{stats.packed}</p>
         </div>
-        <div className="bg-white border border-gray-150 rounded-2xl p-4 shadow-3xs text-center space-y-1">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm text-center space-y-1">
           <p className="text-[10px] font-bold uppercase text-gray-400">Shipped</p>
           <p className="text-xl font-extrabold text-blue-600">{stats.shipped}</p>
         </div>
-        <div className="bg-white border border-gray-150 rounded-2xl p-4 shadow-3xs text-center space-y-1">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm text-center space-y-1">
           <p className="text-[10px] font-bold uppercase text-gray-400">Delivered</p>
           <p className="text-xl font-extrabold text-emerald-600">{stats.delivered}</p>
         </div>
-        <div className="bg-white border border-gray-150 rounded-2xl p-4 shadow-3xs text-center space-y-1">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm text-center space-y-1">
           <p className="text-[10px] font-bold uppercase text-gray-400">Cancelled</p>
           <p className="text-xl font-extrabold text-red-600">{stats.cancelled}</p>
         </div>
-        <div className="bg-white border border-gray-150 rounded-2xl p-4 shadow-3xs text-center space-y-1">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm text-center space-y-1">
           <p className="text-[10px] font-bold uppercase text-gray-400">Returns</p>
           <p className="text-xl font-extrabold text-purple-600">{stats.returns}</p>
         </div>
-        <div className="bg-white border border-gray-150 rounded-2xl p-4 shadow-3xs text-center space-y-1">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm text-center space-y-1">
           <p className="text-[10px] font-bold uppercase text-gray-400">Refunds</p>
           <p className="text-xl font-extrabold text-pink-600">{stats.refunds}</p>
         </div>
       </div>
 
       {/* Advanced Filters Grid */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 bg-white border border-gray-150 p-4 rounded-2xl shadow-3xs">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 bg-white border border-gray-200 p-4 rounded-2xl shadow-sm">
         <div className="space-y-1">
           <label className="block text-[10px] font-bold uppercase text-gray-400 tracking-wider">Search</label>
           <input
@@ -255,7 +255,7 @@ export default function OrdersPage() {
       {/* Orders Listing Grid */}
       <div className="space-y-3.5">
         {orders.filter(applyFilter).length === 0 ? (
-          <div className="rounded-2xl border border-gray-150 bg-white py-12 text-center text-xs font-semibold text-gray-400">
+          <div className="rounded-2xl border border-gray-200 bg-white py-12 text-center text-xs font-semibold text-gray-400">
             No matching orders found.
           </div>
         ) : (
@@ -269,7 +269,7 @@ export default function OrdersPage() {
             const isExpanded = expandedOrders.has(o._id);
 
             return (
-              <div key={o._id} className="rounded-2xl border border-gray-150 bg-white shadow-3xs hover:border-gray-300 transition overflow-hidden">
+              <div key={o._id} className="rounded-2xl border border-gray-200 bg-white shadow-sm hover:border-gray-300 transition overflow-hidden">
                 {/* Main Order Card Body */}
                 <div className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="text-left space-y-1.5 min-w-0">
@@ -354,7 +354,7 @@ export default function OrdersPage() {
                         <select
                           value={o.status || ORDER_STATUS.PLACED}
                           onChange={(e) => handleUpdate(o._id, e.target.value)}
-                          className="h-9 rounded-xl border border-gray-300 bg-white px-2.5 text-[10px] font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-150 cursor-pointer"
+                          className="h-9 rounded-xl border border-gray-300 bg-white px-2.5 text-[10px] font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-100 cursor-pointer"
                         >
                           <option value="PLACED" disabled={isOptionDisabled("PLACED")}>Placed</option>
                           <option value="CONFIRMED" disabled={isOptionDisabled("CONFIRMED")}>Confirmed</option>
@@ -438,7 +438,7 @@ export default function OrdersPage() {
 
                 {/* Expanded Timeline details display */}
                 {isExpanded && (
-                  <div className="px-6 py-4 bg-gray-50 border-t border-gray-150 animate-tab-fade text-left space-y-4">
+                  <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 animate-tab-fade text-left space-y-4">
                     <h4 className="text-[10px] font-bold uppercase text-gray-400 tracking-wider">Order Status Timeline Logs</h4>
                     
                     <div className="relative border-l border-gray-200 ml-3 space-y-4">
@@ -469,8 +469,8 @@ export default function OrdersPage() {
 
       {/* Admin Process Refund Modal */}
       {showRefundModal && selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs animate-dropdown">
-          <form onSubmit={handleRefundSubmit} className="w-full max-w-md rounded-2xl border border-gray-150 bg-white p-6 shadow-2xl space-y-4 text-left animate-dropdown">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-dropdown">
+          <form onSubmit={handleRefundSubmit} className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl space-y-4 text-left animate-dropdown">
             <div className="border-b border-gray-100 pb-3">
               <h3 className="text-base font-extrabold text-gray-900">Process Order Refund</h3>
               <p className="text-[10px] text-gray-400 font-medium">Verify refund parameters to execute payment updates.</p>
@@ -494,7 +494,7 @@ export default function OrdersPage() {
                 <select
                   value={refundMethod}
                   onChange={(e) => setRefundMethod(e.target.value)}
-                  className="w-full h-11 rounded-xl border border-gray-300 bg-white px-3 text-xs font-semibold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-150 cursor-pointer"
+                  className="w-full h-11 rounded-xl border border-gray-300 bg-white px-3 text-xs font-semibold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-100 cursor-pointer"
                 >
                   {selectedOrder.paymentMethod === "razorpay" ? (
                     <option value="Razorpay">Razorpay Gateway Refund</option>

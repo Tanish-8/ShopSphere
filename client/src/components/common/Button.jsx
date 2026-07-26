@@ -11,16 +11,16 @@ export default function Button({
   style = {},
   ...props
 }) {
-  const baseStyle = "inline-flex items-center justify-center font-semibold transition-all duration-200 outline-none select-none cursor-pointer focus:ring-2 focus:ring-indigo-150 active:scale-98 hover:-translate-y-0.5 hover:shadow-sm";
+  const baseStyle = "inline-flex items-center justify-center font-semibold transition-all duration-200 outline-none select-none cursor-pointer focus:ring-2 focus:ring-indigo-100 active:scale-98 hover:-translate-y-0.5 hover:shadow-sm";
   
   let variantStyle = "";
 
   if (variant === "primary") {
-    variantStyle = "h-[44px] min-w-[140px] px-6 rounded-xl text-[15px] bg-indigo-600 hover:bg-indigo-700 text-white border border-transparent shadow-xs";
+    variantStyle = "h-[44px] min-w-[140px] px-6 rounded-xl text-[15px] bg-indigo-600 hover:bg-indigo-700 text-white border border-transparent shadow-sm";
   } else if (variant === "secondary") {
     variantStyle = "h-[44px] min-w-[140px] px-6 rounded-xl text-[15px] bg-transparent text-gray-700 border border-gray-300 hover:bg-gray-50/50";
   } else if (variant === "danger") {
-    variantStyle = "h-[44px] min-w-[140px] px-6 rounded-xl text-[15px] bg-red-600 hover:bg-red-700 text-white border border-transparent shadow-xs";
+    variantStyle = "h-[44px] min-w-[140px] px-6 rounded-xl text-[15px] bg-red-600 hover:bg-red-700 text-white border border-transparent shadow-sm";
   } else if (variant === "ghost") {
     variantStyle = "bg-transparent text-gray-600 border border-transparent hover:bg-gray-50/50";
   } else if (variant === "icon") {

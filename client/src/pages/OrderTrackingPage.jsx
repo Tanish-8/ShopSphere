@@ -40,7 +40,7 @@ export default function OrderTrackingPage() {
 
   if (error || !order) {
     return (
-      <div className="rounded-2xl border border-red-200 bg-red-50 p-8 text-center text-sm text-red-700 shadow-xs">
+      <div className="rounded-2xl border border-red-200 bg-red-50 p-8 text-center text-sm text-red-700 shadow-sm">
         {error || "Order details not found."}
       </div>
     );
@@ -105,7 +105,7 @@ export default function OrderTrackingPage() {
       </div>
 
       {/* Shipping Progress Card */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 bg-white border border-gray-150 p-6 rounded-3xl shadow-xs">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 bg-white border border-gray-200 p-6 rounded-3xl shadow-sm">
         <div className="space-y-1 text-left">
           <span className="block text-[10px] font-bold uppercase tracking-wider text-gray-400">Current Status</span>
           <span className="block text-sm font-extrabold text-indigo-600 capitalize">
@@ -131,7 +131,7 @@ export default function OrderTrackingPage() {
       </div>
 
       {/* Main Tracking Details */}
-      <div className="rounded-3xl border border-gray-150 bg-white p-6 shadow-xs space-y-6">
+      <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm space-y-6">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-gray-50 pb-4">
           <div className="text-left">
             <h2 className="text-lg font-bold text-gray-900">Order tracking logs</h2>
@@ -159,7 +159,7 @@ export default function OrderTrackingPage() {
               return (
                 <div key={stg.key} className="flex-1 flex flex-col items-center text-center relative z-10">
                   <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-bold transition-all duration-300 ${completed ? "bg-indigo-600 border-indigo-600 text-white shadow-xs" : "bg-white border-gray-300 text-gray-400"} ${isActive ? "ring-4 ring-indigo-100 scale-105 animate-pulse" : ""}`}
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-bold transition-all duration-300 ${completed ? "bg-indigo-600 border-indigo-600 text-white shadow-sm" : "bg-white border-gray-300 text-gray-400"} ${isActive ? "ring-4 ring-indigo-100 scale-105 animate-pulse" : ""}`}
                   >
                     {completed ? "✓" : i + 1}
                   </div>

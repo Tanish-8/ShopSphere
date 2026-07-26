@@ -41,9 +41,8 @@ const FeaturedProductCard = ({ product, isWishlisted, onWishlistToggle, classNam
         transformStyle: "preserve-3d",
       }}
       className={cn(
-        "group relative transition-all duration-500 rounded-3xl p-4",
-        "hover:shadow-[0_40px_80px_rgba(0,0,0,0.12)]",
-        "bg-white border border-neutral-100/50 hover:border-transparent",
+        "group relative transition-all duration-300 rounded-2xl p-4",
+        "bg-white dark:bg-gray-800 border border-[#E8E1D8] dark:border-gray-700 shadow-sm hover:shadow-md hover:-translate-y-1",
         className
       )}
     >

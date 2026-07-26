@@ -59,48 +59,36 @@ export default function DecorativeHeroCard({
         }}
       >
         {/* Card body */}
-        <div className="relative overflow-hidden rounded-2xl border border-white/[0.12] bg-white/[0.06] p-4 shadow-2xl shadow-black/40 backdrop-blur-2xl text-left">
-            {/* Gradient border shimmer */}
-            <div
-              className="pointer-events-none absolute inset-0 rounded-2xl opacity-60"
-              style={{
-                background:
-                  "linear-gradient(135deg, rgba(139,92,246,0.25) 0%, rgba(99,102,241,0.15) 50%, rgba(255,255,255,0.05) 100%)",
-              }}
-              aria-hidden="true"
-            />
-
+        <div className="relative overflow-hidden rounded-2xl border border-[#E8E1D8] dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm text-left">
             {/* Badge */}
             {badge && (
-              <div className="absolute right-3 top-3 z-10 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-lg shadow-violet-500/40">
+              <div className="absolute right-3 top-3 z-10 rounded-full bg-indigo-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-sm">
                 {badge}
               </div>
             )}
 
             {/* Product image */}
-            <div className="relative mb-3 flex h-36 items-center justify-center overflow-hidden rounded-xl bg-white/5">
+            <div className="relative mb-3 flex h-36 items-center justify-center overflow-hidden rounded-xl bg-gray-50 dark:bg-gray-900">
               <img
                 src={image}
                 alt={name}
-                className="h-full w-full object-contain drop-shadow-2xl"
+                className="h-full w-full object-contain"
               />
-              {/* Glow under image */}
-              <div className="pointer-events-none absolute bottom-0 left-1/2 h-10 w-3/4 -translate-x-1/2 rounded-full bg-violet-600/20 blur-xl" aria-hidden="true" />
             </div>
 
             {/* Card info */}
             <div className="relative space-y-2">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-violet-400">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
                 {category}
               </p>
-              <h3 className="text-sm font-semibold leading-tight text-white">{name}</h3>
+              <h3 className="text-sm font-semibold leading-tight text-gray-900 dark:text-white">{name}</h3>
               <div className="flex items-center justify-between">
                 <StarRating rating={rating} />
-                <span className="text-[10px] text-slate-400">({rating})</span>
+                <span className="text-[10px] text-gray-500 dark:text-gray-400">({rating})</span>
               </div>
               <div className="flex items-center justify-between pt-1">
-                <span className="text-base font-bold text-white">{formatCurrency(convertPrice(price))}</span>
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/40">
+                <span className="text-base font-bold text-gray-900 dark:text-white">{formatCurrency(convertPrice(price))}</span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-colors">
                   <ShoppingBag className="h-3.5 w-3.5 text-white" />
                 </div>
               </div>

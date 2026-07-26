@@ -61,7 +61,7 @@ export default function CouponsPage() {
     setCopiedCode(code);
     toast.success("Coupon Copied!", (
       <div className="space-y-1">
-        <p className="font-extrabold text-gray-900 leading-tight">Code: <span className="text-indigo-650">{code}</span></p>
+        <p className="font-extrabold text-gray-900 leading-tight">Code: <span className="text-indigo-600">{code}</span></p>
         <p className="text-[10px] text-gray-500">Apply this code during cart review or checkout.</p>
       </div>
     ));
@@ -81,7 +81,7 @@ export default function CouponsPage() {
         {AVAILABLE_COUPONS.map((coupon) => (
           <div
             key={coupon.code}
-            className="group relative flex overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
+            className="group relative flex overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
             style={{ boxShadow: `0 4px 20px -2px ${coupon.glowColor}` }}
           >
             {/* Left section: Gradient badge & Discount */}
@@ -101,14 +101,14 @@ export default function CouponsPage() {
               
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="inline-block rounded-md bg-indigo-50 px-2.5 py-1 text-xs font-black tracking-wider text-indigo-750 uppercase">
+                  <span className="inline-block rounded-md bg-indigo-50 px-2.5 py-1 text-xs font-black tracking-wider text-indigo-700 uppercase">
                     {coupon.code}
                   </span>
                   <span className="text-[10px] text-gray-400 font-bold">
                     Expires {new Date(coupon.expiryDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
                   </span>
                 </div>
-                <p className="text-xs text-gray-650 leading-relaxed font-medium mt-1">
+                <p className="text-xs text-gray-600 leading-relaxed font-medium mt-1">
                   {coupon.description}
                 </p>
               </div>
@@ -120,7 +120,7 @@ export default function CouponsPage() {
                     <span className="font-extrabold text-gray-800">${coupon.minOrder}</span>
                   </div>
                   {coupon.maxDiscount > 0 && coupon.maxDiscount !== coupon.value && (
-                    <div className="flex items-center gap-1 text-[10px] text-gray-405">
+                    <div className="flex items-center gap-1 text-[10px] text-gray-400">
                       <span>Max Discount:</span>
                       <span>${coupon.maxDiscount}</span>
                     </div>
@@ -133,7 +133,7 @@ export default function CouponsPage() {
                   className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all duration-300 active:scale-95 flex items-center gap-1 cursor-pointer ${
                     copiedCode === coupon.code
                       ? "bg-emerald-600 text-white"
-                      : "bg-gray-150 hover:bg-indigo-600 hover:text-white text-gray-700"
+                      : "bg-gray-200 hover:bg-indigo-600 hover:text-white text-gray-700"
                   }`}
                 >
                   {copiedCode === coupon.code ? (

@@ -97,7 +97,7 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3 bg-white border border-gray-150 p-4 rounded-2xl shadow-3xs">
+      <div className="flex items-center gap-3 bg-white border border-gray-200 p-4 rounded-2xl shadow-sm">
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -113,10 +113,10 @@ export default function UsersPage() {
       ) : filtered.length === 0 ? (
         <div className="text-center text-xs font-bold text-gray-400 py-10">No customers found.</div>
       ) : (
-        <div className="overflow-x-auto bg-white rounded-2xl border border-gray-200 shadow-3xs">
+        <div className="overflow-x-auto bg-white rounded-2xl border border-gray-200 shadow-sm">
           <table className="min-w-full text-xs text-left">
             <thead>
-              <tr className="bg-gray-55 border-b border-gray-150">
+              <tr className="bg-gray-50 border-b border-gray-200">
                 <th className="px-4 py-3 font-extrabold text-gray-400 uppercase tracking-wider">Customer Details</th>
                 <th className="px-4 py-3 font-extrabold text-gray-400 uppercase tracking-wider">Registered</th>
                 <th className="px-4 py-3 font-extrabold text-gray-400 uppercase tracking-wider">Role</th>
@@ -141,7 +141,7 @@ export default function UsersPage() {
                       <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                         u.role === "admin"
                           ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
-                          : "bg-gray-50 text-gray-700 border border-gray-150"
+                          : "bg-gray-50 text-gray-700 border border-gray-200"
                       }`}>
                         {u.role}
                       </span>
@@ -161,13 +161,13 @@ export default function UsersPage() {
                       <div className="inline-flex gap-1.5">
                         <button
                           onClick={() => setSelectedUser({ ...u, ...stats, isSuspended })}
-                          className="px-2.5 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 font-bold text-gray-650 cursor-pointer text-[10px]"
+                          className="px-2.5 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 font-bold text-gray-600 cursor-pointer text-[10px]"
                         >
                           Profile
                         </button>
                         <button
                           onClick={() => handleRole(u._id, u.role === "admin" ? "customer" : "admin")}
-                          className="px-2.5 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 font-bold text-gray-650 cursor-pointer text-[10px]"
+                          className="px-2.5 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 font-bold text-gray-600 cursor-pointer text-[10px]"
                         >
                           Role
                         </button>
@@ -197,13 +197,13 @@ export default function UsersPage() {
 
       {/* Customer Profile detail slide over / modal */}
       {selectedUser && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4 select-none">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 select-none">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 border border-gray-200 text-left space-y-4 animate-scale-up">
             <div className="border-b border-gray-100 pb-3 flex items-center justify-between">
               <h3 className="text-sm font-black text-gray-900 uppercase tracking-wide">Customer Profile Card</h3>
               <button
                 onClick={() => setSelectedUser(null)}
-                className="text-gray-400 hover:text-gray-650 text-sm font-bold cursor-pointer"
+                className="text-gray-400 hover:text-gray-600 text-sm font-bold cursor-pointer"
               >
                 ✕
               </button>
@@ -216,16 +216,16 @@ export default function UsersPage() {
               </div>
               <div>
                 <span className="text-[10px] font-extrabold text-gray-400 uppercase">Email</span>
-                <p className="text-xs font-semibold text-gray-650">{selectedUser.email}</p>
+                <p className="text-xs font-semibold text-gray-600">{selectedUser.email}</p>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <span className="text-[10px] font-extrabold text-gray-400 uppercase">Registration Date</span>
-                  <p className="text-xs font-semibold text-gray-650">{selectedUser.regDate}</p>
+                  <p className="text-xs font-semibold text-gray-600">{selectedUser.regDate}</p>
                 </div>
                 <div>
                   <span className="text-[10px] font-extrabold text-gray-400 uppercase">Last Login</span>
-                  <p className="text-xs font-semibold text-gray-650">{selectedUser.lastLogin}</p>
+                  <p className="text-xs font-semibold text-gray-600">{selectedUser.lastLogin}</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2 border-t border-gray-100 pt-3">
@@ -240,10 +240,10 @@ export default function UsersPage() {
               </div>
             </div>
 
-            <div className="border-t border-gray-150 pt-4 flex justify-end">
+            <div className="border-t border-gray-200 pt-4 flex justify-end">
               <button
                 onClick={() => setSelectedUser(null)}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-750 text-xs font-bold text-white rounded-xl transition cursor-pointer"
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-xs font-bold text-white rounded-xl transition cursor-pointer"
               >
                 Done
               </button>

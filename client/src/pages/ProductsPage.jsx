@@ -234,7 +234,7 @@ function ProductsPage() {
         setWishlistIds((prev) => prev.filter((id) => id !== productId));
         toast.dismiss(toastId);
         toast.info("Removed from Wishlist", (
-          <p className="font-bold text-gray-905">{prodName}</p>
+          <p className="font-bold text-gray-900">{prodName}</p>
         ));
       } else {
         await addToWishlist(productId);
@@ -243,7 +243,7 @@ function ProductsPage() {
         toast.success("Added to Wishlist", (
           <div className="space-y-1">
             <p className="font-extrabold text-gray-900 leading-tight">{prodName}</p>
-            <div className="flex gap-2.5 pt-1 text-[10px] font-black text-indigo-650">
+            <div className="flex gap-2.5 pt-1 text-[10px] font-black text-indigo-600">
               <a href="/wishlist" className="hover:underline">View Wishlist</a>
               <span className="text-gray-300">|</span>
               <a href="/products" className="hover:underline">Continue Shopping</a>
@@ -394,7 +394,7 @@ function ProductsPage() {
   return (
     <div className="space-y-6">
       {/* Search and Sort Header Card */}
-      <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-xs">
+      <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="relative w-full md:max-w-md">
             <input
@@ -416,7 +416,7 @@ function ProductsPage() {
           <select
             value={querySort}
             onChange={(e) => handleSortChange(e.target.value)}
-            className="rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-bold text-gray-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-150 md:w-56 cursor-pointer"
+            className="rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-bold text-gray-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 md:w-56 cursor-pointer"
           >
             <option value="popularity">Sort: Popularity</option>
             <option value="newest">Sort: Newest</option>
@@ -438,8 +438,8 @@ function ProductsPage() {
               onClick={() => handleCategoryChange(category)}
               className={`rounded-full px-4 py-1.5 text-xs font-bold transition cursor-pointer ${
                 queryCategory === category
-                  ? "bg-indigo-600 text-white shadow-xs"
-                  : "border border-gray-300 bg-white text-gray-700 hover:border-indigo-300 hover:text-indigo-650"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "border border-gray-300 bg-white text-gray-700 hover:border-indigo-300 hover:text-indigo-600"
               }`}
             >
               {category}
@@ -452,12 +452,12 @@ function ProductsPage() {
       <div className="flex flex-col lg:flex-row gap-6 items-start">
         {/* Left Filters Sidebar */}
         <aside className="w-full lg:w-64 flex-shrink-0 space-y-6">
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-xs space-y-6">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-gray-900">Filters</h3>
               <button
                 onClick={handleClearFilters}
-                className="text-2xs font-extrabold text-indigo-600 hover:text-indigo-700 cursor-pointer uppercase tracking-wider"
+                className="text-xs font-extrabold text-indigo-600 hover:text-indigo-700 cursor-pointer uppercase tracking-wider"
               >
                 Clear All
               </button>
@@ -465,7 +465,7 @@ function ProductsPage() {
 
             {/* Price Filter */}
             <div className="border-t border-gray-100 pt-4 space-y-2.5">
-              <h4 className="text-2xs font-extrabold text-gray-400 uppercase tracking-wider">Price Range</h4>
+              <h4 className="text-xs font-extrabold text-gray-400 uppercase tracking-wider">Price Range</h4>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
@@ -493,15 +493,15 @@ function ProductsPage() {
 
             {/* Brand Checkboxes */}
             <div className="border-t border-gray-100 pt-4 space-y-2.5">
-              <h4 className="text-2xs font-extrabold text-gray-400 uppercase tracking-wider">Brand</h4>
+              <h4 className="text-xs font-extrabold text-gray-400 uppercase tracking-wider">Brand</h4>
               <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                 {POPULAR_BRANDS.map((b) => (
-                  <label key={b} className="flex items-center gap-2 text-xs font-semibold text-gray-650 cursor-pointer hover:text-gray-900">
+                  <label key={b} className="flex items-center gap-2 text-xs font-semibold text-gray-600 cursor-pointer hover:text-gray-900">
                     <input
                       type="checkbox"
                       checked={selectedBrands.includes(b)}
                       onChange={() => handleBrandToggle(b)}
-                      className="rounded border-gray-300 text-indigo-650 focus:ring-indigo-500 h-3.5 w-3.5 cursor-pointer"
+                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-3.5 w-3.5 cursor-pointer"
                     />
                     <span>{b}</span>
                   </label>
@@ -511,7 +511,7 @@ function ProductsPage() {
 
             {/* Ratings Filter */}
             <div className="border-t border-gray-100 pt-4 space-y-2.5">
-              <h4 className="text-2xs font-extrabold text-gray-400 uppercase tracking-wider">Rating</h4>
+              <h4 className="text-xs font-extrabold text-gray-400 uppercase tracking-wider">Rating</h4>
               <div className="space-y-1.5">
                 {[4, 3, 2, 1].map((stars) => (
                   <button
@@ -520,7 +520,7 @@ function ProductsPage() {
                     className={`flex items-center gap-1.5 text-xs font-semibold w-full text-left py-1.5 rounded-lg px-2.5 transition cursor-pointer ${
                       Number(queryRating) === stars
                         ? "bg-indigo-50 text-indigo-700 font-bold"
-                        : "text-gray-650 hover:bg-gray-50"
+                        : "text-gray-600 hover:bg-gray-50"
                     }`}
                   >
                     <span className="text-amber-400">{"★".repeat(stars) + "☆".repeat(5 - stars)}</span>
@@ -532,19 +532,19 @@ function ProductsPage() {
 
             {/* Availability Filter */}
             <div className="border-t border-gray-100 pt-4 space-y-2.5">
-              <h4 className="text-2xs font-extrabold text-gray-400 uppercase tracking-wider">Availability</h4>
+              <h4 className="text-xs font-extrabold text-gray-400 uppercase tracking-wider">Availability</h4>
               <div className="space-y-2">
                 {[
                   { key: "in_stock", label: "In Stock" },
                   { key: "low_stock", label: "Low Stock (≤ 5)" },
                   { key: "out_of_stock", label: "Out of Stock" }
                 ].map((av) => (
-                  <label key={av.key} className="flex items-center gap-2 text-xs font-semibold text-gray-650 cursor-pointer hover:text-gray-900">
+                  <label key={av.key} className="flex items-center gap-2 text-xs font-semibold text-gray-600 cursor-pointer hover:text-gray-900">
                     <input
                       type="checkbox"
                       checked={selectedAvailability.includes(av.key)}
                       onChange={() => handleAvailabilityToggle(av.key)}
-                      className="rounded border-gray-300 text-indigo-650 focus:ring-indigo-500 h-3.5 w-3.5 cursor-pointer"
+                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-3.5 w-3.5 cursor-pointer"
                     />
                     <span>{av.label}</span>
                   </label>
@@ -554,21 +554,21 @@ function ProductsPage() {
 
             {/* Discount Filter */}
             <div className="border-t border-gray-100 pt-4 space-y-2.5">
-              <h4 className="text-2xs font-extrabold text-gray-400 uppercase tracking-wider">Discount Offer</h4>
+              <h4 className="text-xs font-extrabold text-gray-400 uppercase tracking-wider">Discount Offer</h4>
               <div className="space-y-2">
                 {[
                   { val: "10", label: "10% Off or more" },
                   { val: "20", label: "20% Off or more" },
                   { val: "30", label: "30% Off or more" }
                 ].map((disc) => (
-                  <label key={disc.val} className="flex items-center gap-2 text-xs font-semibold text-gray-650 cursor-pointer hover:text-gray-900">
+                  <label key={disc.val} className="flex items-center gap-2 text-xs font-semibold text-gray-600 cursor-pointer hover:text-gray-900">
                     <input
                       type="radio"
                       name="discountRadio"
                       checked={queryDiscount === disc.val}
                       onClick={() => handleDiscountChange(disc.val)}
                       onChange={() => {}} // Handled by onClick for toggle support
-                      className="border-gray-300 text-indigo-650 focus:ring-indigo-500 h-3.5 w-3.5 cursor-pointer"
+                      className="border-gray-300 text-indigo-600 focus:ring-indigo-500 h-3.5 w-3.5 cursor-pointer"
                     />
                     <span>{disc.label}</span>
                   </label>
@@ -578,19 +578,19 @@ function ProductsPage() {
 
             {/* Badges Filter */}
             <div className="border-t border-gray-100 pt-4 space-y-2.5">
-              <h4 className="text-2xs font-extrabold text-gray-400 uppercase tracking-wider">Special Badges</h4>
+              <h4 className="text-xs font-extrabold text-gray-400 uppercase tracking-wider">Special Badges</h4>
               <div className="space-y-2">
                 {[
                   { val: "Best Seller", label: "Best Seller" },
                   { val: "Trending", label: "Trending" },
                   { val: "Top Rated", label: "Top Rated" }
                 ].map((bg) => (
-                  <label key={bg.val} className="flex items-center gap-2 text-xs font-semibold text-gray-650 cursor-pointer hover:text-gray-900">
+                  <label key={bg.val} className="flex items-center gap-2 text-xs font-semibold text-gray-600 cursor-pointer hover:text-gray-900">
                     <input
                       type="checkbox"
                       checked={selectedBadges.includes(bg.val)}
                       onChange={() => handleBadgeToggle(bg.val)}
-                      className="rounded border-gray-300 text-indigo-650 focus:ring-indigo-500 h-3.5 w-3.5 cursor-pointer"
+                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-3.5 w-3.5 cursor-pointer"
                     />
                     <span>{bg.label}</span>
                   </label>
@@ -629,7 +629,7 @@ function ProductsPage() {
                 <p className="mb-3">{error}</p>
                 <button
                   onClick={() => fetchFilteredProducts()}
-                  className="px-4 py-2 bg-red-650 text-white rounded-xl hover:bg-red-700 transition cursor-pointer"
+                  className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition cursor-pointer"
                 >
                   Retry Loading
                 </button>
@@ -637,13 +637,13 @@ function ProductsPage() {
             )}
 
             {!loading && !error && products.length === 0 && (
-              <div className="col-span-full rounded-2xl border border-gray-200 bg-white p-16 text-center text-sm text-gray-550 flex flex-col items-center justify-center space-y-4">
+              <div className="col-span-full rounded-2xl border border-gray-200 bg-white p-16 text-center text-sm text-gray-500 flex flex-col items-center justify-center space-y-4">
                 <span className="block text-4xl select-none">🔍</span>
                 <span className="font-black text-gray-800 text-base">No Products Found</span>
                 <span className="text-gray-400 max-w-xs">We couldn't find matches for your search keywords or applied filters.</span>
                 <button
                   onClick={handleClearFilters}
-                  className="px-5 py-2.5 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition shadow-xs cursor-pointer"
+                  className="px-5 py-2.5 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition shadow-sm cursor-pointer"
                 >
                   Clear All Filters
                 </button>
@@ -671,7 +671,7 @@ function ProductsPage() {
                   disabled={page === "..."}
                   className={`rounded-xl px-3.5 py-2 text-xs font-bold transition ${
                     queryPage === page
-                      ? "bg-indigo-650 text-white shadow-xs"
+                      ? "bg-indigo-600 text-white shadow-sm"
                       : page === "..."
                       ? "text-gray-400 cursor-default"
                       : "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 cursor-pointer"

@@ -9,13 +9,13 @@ function Footer() {
   };
 
   return (
-    <footer className="mt-20 border-t border-gray-200 bg-white">
+    <footer className="mt-20 border-t border-[#E8E1D8] dark:border-gray-800 bg-[#F1ECE5] dark:bg-[#0b1329] text-gray-900 dark:text-gray-100">
       {/* Top Footer Section */}
       <div className="mx-auto grid max-w-7xl gap-10 px-6 py-16 sm:px-8 lg:grid-cols-5 text-left">
         {/* Column 1: Brand & Contact Info */}
         <section className="lg:col-span-2 space-y-5">
           <Link to="/" className="flex items-center gap-2">
-            <span className="rounded-lg bg-indigo-650 px-2 py-1 text-sm font-black text-white">SS</span>
+            <span className="rounded-lg bg-indigo-600 px-2 py-1 text-sm font-black text-white">SS</span>
             <span className="text-lg font-black text-gray-900 tracking-tight">ShopSphere</span>
           </Link>
           <p className="max-w-md text-xs leading-relaxed text-gray-500 font-medium">
@@ -41,7 +41,7 @@ function Footer() {
 
         {/* Column 2: Customer Support & Legal Policies */}
         <section>
-          <h4 className="text-xs font-black uppercase tracking-wider text-gray-905">Customer Service</h4>
+          <h4 className="text-xs font-black uppercase tracking-wider text-gray-900">Customer Service</h4>
           <ul className="mt-4 space-y-2.5 text-xs text-gray-500 font-bold">
             <li>
               <Link to="/help" className="hover:text-indigo-600 transition">
@@ -68,7 +68,7 @@ function Footer() {
 
         {/* Column 3: Legal & Policies */}
         <section>
-          <h4 className="text-xs font-black uppercase tracking-wider text-gray-905">Legal Policies</h4>
+          <h4 className="text-xs font-black uppercase tracking-wider text-gray-900">Legal Policies</h4>
           <ul className="mt-4 space-y-2.5 text-xs text-gray-500 font-bold">
             <li>
               <a href="#" className="hover:text-indigo-600 transition">
@@ -96,7 +96,7 @@ function Footer() {
         {/* Column 4: App Download & Newsletter */}
         <section className="space-y-5">
           <div>
-            <h4 className="text-xs font-black uppercase tracking-wider text-gray-905">Download Our App</h4>
+            <h4 className="text-xs font-black uppercase tracking-wider text-gray-900">Download Our App</h4>
             <p className="mt-2 text-xs text-gray-500 font-semibold leading-relaxed">
               Shop on the go with fast checkout, updates, and custom rewards.
             </p>
@@ -134,12 +134,12 @@ function Footer() {
       </div>
 
       {/* Bottom Footer Section: Social Links, Payments, and Copyright */}
-      <div className="border-t border-gray-150 py-8 bg-gray-50">
+      <div className="border-t border-gray-200 py-8 bg-gray-50">
         <div className="mx-auto max-w-7xl px-6 flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Copyright Info */}
           <div className="text-xs text-gray-400 font-bold text-center md:text-left space-y-1">
             <p>&copy; {new Date().getFullYear()} ShopSphere Ltd. All rights reserved.</p>
-            <p className="text-[10px] font-semibold text-gray-402 leading-normal">
+            <p className="text-[10px] font-semibold text-gray-400 leading-normal">
               Built for secure, high-fidelity online shopping experiences.
             </p>
           </div>
@@ -147,23 +147,23 @@ function Footer() {
           {/* Payment Gateways Icons */}
           <div className="flex items-center gap-2">
             {/* Visa */}
-            <span className="rounded-md border border-gray-200 bg-white px-2 py-1 shadow-xs text-[10px] font-black text-indigo-700 select-none tracking-tight">
+            <span className="rounded-md border border-gray-200 bg-white px-2 py-1 shadow-sm text-[10px] font-black text-indigo-700 select-none tracking-tight">
               VISA
             </span>
             {/* Mastercard */}
-            <span className="rounded-md border border-gray-200 bg-white px-2 py-1 shadow-xs text-[10px] font-black text-red-500 select-none tracking-tight">
+            <span className="rounded-md border border-gray-200 bg-white px-2 py-1 shadow-sm text-[10px] font-black text-red-500 select-none tracking-tight">
               MC
             </span>
             {/* PayPal */}
-            <span className="rounded-md border border-gray-200 bg-white px-2 py-1 shadow-xs text-[10px] font-black text-blue-800 select-none tracking-tight">
+            <span className="rounded-md border border-gray-200 bg-white px-2 py-1 shadow-sm text-[10px] font-black text-blue-800 select-none tracking-tight">
               PayPal
             </span>
             {/* Apple Pay */}
-            <span className="rounded-md border border-gray-200 bg-white px-2 py-1 shadow-xs text-[10px] font-black text-gray-900 select-none tracking-tight">
+            <span className="rounded-md border border-gray-200 bg-white px-2 py-1 shadow-sm text-[10px] font-black text-gray-900 select-none tracking-tight">
                Pay
             </span>
             {/* Razorpay */}
-            <span className="rounded-md border border-gray-200 bg-white px-2 py-1 shadow-xs text-[10px] font-black text-indigo-500 select-none tracking-tight">
+            <span className="rounded-md border border-gray-200 bg-white px-2 py-1 shadow-sm text-[10px] font-black text-indigo-500 select-none tracking-tight">
               Razorpay
             </span>
           </div>
@@ -172,12 +172,12 @@ function Footer() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
               <a href="#" className="rounded-full bg-white border border-gray-200 p-2 text-gray-400 hover:text-indigo-600 transition" aria-label="Instagram">
-                <svg className="h-4.5 w-4.5" viewBox="0 0 24 24" fill="currentColor">
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M7.75 2h8.5A5.75 5.75 0 0122 7.75v8.5A5.75 5.75 0 0116.25 22h-8.5A5.75 5.75 0 012 16.25v-8.5A5.75 5.75 0 017.75 2zm0 1.5A4.25 4.25 0 003.5 7.75v8.5a4.25 4.25 0 004.25 4.25h8.5a4.25 4.25 0 004.25-4.25v-8.5a4.25 4.25 0 00-4.25-4.25h-8.5z" />
                 </svg>
               </a>
               <a href="#" className="rounded-full bg-white border border-gray-200 p-2 text-gray-400 hover:text-indigo-600 transition" aria-label="Facebook">
-                <svg className="h-4.5 w-4.5" viewBox="0 0 24 24" fill="currentColor">
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M13.5 22v-8h2.7l.4-3h-3.1V9.1c0-.9.3-1.5 1.6-1.5h1.7V4.9c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.4-4 4.1V11H8v3h2.4v8h3.1z" />
                 </svg>
               </a>
@@ -187,7 +187,7 @@ function Footer() {
             <button
               type="button"
               onClick={scrollToTop}
-              className="rounded-xl bg-indigo-600 p-2.5 text-white hover:bg-indigo-750 active:scale-90 transition shadow-sm cursor-pointer"
+              className="rounded-xl bg-indigo-600 p-2.5 text-white hover:bg-indigo-700 active:scale-90 transition shadow-sm cursor-pointer"
               title="Back to Top"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">

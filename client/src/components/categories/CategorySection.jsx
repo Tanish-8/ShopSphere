@@ -89,7 +89,7 @@ const CATEGORIES = [
 
 export const CategorySection = () => {
   return (
-    <section id="categories" className="py-24 px-6 md:px-12 lg:px-20 bg-[#050505] -mx-4 sm:-mx-6 lg:-mx-8 scroll-mt-20">
+    <section id="categories" className="py-16 px-6 md:px-12 lg:px-16 bg-[#F3EFE8] dark:bg-[#0f172a] rounded-3xl border border-[#E8E1D8] dark:border-gray-800 shadow-sm scroll-mt-20">
       <div className="max-w-screen-2xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
           <motion.div
@@ -98,10 +98,10 @@ export const CategorySection = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-3 tracking-tight">
               Shop by Category
             </h2>
-            <p className="text-zinc-400 text-lg max-w-md">
+            <p className="text-gray-600 dark:text-gray-400 text-sm md:text-base max-w-md">
               Discover products across our carefully curated collections.
             </p>
           </motion.div>
@@ -115,7 +115,7 @@ export const CategorySection = () => {
           >
             <Link
               to="/products"
-              className="px-6 py-3 rounded-full bg-zinc-800 text-white font-medium hover:bg-zinc-700 transition-colors"
+              className="px-6 py-2.5 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-[#E8E1D8] dark:border-gray-700 font-semibold text-xs hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
             >
               View All Categories
             </Link>

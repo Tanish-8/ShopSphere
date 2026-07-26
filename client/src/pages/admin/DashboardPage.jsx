@@ -4,24 +4,24 @@ import { getDashboardStats } from "../../services/adminService";
 function KPICard({ title, value, trendPct, icon, prefix = "", isAlert = false }) {
   const isPositive = trendPct >= 0;
   return (
-    <div className={`rounded-2xl border bg-white p-5 shadow-2xs flex items-center justify-between transition hover:shadow-xs ${
-      isAlert ? "border-amber-250 bg-amber-50/20" : "border-gray-200"
+    <div className={`rounded-2xl border bg-white p-5 shadow-sm flex items-center justify-between transition hover:shadow-sm ${
+      isAlert ? "border-amber-300 bg-amber-50/20" : "border-gray-200"
     }`}>
       <div className="space-y-1 text-left">
-        <span className="text-2xs font-extrabold text-gray-400 uppercase tracking-wider block">{title}</span>
+        <span className="text-xs font-extrabold text-gray-400 uppercase tracking-wider block">{title}</span>
         <h3 className="text-xl font-black text-gray-900">
           {prefix}{typeof value === "number" && prefix ? value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : value.toLocaleString()}
         </h3>
         {trendPct !== undefined && (
           <div className="flex items-center gap-1.5">
-            <span className={`text-[10px] font-black ${isPositive ? "text-emerald-700" : "text-rose-650"}`}>
+            <span className={`text-[10px] font-black ${isPositive ? "text-emerald-700" : "text-rose-600"}`}>
               {isPositive ? "▲ +" : "▼ "}{trendPct}%
             </span>
             <span className="text-[9px] text-gray-400 font-bold">vs last month</span>
           </div>
         )}
       </div>
-      <div className="text-2xl p-3 bg-gray-50 rounded-2xl text-gray-650 flex items-center justify-center h-12 w-12 select-none">
+      <div className="text-2xl p-3 bg-gray-50 rounded-2xl text-gray-600 flex items-center justify-center h-12 w-12 select-none">
         {icon}
       </div>
     </div>
@@ -36,21 +36,21 @@ function SVGBarChart({ data, xKey, yKey, isCurrency = false }) {
   const height = 120;
   
   return (
-    <div className="flex items-end justify-between gap-3 h-36 pt-4 px-2 border-b border-gray-150">
+    <div className="flex items-end justify-between gap-3 h-36 pt-4 px-2 border-b border-gray-200">
       {data.map((item, idx) => {
         const val = item[yKey];
         const pct = (val / maxVal) * 100;
         const barHeight = Math.max(8, (pct / 100) * height);
         return (
           <div key={idx} className="flex-1 flex flex-col items-center group relative">
-            <span className="absolute -top-8 scale-0 group-hover:scale-100 transition-transform duration-200 bg-gray-900 text-white text-[10px] font-bold px-2 py-1 rounded-lg shadow-md z-15 whitespace-nowrap">
+            <span className="absolute -top-8 scale-0 group-hover:scale-100 transition-transform duration-200 bg-gray-900 text-white text-[10px] font-bold px-2 py-1 rounded-lg shadow-md z-20 whitespace-nowrap">
               {item[xKey]}: {isCurrency ? `$${val.toFixed(2)}` : val}
             </span>
             <div
-              className="w-full rounded-t-lg bg-indigo-500 hover:bg-indigo-650 transition-all duration-300 cursor-pointer"
+              className="w-full rounded-t-lg bg-indigo-500 hover:bg-indigo-600 transition-all duration-300 cursor-pointer"
               style={{ height: `${barHeight}px` }}
             />
-            <span className="text-[9px] text-gray-450 font-bold mt-2 truncate max-w-full">
+            <span className="text-[9px] text-gray-500 font-bold mt-2 truncate max-w-full">
               {item[xKey]}
             </span>
           </div>
@@ -75,13 +75,13 @@ function DistributionList({ data, totalKey }) {
         const name = item._id || "Unknown";
         return (
           <div key={idx} className="space-y-1 text-left">
-            <div className="flex justify-between text-xs font-bold text-gray-650">
+            <div className="flex justify-between text-xs font-bold text-gray-600">
               <span className="truncate max-w-[65%]">{name}</span>
               <span>
                 {totalKey === "value" ? `$${val.toFixed(2)}` : val} ({pct}%)
               </span>
             </div>
-            <div className="w-full bg-gray-150 h-2 rounded-full overflow-hidden">
+            <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
               <div
                 className={`${colors[idx % colors.length]} h-full rounded-full transition-all duration-500`}
                 style={{ width: `${pct}%` }}
@@ -187,7 +187,7 @@ export default function DashboardPage() {
       {/* Charts Grid */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Monthly Revenue Chart */}
-        <div className="lg:col-span-8 rounded-2xl border border-gray-200 bg-white p-5 shadow-2xs space-y-4">
+        <div className="lg:col-span-8 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
           <div className="text-left">
             <h2 className="text-sm font-black text-gray-900 uppercase tracking-wide">Monthly Sales & Revenue</h2>
             <p className="text-[10px] font-bold text-gray-400">Total transaction volumes aggregated by calendar month</p>
@@ -196,7 +196,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Sales by Category Distribution */}
-        <div className="lg:col-span-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-2xs space-y-4">
+        <div className="lg:col-span-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
           <div className="text-left">
             <h2 className="text-sm font-black text-gray-900 uppercase tracking-wide">Category Sales</h2>
             <p className="text-[10px] font-bold text-gray-400">Revenue share distributions across departments</p>
@@ -207,7 +207,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* Payment Methods */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-2xs space-y-4">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
           <div className="text-left">
             <h2 className="text-sm font-black text-gray-900 uppercase tracking-wide">Payment Channels</h2>
             <p className="text-[10px] font-bold text-gray-400">Customer checkout gateway distributions</p>
@@ -216,7 +216,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Order Statuses */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-2xs space-y-4">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
           <div className="text-left">
             <h2 className="text-sm font-black text-gray-900 uppercase tracking-wide">Order Lifecycle Stages</h2>
             <p className="text-[10px] font-bold text-gray-400">Distribution of current statuses in state machine</p>
@@ -225,7 +225,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Top Selling Brands */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-2xs space-y-4">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
           <div className="text-left">
             <h2 className="text-sm font-black text-gray-900 uppercase tracking-wide">Top Selling Brands</h2>
             <p className="text-[10px] font-bold text-gray-400">Top brands based on quantities purchased</p>
@@ -237,15 +237,15 @@ export default function DashboardPage() {
       {/* Tables section: Top Products and Top Customers */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* Top Products */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-2xs space-y-4 text-left">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4 text-left">
           <div>
             <h2 className="text-sm font-black text-gray-900 uppercase tracking-wide">Best Selling Products</h2>
             <p className="text-[10px] font-bold text-gray-400">Top 5 items in units sold and overall catalog revenue contribution</p>
           </div>
-          <div className="overflow-hidden rounded-xl border border-gray-150">
+          <div className="overflow-hidden rounded-xl border border-gray-200">
             <table className="w-full text-xs text-left">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-150">
+                <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="px-4 py-2.5 font-extrabold text-gray-500">Product Name</th>
                   <th className="px-4 py-2.5 font-extrabold text-gray-500 text-right">Units Sold</th>
                   <th className="px-4 py-2.5 font-extrabold text-gray-500 text-right">Revenue</th>
@@ -270,15 +270,15 @@ export default function DashboardPage() {
         </div>
 
         {/* Top Customers */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-2xs space-y-4 text-left">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4 text-left">
           <div>
             <h2 className="text-sm font-black text-gray-900 uppercase tracking-wide">Top Customers by Spend</h2>
             <p className="text-[10px] font-bold text-gray-400">Top 5 customers in cumulative checkout purchase value</p>
           </div>
-          <div className="overflow-hidden rounded-xl border border-gray-150">
+          <div className="overflow-hidden rounded-xl border border-gray-200">
             <table className="w-full text-xs text-left">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-150">
+                <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="px-4 py-2.5 font-extrabold text-gray-500">Name / Email</th>
                   <th className="px-4 py-2.5 font-extrabold text-gray-500 text-right">Orders Count</th>
                   <th className="px-4 py-2.5 font-extrabold text-gray-500 text-right">Lifetime Spend</th>
