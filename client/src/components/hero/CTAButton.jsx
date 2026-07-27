@@ -36,9 +36,9 @@ export default function CTAButton({
       <motion.button
         ref={buttonRef}
         onClick={handleClick}
-        whileHover={{ scale: 1.03 }}
-        whileTap={{ scale: 0.97 }}
-        className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-500/30 transition-shadow hover:shadow-violet-500/50 cursor-pointer"
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className="group relative overflow-hidden rounded-xl bg-indigo-600 hover:bg-indigo-700 px-7 py-3.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 cursor-pointer"
         type="button"
       >
         {/* Shimmer overlay */}
@@ -77,16 +77,16 @@ export default function CTAButton({
     <motion.button
       ref={buttonRef}
       onClick={handleClick}
-      whileHover={{ scale: 1.03 }}
-      whileTap={{ scale: 0.97 }}
-      className="group relative overflow-hidden rounded-xl border border-white/15 bg-white/5 px-7 py-3.5 text-sm font-semibold text-slate-200 backdrop-blur-sm transition-colors hover:bg-white/10 hover:border-white/25 cursor-pointer"
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      className="group relative overflow-hidden rounded-xl border border-[#E8E1D8] dark:border-gray-700 bg-white hover:bg-gray-50 text-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-white px-7 py-3.5 text-sm font-semibold shadow-sm transition-all duration-200 cursor-pointer"
       type="button"
     >
       <AnimatePresence>
         {ripples.map((ripple) => (
           <motion.span
             key={ripple.id}
-            className="pointer-events-none absolute rounded-full bg-white/15"
+            className="pointer-events-none absolute rounded-full bg-indigo-500/15"
             style={{ left: ripple.x, top: ripple.y, x: "-50%", y: "-50%" }}
             initial={{ width: 0, height: 0, opacity: 0.5 }}
             animate={{ width: 180, height: 180, opacity: 0 }}

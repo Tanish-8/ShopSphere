@@ -66,29 +66,29 @@ function ProductForm({ initial, onCancel, onSave, saving }) {
   return (
     <form onSubmit={submit} className="space-y-4 text-left">
       <div>
-        <label className="block text-2xs font-extrabold text-gray-400 uppercase mb-1">Product Name</label>
+        <label className="block text-xs font-extrabold text-gray-400 uppercase mb-1">Product Name</label>
         <input
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
           className="w-full h-10 rounded-xl border border-gray-300 bg-gray-50 px-3 text-xs outline-none focus:border-indigo-500"
         />
-        {errors.name && <p className="text-2xs font-bold text-red-600 mt-1">{errors.name}</p>}
+        {errors.name && <p className="text-xs font-bold text-red-600 mt-1">{errors.name}</p>}
       </div>
 
       <div>
-        <label className="block text-2xs font-extrabold text-gray-400 uppercase mb-1">Description</label>
+        <label className="block text-xs font-extrabold text-gray-400 uppercase mb-1">Description</label>
         <textarea
           value={form.description}
           onChange={(e) => setForm({ ...form, description: e.target.value })}
           rows={3}
           className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2 text-xs outline-none focus:border-indigo-500"
         />
-        {errors.description && <p className="text-2xs font-bold text-red-600 mt-1">{errors.description}</p>}
+        {errors.description && <p className="text-xs font-bold text-red-600 mt-1">{errors.description}</p>}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
-          <label className="block text-2xs font-extrabold text-gray-400 uppercase mb-1">Category</label>
+          <label className="block text-xs font-extrabold text-gray-400 uppercase mb-1">Category</label>
           <select
             value={form.category}
             onChange={(e) => setForm({ ...form, category: e.target.value })}
@@ -99,10 +99,10 @@ function ProductForm({ initial, onCancel, onSave, saving }) {
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
-          {errors.category && <p className="text-2xs font-bold text-red-600 mt-1">{errors.category}</p>}
+          {errors.category && <p className="text-xs font-bold text-red-600 mt-1">{errors.category}</p>}
         </div>
         <div>
-          <label className="block text-2xs font-extrabold text-gray-400 uppercase mb-1">Brand</label>
+          <label className="block text-xs font-extrabold text-gray-400 uppercase mb-1">Brand</label>
           <input
             value={form.brand}
             onChange={(e) => setForm({ ...form, brand: e.target.value })}
@@ -110,20 +110,20 @@ function ProductForm({ initial, onCancel, onSave, saving }) {
           />
         </div>
         <div>
-          <label className="block text-2xs font-extrabold text-gray-400 uppercase mb-1">SKU Code</label>
+          <label className="block text-xs font-extrabold text-gray-400 uppercase mb-1">SKU Code</label>
           <input
             value={form.sku}
             onChange={(e) => setForm({ ...form, sku: e.target.value })}
             placeholder="e.g. SKU-ELEC-181"
             className="w-full h-10 rounded-xl border border-gray-300 bg-gray-50 px-3 text-xs outline-none focus:border-indigo-500"
           />
-          {errors.sku && <p className="text-2xs font-bold text-red-600 mt-1">{errors.sku}</p>}
+          {errors.sku && <p className="text-xs font-bold text-red-600 mt-1">{errors.sku}</p>}
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-2xs font-extrabold text-gray-400 uppercase mb-1">Price ($)</label>
+          <label className="block text-xs font-extrabold text-gray-400 uppercase mb-1">Price ($)</label>
           <input
             type="number"
             step="0.01"
@@ -131,22 +131,22 @@ function ProductForm({ initial, onCancel, onSave, saving }) {
             onChange={(e) => setForm({ ...form, price: e.target.value })}
             className="w-full h-10 rounded-xl border border-gray-300 bg-gray-50 px-3 text-xs outline-none focus:border-indigo-500"
           />
-          {errors.price && <p className="text-2xs font-bold text-red-600 mt-1">{errors.price}</p>}
+          {errors.price && <p className="text-xs font-bold text-red-600 mt-1">{errors.price}</p>}
         </div>
         <div>
-          <label className="block text-2xs font-extrabold text-gray-400 uppercase mb-1">Stock Count</label>
+          <label className="block text-xs font-extrabold text-gray-400 uppercase mb-1">Stock Count</label>
           <input
             type="number"
             value={form.stock}
             onChange={(e) => setForm({ ...form, stock: e.target.value })}
             className="w-full h-10 rounded-xl border border-gray-300 bg-gray-50 px-3 text-xs outline-none focus:border-indigo-500"
           />
-          {errors.stock && <p className="text-2xs font-bold text-red-600 mt-1">{errors.stock}</p>}
+          {errors.stock && <p className="text-xs font-bold text-red-600 mt-1">{errors.stock}</p>}
         </div>
       </div>
 
       <div>
-        <label className="block text-2xs font-extrabold text-gray-400 uppercase mb-1">Key Highlights (One per line)</label>
+        <label className="block text-xs font-extrabold text-gray-400 uppercase mb-1">Key Highlights (One per line)</label>
         <textarea
           value={form.featuresString}
           onChange={(e) => setForm({ ...form, featuresString: e.target.value })}
@@ -157,7 +157,7 @@ function ProductForm({ initial, onCancel, onSave, saving }) {
       </div>
 
       <div>
-        <label className="block text-2xs font-extrabold text-gray-400 uppercase mb-1">Image URL</label>
+        <label className="block text-xs font-extrabold text-gray-400 uppercase mb-1">Image URL</label>
         <input
           value={form.image}
           onChange={(e) => setForm({ ...form, image: e.target.value })}
@@ -166,7 +166,7 @@ function ProductForm({ initial, onCancel, onSave, saving }) {
         />
       </div>
 
-      <div className="flex justify-end gap-2.5 pt-3 border-t border-gray-150">
+      <div className="flex justify-end gap-2.5 pt-3 border-t border-gray-200">
         <button
           type="button"
           onClick={onCancel}
@@ -177,7 +177,7 @@ function ProductForm({ initial, onCancel, onSave, saving }) {
         <button
           type="submit"
           disabled={saving}
-          className="h-10 px-5 rounded-xl bg-indigo-600 text-xs font-bold text-white hover:bg-indigo-700 transition disabled:opacity-50 cursor-pointer shadow-xs"
+          className="h-10 px-5 rounded-xl bg-indigo-600 text-xs font-bold text-white hover:bg-indigo-700 transition disabled:opacity-50 cursor-pointer shadow-sm"
         >
           {saving ? "Saving..." : "Save Product"}
         </button>
@@ -432,7 +432,7 @@ export default function ProductsPage() {
             onClick={() => setActiveTab(tab.key)}
             className={`px-4 py-2.5 text-xs font-bold border-b-2 transition ${
               activeTab === tab.key
-                ? "border-indigo-650 text-indigo-700"
+                ? "border-indigo-600 text-indigo-700"
                 : "border-transparent text-gray-400 hover:text-gray-600"
             }`}
           >
@@ -448,7 +448,7 @@ export default function ProductsPage() {
       {activeTab === "all" && (
         <div className="space-y-4">
           {/* Advanced Search/Filter Bar */}
-          <form onSubmit={handleSearchSubmit} className="grid gap-3 sm:grid-cols-12 bg-white border border-gray-150 p-4 rounded-2xl shadow-3xs">
+          <form onSubmit={handleSearchSubmit} className="grid gap-3 sm:grid-cols-12 bg-white border border-gray-200 p-4 rounded-2xl shadow-sm">
             <input
               placeholder="Search by name..."
               value={query}
@@ -458,7 +458,7 @@ export default function ProductsPage() {
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="h-10 rounded-xl border border-gray-300 bg-white px-2.5 text-xs font-bold text-gray-650 outline-none cursor-pointer sm:col-span-3"
+              className="h-10 rounded-xl border border-gray-300 bg-white px-2.5 text-xs font-bold text-gray-600 outline-none cursor-pointer sm:col-span-3"
             >
               <option value="">All Categories</option>
               {categories.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -466,7 +466,7 @@ export default function ProductsPage() {
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value)}
-              className="h-10 rounded-xl border border-gray-300 bg-white px-2.5 text-xs font-bold text-gray-650 outline-none cursor-pointer sm:col-span-3"
+              className="h-10 rounded-xl border border-gray-300 bg-white px-2.5 text-xs font-bold text-gray-600 outline-none cursor-pointer sm:col-span-3"
             >
               <option value="newest">Newest First</option>
               <option value="price_asc">Price: Low to High</option>
@@ -481,10 +481,10 @@ export default function ProductsPage() {
           ) : products.length === 0 ? (
             <div className="text-center text-xs font-bold text-gray-400 py-10">No products found.</div>
           ) : (
-            <div className="overflow-x-auto bg-white rounded-2xl border border-gray-200 shadow-3xs">
+            <div className="overflow-x-auto bg-white rounded-2xl border border-gray-200 shadow-sm">
               <table className="min-w-full text-xs text-left">
                 <thead>
-                  <tr className="bg-gray-55 border-b border-gray-150">
+                  <tr className="bg-gray-50 border-b border-gray-200">
                     <th className="px-4 py-3 font-extrabold text-gray-400 uppercase tracking-wider">Product Info</th>
                     <th className="px-4 py-3 font-extrabold text-gray-400 uppercase tracking-wider">Category</th>
                     <th className="px-4 py-3 font-extrabold text-gray-400 uppercase tracking-wider text-right">Price</th>
@@ -506,7 +506,7 @@ export default function ProductsPage() {
                       <td className="px-4 py-3 font-bold text-gray-700">{p.category}</td>
                       <td className="px-4 py-3 font-bold text-gray-900 text-right">${p.price.toFixed(2)}</td>
                       <td className="px-4 py-3 text-right">
-                        <span className={`font-black ${p.stock === 0 ? "text-red-650" : p.stock <= 5 ? "text-amber-700" : "text-gray-700"}`}>
+                        <span className={`font-black ${p.stock === 0 ? "text-red-600" : p.stock <= 5 ? "text-amber-700" : "text-gray-700"}`}>
                           {p.stock}
                         </span>
                       </td>
@@ -515,13 +515,13 @@ export default function ProductsPage() {
                         <div className="inline-flex gap-1.5">
                           <button
                             onClick={() => openEdit(p)}
-                            className="px-2.5 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 font-bold text-gray-650 cursor-pointer"
+                            className="px-2.5 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 font-bold text-gray-600 cursor-pointer"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => handleDuplicate(p)}
-                            className="px-2.5 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 font-bold text-gray-650 cursor-pointer"
+                            className="px-2.5 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 font-bold text-gray-600 cursor-pointer"
                           >
                             Clone
                           </button>
@@ -547,19 +547,19 @@ export default function ProductsPage() {
         <div className="space-y-6">
           {/* Inventory overview counts */}
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <div className="bg-white border border-gray-200 p-4 rounded-2xl shadow-3xs text-left">
+            <div className="bg-white border border-gray-200 p-4 rounded-2xl shadow-sm text-left">
               <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block">Total Stock Count</span>
               <span className="text-lg font-black text-gray-900">{inventoryStats.totalStock.toLocaleString()} units</span>
             </div>
-            <div className="bg-white border border-gray-250 p-4 rounded-2xl shadow-3xs text-left">
+            <div className="bg-white border border-gray-300 p-4 rounded-2xl shadow-sm text-left">
               <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block">Inventory Valuation</span>
               <span className="text-lg font-black text-gray-900">${inventoryStats.totalVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
-            <div className={`p-4 rounded-2xl border text-left shadow-3xs ${inventoryStats.lowStockCount > 0 ? "border-amber-200 bg-amber-50/20" : "border-gray-200 bg-white"}`}>
+            <div className={`p-4 rounded-2xl border text-left shadow-sm ${inventoryStats.lowStockCount > 0 ? "border-amber-200 bg-amber-50/20" : "border-gray-200 bg-white"}`}>
               <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block">Low Stock Warnings</span>
               <span className="text-lg font-black text-gray-900">{inventoryStats.lowStockCount} items</span>
             </div>
-            <div className={`p-4 rounded-2xl border text-left shadow-3xs ${inventoryStats.outOfStockCount > 0 ? "border-red-200 bg-red-50/20" : "border-gray-200 bg-white"}`}>
+            <div className={`p-4 rounded-2xl border text-left shadow-sm ${inventoryStats.outOfStockCount > 0 ? "border-red-200 bg-red-50/20" : "border-gray-200 bg-white"}`}>
               <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block">Out of Stock Alert</span>
               <span className="text-lg font-black text-gray-900">{inventoryStats.outOfStockCount} items</span>
             </div>
@@ -567,10 +567,10 @@ export default function ProductsPage() {
 
           {/* Table */}
           <div className="grid gap-6 lg:grid-cols-3 items-start">
-            <div className="lg:col-span-2 overflow-x-auto bg-white rounded-2xl border border-gray-200 shadow-3xs">
+            <div className="lg:col-span-2 overflow-x-auto bg-white rounded-2xl border border-gray-200 shadow-sm">
               <table className="min-w-full text-xs text-left">
                 <thead>
-                  <tr className="bg-gray-55 border-b border-gray-150">
+                  <tr className="bg-gray-50 border-b border-gray-200">
                     <th className="px-4 py-3 font-extrabold text-gray-400 uppercase tracking-wider">Product Description</th>
                     <th className="px-4 py-3 font-extrabold text-gray-400 uppercase tracking-wider text-right font-mono">Current Stock</th>
                     <th className="px-4 py-3 font-extrabold text-gray-400 uppercase tracking-wider text-right font-mono">Reserved Stock</th>
@@ -590,11 +590,11 @@ export default function ProductsPage() {
                         </td>
                         <td className="px-4 py-3 text-right font-bold text-gray-700">{p.stock}</td>
                         <td className="px-4 py-3 text-right text-gray-400 font-semibold">{reserved}</td>
-                        <td className="px-4 py-3 text-right font-black text-indigo-650">{available}</td>
+                        <td className="px-4 py-3 text-right font-black text-indigo-600">{available}</td>
                         <td className="px-4 py-3 text-right">
                           <button
                             onClick={() => { setAdjustingProduct(p); setAdjustValue(p.stock); }}
-                            className="px-2.5 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 font-bold text-gray-650 cursor-pointer"
+                            className="px-2.5 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 font-bold text-gray-600 cursor-pointer"
                           >
                             Adjust Stock
                           </button>
@@ -607,7 +607,7 @@ export default function ProductsPage() {
             </div>
 
             {/* Adjustments log sidebar history */}
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-3xs space-y-4">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
               <h3 className="text-sm font-black text-gray-900 uppercase tracking-wide">Adjustment Logs</h3>
               <p className="text-[10px] font-bold text-gray-400">History log of corrections completed during this workspace session</p>
               
@@ -617,7 +617,7 @@ export default function ProductsPage() {
                     <p className="font-bold text-gray-800">{log.name}</p>
                     <p className="text-[10px] text-gray-500">
                       SKU: <span className="font-mono font-bold text-gray-600">{log.sku}</span> | Change:{" "}
-                      <span className={`font-black ${log.change.startsWith("+") ? "text-emerald-700" : "text-rose-650"}`}>
+                      <span className={`font-black ${log.change.startsWith("+") ? "text-emerald-700" : "text-rose-600"}`}>
                         {log.change}
                       </span>
                     </p>
@@ -637,7 +637,7 @@ export default function ProductsPage() {
       {activeTab === "bulk" && (
         <div className="grid gap-6 md:grid-cols-2">
           {/* Bulk Export Card */}
-          <div className="bg-white border border-gray-200 p-5 rounded-2xl shadow-3xs text-left space-y-4">
+          <div className="bg-white border border-gray-200 p-5 rounded-2xl shadow-sm text-left space-y-4">
             <h3 className="text-sm font-black text-gray-900 uppercase tracking-wide">Export Product Catalog</h3>
             <p className="text-xs text-gray-500 leading-relaxed">
               Export all currently loaded database products and metadata configurations into a spreadsheet-compatible CSV file format.
@@ -651,7 +651,7 @@ export default function ProductsPage() {
           </div>
 
           {/* Bulk Import Card */}
-          <div className="bg-white border border-gray-200 p-5 rounded-2xl shadow-3xs text-left space-y-4">
+          <div className="bg-white border border-gray-200 p-5 rounded-2xl shadow-sm text-left space-y-4">
             <h3 className="text-sm font-black text-gray-900 uppercase tracking-wide">Bulk Import Catalog (JSON Format)</h3>
             <p className="text-xs text-gray-500 leading-relaxed">
               Paste a valid JSON array of product objects to import them into the database in bulk.
@@ -668,7 +668,7 @@ export default function ProductsPage() {
               <button
                 type="submit"
                 disabled={bulkProcessing}
-                className="px-4 py-2.5 bg-emerald-650 hover:bg-emerald-700 text-xs font-bold text-white rounded-xl transition disabled:opacity-50 cursor-pointer shadow-sm"
+                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-xs font-bold text-white rounded-xl transition disabled:opacity-50 cursor-pointer shadow-sm"
               >
                 {bulkProcessing ? "Processing list..." : "🚀 Trigger Bulk Import"}
               </button>
@@ -679,7 +679,7 @@ export default function ProductsPage() {
 
       {/* Product Edit/Create Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4 select-none">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 select-none">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6 border border-gray-200 animate-scale-up max-h-[90vh] overflow-y-auto">
             <h2 className="text-lg font-black text-gray-900 mb-4 text-left">
               {editing && editing._id ? "Edit Product Listing" : "Add Product Listing"}
@@ -696,7 +696,7 @@ export default function ProductsPage() {
 
       {/* Stock Adjustment Popover Modal */}
       {adjustingProduct && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4 select-none">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 select-none">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 border border-gray-200 text-left space-y-4">
             <h3 className="text-sm font-black text-gray-900">Adjust Inventory Stock</h3>
             <div>
@@ -704,7 +704,7 @@ export default function ProductsPage() {
               <p className="text-[10px] text-gray-400 font-bold mt-0.5">SKU: {adjustingProduct.sku}</p>
             </div>
             <div>
-              <label className="block text-2xs font-extrabold text-gray-400 uppercase mb-1">New Stock Count</label>
+              <label className="block text-xs font-extrabold text-gray-400 uppercase mb-1">New Stock Count</label>
               <input
                 type="number"
                 value={adjustValue}
@@ -712,11 +712,11 @@ export default function ProductsPage() {
                 className="w-full h-10 rounded-xl border border-gray-300 bg-gray-50 px-3 text-xs outline-none focus:border-indigo-500"
               />
             </div>
-            <div className="flex justify-end gap-2 border-t border-gray-150 pt-3">
+            <div className="flex justify-end gap-2 border-t border-gray-200 pt-3">
               <button
                 type="button"
                 onClick={() => setAdjustingProduct(null)}
-                className="h-9 px-3 rounded-xl border border-gray-300 bg-white text-xs font-bold text-gray-650 hover:bg-gray-50 cursor-pointer"
+                className="h-9 px-3 rounded-xl border border-gray-300 bg-white text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer"
               >
                 Cancel
               </button>
@@ -724,7 +724,7 @@ export default function ProductsPage() {
                 type="button"
                 onClick={handleStockAdjustSave}
                 disabled={saving}
-                className="h-9 px-4 bg-indigo-600 hover:bg-indigo-750 text-xs font-bold text-white rounded-xl transition cursor-pointer disabled:opacity-50"
+                className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 text-xs font-bold text-white rounded-xl transition cursor-pointer disabled:opacity-50"
               >
                 {saving ? "Saving..." : "Apply Adjust"}
               </button>

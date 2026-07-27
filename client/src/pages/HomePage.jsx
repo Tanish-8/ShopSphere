@@ -12,7 +12,7 @@ import { FeaturedSection, FeaturedProductCard, AnimatedProductGrid, ProductSkele
 import { CATEGORIES_HASH, scrollToCategoriesSection } from "../utils/scrollToCategories";
 
 const ProductCardSkeleton = () => (
-  <div className="flex flex-col overflow-hidden rounded-2xl border border-gray-150 bg-white p-4 space-y-4 animate-pulse">
+  <div className="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 space-y-4 animate-pulse">
     <div className="aspect-square w-full rounded-xl bg-gray-100"></div>
     <div className="space-y-2">
       <div className="h-3 w-1/3 rounded bg-gray-200"></div>
@@ -28,7 +28,7 @@ const ProductCardSkeleton = () => (
 
 // Legacy skeleton for backward compatibility
 const LegacyProductCardSkeleton = () => (
-  <div className="flex flex-col overflow-hidden rounded-2xl border border-gray-150 bg-white p-4 space-y-4 animate-pulse">
+  <div className="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 space-y-4 animate-pulse">
     <div className="aspect-square w-full rounded-xl bg-gray-100"></div>
     <div className="space-y-2">
       <div className="h-3 w-1/3 rounded bg-gray-200"></div>
@@ -191,7 +191,7 @@ export default function HomePage() {
         setWishlistIds((prev) => prev.filter((id) => id !== productId));
         toast.dismiss(toastId);
         toast.info("Removed from Wishlist", (
-          <p className="font-bold text-gray-905">{prodName}</p>
+          <p className="font-bold text-gray-900">{prodName}</p>
         ));
       } else {
         await addToWishlist(productId);
@@ -200,7 +200,7 @@ export default function HomePage() {
         toast.success("Added to Wishlist", (
           <div className="space-y-1">
             <p className="font-extrabold text-gray-900 leading-tight">{prodName}</p>
-            <div className="flex gap-2.5 pt-1 text-[10px] font-black text-indigo-650">
+            <div className="flex gap-2.5 pt-1 text-[10px] font-black text-indigo-600">
               <a href="/wishlist" className="hover:underline">View Wishlist</a>
               <span className="text-gray-300">|</span>
               <a href="/products" className="hover:underline">Continue Shopping</a>
@@ -231,13 +231,13 @@ export default function HomePage() {
       {/* 2. Why Shop With Us Section */}
       <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {features.map((feat, i) => (
-          <div key={i} className="flex gap-4 rounded-2xl border border-gray-150 bg-white p-5 shadow-xs">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-50">
+          <div key={i} className="flex gap-4 rounded-2xl border border-[#E8E1D8] dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-sm">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400">
               {feat.icon}
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900">{feat.title}</h3>
-              <p className="mt-1 text-xs text-gray-500 leading-normal">{feat.desc}</p>
+              <h3 className="font-semibold text-gray-900 dark:text-white">{feat.title}</h3>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 leading-normal">{feat.desc}</p>
             </div>
           </div>
         ))}
@@ -247,32 +247,32 @@ export default function HomePage() {
       <CategorySection />
 
       {/* 4. Flash Deals Section */}
-      <section id="flash-deals" className="overflow-hidden rounded-3xl border border-red-200 bg-red-50 p-6 sm:p-8 flex flex-col lg:flex-row items-center gap-8">
+      <section id="flash-deals" className="overflow-hidden rounded-3xl border border-[#FDE8E0] dark:border-gray-800 bg-[#FFF7F3] dark:bg-[#1e1b2e] p-6 sm:p-8 flex flex-col lg:flex-row items-center gap-8 shadow-sm">
         <div className="flex-1 space-y-4 text-center lg:text-left">
-          <div className="inline-flex items-center gap-2 rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">
-            <span className="animate-pulse rounded-full h-2.5 w-2.5 bg-red-600"></span>
+          <div className="inline-flex items-center gap-2 rounded-full bg-rose-100 dark:bg-rose-950/40 px-3.5 py-1 text-xs font-bold text-rose-700 dark:text-rose-400">
+            <span className="animate-pulse rounded-full h-2.5 w-2.5 bg-rose-600"></span>
             FLASH DEALS
           </div>
-          <h2 className="text-3xl font-extrabold text-gray-900 leading-tight">
+          <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white leading-tight">
             Special Discounts • Limited Quantities
           </h2>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             Hurry up! Grab top-tier products at unprecedented prices before the clock runs down.
           </p>
           <div className="flex justify-center lg:justify-start items-center gap-3 pt-2">
-            <div className="flex flex-col items-center rounded-xl bg-white border border-red-100 p-3 shadow-sm min-w-16">
-              <span className="text-xl font-black text-red-600 tracking-tight">{timeLeft.hours.toString().padStart(2, "0")}</span>
-              <span className="text-[9px] font-extrabold uppercase tracking-wider text-gray-450 mt-0.5">Hours</span>
+            <div className="flex flex-col items-center rounded-xl bg-white dark:bg-gray-800 border border-[#FDE8E0] dark:border-gray-700 p-3 shadow-sm min-w-16">
+              <span className="text-xl font-black text-rose-600 dark:text-rose-400 tracking-tight">{timeLeft.hours.toString().padStart(2, "0")}</span>
+              <span className="text-[9px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400 mt-0.5">Hours</span>
             </div>
-            <span className="text-xl font-black text-red-500 animate-pulse">:</span>
-            <div className="flex flex-col items-center rounded-xl bg-white border border-red-100 p-3 shadow-sm min-w-16">
-              <span className="text-xl font-black text-red-600 tracking-tight">{timeLeft.minutes.toString().padStart(2, "0")}</span>
-              <span className="text-[9px] font-extrabold uppercase tracking-wider text-gray-450 mt-0.5">Mins</span>
+            <span className="text-xl font-black text-rose-500 animate-pulse">:</span>
+            <div className="flex flex-col items-center rounded-xl bg-white dark:bg-gray-800 border border-[#FDE8E0] dark:border-gray-700 p-3 shadow-sm min-w-16">
+              <span className="text-xl font-black text-rose-600 dark:text-rose-400 tracking-tight">{timeLeft.minutes.toString().padStart(2, "0")}</span>
+              <span className="text-[9px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400 mt-0.5">Mins</span>
             </div>
-            <span className="text-xl font-black text-red-500 animate-pulse">:</span>
-            <div className="flex flex-col items-center rounded-xl bg-white border border-red-100 p-3 shadow-sm min-w-16">
-              <span className="text-xl font-black text-red-600 tracking-tight">{timeLeft.seconds.toString().padStart(2, "0")}</span>
-              <span className="text-[9px] font-extrabold uppercase tracking-wider text-gray-450 mt-0.5">Secs</span>
+            <span className="text-xl font-black text-rose-500 animate-pulse">:</span>
+            <div className="flex flex-col items-center rounded-xl bg-white dark:bg-gray-800 border border-[#FDE8E0] dark:border-gray-700 p-3 shadow-sm min-w-16">
+              <span className="text-xl font-black text-rose-600 dark:text-rose-400 tracking-tight">{timeLeft.seconds.toString().padStart(2, "0")}</span>
+              <span className="text-[9px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400 mt-0.5">Secs</span>
             </div>
           </div>
         </div>
@@ -324,11 +324,11 @@ export default function HomePage() {
       </FeaturedSection>
 
       {/* 6. Best Sellers Section */}
-      <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
-        <div className="mb-6 flex items-end justify-between border-b border-gray-100 pb-4">
+      <section className="rounded-3xl border border-[#E8E1D8] dark:border-gray-800 bg-[#F3EFE8] dark:bg-[#0f172a] p-6 shadow-sm sm:p-8">
+        <div className="mb-6 flex items-end justify-between border-b border-[#E8E1D8] dark:border-gray-800 pb-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Best Sellers</h2>
-            <p className="text-xs text-gray-500 mt-1">The most popular items across our catalog.</p>
+            <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white">Best Sellers</h2>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">The most popular items across our catalog.</p>
           </div>
         </div>
 
@@ -340,7 +340,7 @@ export default function HomePage() {
             <LegacyProductCardSkeleton />
           </div>
         ) : (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5">
             {bestSellers.map((product) => (
               <ProductCard
                 key={product._id || product.id}
@@ -354,13 +354,13 @@ export default function HomePage() {
       </section>
 
       {/* 7. Newsletter Section */}
-      <section className="relative overflow-hidden rounded-3xl bg-indigo-900 px-6 py-12 text-white sm:px-12 sm:py-16 shadow-lg">
+      <section className="relative overflow-hidden rounded-3xl bg-indigo-900 dark:bg-indigo-950/90 border border-indigo-800/50 px-6 py-12 text-white sm:px-12 sm:py-16 shadow-md">
         {/* Decorative Circles */}
         <div className="absolute -left-12 -top-12 h-48 w-48 rounded-full bg-white/5" />
         <div className="absolute -right-12 -bottom-12 h-48 w-48 rounded-full bg-white/5" />
 
         <div className="relative z-10 max-w-2xl mx-auto text-center space-y-4">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/10 backdrop-blur-xs text-2xl">
+          <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm text-2xl">
             📬
           </div>
           <h2 className="text-2xl font-extrabold sm:text-4xl">Get Exclusive Offers</h2>
@@ -379,7 +379,7 @@ export default function HomePage() {
             />
             <button
               type="submit"
-              className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50 active:scale-95 cursor-pointer"
+              className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50 active:scale-95 cursor-pointer shadow-sm"
             >
               Subscribe
             </button>

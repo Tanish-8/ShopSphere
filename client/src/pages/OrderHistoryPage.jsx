@@ -103,7 +103,7 @@ function OrderHistoryPage() {
           {/* Desktop Table */}
           <section className="hidden overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm md:block">
             <table className="min-w-full text-left text-sm">
-              <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500 font-bold border-b border-gray-150">
+              <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500 font-bold border-b border-gray-200">
                 <tr>
                   <th className="px-4 py-3">Order ID</th>
                   <th className="px-4 py-3">Date</th>
@@ -123,7 +123,7 @@ function OrderHistoryPage() {
                     <td className="px-4 py-3 text-gray-600">{formatDate(order.createdAt)}</td>
                     <td className="px-4 py-3 font-semibold text-indigo-600">{formatCurrency(convertPrice(Number(order.totalPrice || 0)))}</td>
                     <td className="px-4 py-3">
-                      <span className={`rounded-full px-2.5 py-1 text-2xs font-bold uppercase tracking-wider ${
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wider ${
                         order.status === ORDER_STATUS.DELIVERED ? "bg-emerald-50 text-emerald-700" :
                         order.status === ORDER_STATUS.CANCELLED ? "bg-red-50 text-red-700" :
                         "bg-indigo-50 text-indigo-700"
@@ -145,7 +145,7 @@ function OrderHistoryPage() {
                             {!isCancelledOrRefunded && (
                               <Link
                                 to={`/orders/${order._id}/track`}
-                                className="inline-flex items-center rounded-xl bg-indigo-600 px-3 py-1.5 text-2xs font-bold text-white transition hover:bg-indigo-700 cursor-pointer"
+                                className="inline-flex items-center rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-indigo-700 cursor-pointer"
                               >
                                 Track Order
                               </Link>
@@ -153,7 +153,7 @@ function OrderHistoryPage() {
                             <button
                               onClick={() => handleDownload(order._id)}
                               disabled={downloadingId === order._id}
-                              className="inline-flex items-center rounded-xl border border-gray-350 bg-white px-3 py-1.5 text-2xs font-bold text-gray-700 transition hover:bg-gray-50 cursor-pointer disabled:opacity-50"
+                              className="inline-flex items-center rounded-xl border border-gray-300 bg-white px-3 py-1.5 text-xs font-bold text-gray-700 transition hover:bg-gray-50 cursor-pointer disabled:opacity-50"
                             >
                               {downloadingId === order._id ? "..." : "Download Invoice"}
                             </button>
@@ -163,7 +163,7 @@ function OrderHistoryPage() {
                                   setSelectedOrder(order);
                                   setShowCancelModal(true);
                                 }}
-                                className="inline-flex items-center rounded-xl bg-red-50 hover:bg-red-100 text-2xs font-bold text-red-700 transition border border-red-200 px-3 py-1.5 cursor-pointer"
+                                className="inline-flex items-center rounded-xl bg-red-50 hover:bg-red-100 text-xs font-bold text-red-700 transition border border-red-200 px-3 py-1.5 cursor-pointer"
                               >
                                 Cancel Order
                               </button>
@@ -171,13 +171,13 @@ function OrderHistoryPage() {
                             {isDelivered && (
                               <Link
                                 to={`/orders/${order._id}`}
-                                className="inline-flex items-center rounded-xl bg-purple-50 hover:bg-purple-100 text-2xs font-bold text-purple-700 transition border border-purple-200 px-3 py-1.5 cursor-pointer"
+                                className="inline-flex items-center rounded-xl bg-purple-50 hover:bg-purple-100 text-xs font-bold text-purple-700 transition border border-purple-200 px-3 py-1.5 cursor-pointer"
                               >
                                 Return / Replace
                               </Link>
                             )}
                             {isCancelledOrRefunded && (
-                              <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-2xs font-bold border uppercase ${isRefunded ? "bg-teal-50 text-teal-700 border-teal-100" : "bg-red-50 text-red-700 border-red-100"}`}>
+                              <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold border uppercase ${isRefunded ? "bg-teal-50 text-teal-700 border-teal-100" : "bg-red-50 text-red-700 border-red-100"}`}>
                                 {isRefunded ? "Refunded" : "Cancelled"}
                               </span>
                             )}

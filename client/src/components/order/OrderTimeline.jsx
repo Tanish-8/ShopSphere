@@ -36,7 +36,7 @@ export default function OrderTimeline({ statusHistory = [], orderTimeline = [], 
               <h4 className="text-xs font-extrabold text-gray-900 capitalize">{item.status}</h4>
               <time className="text-[10px] text-gray-500 font-semibold mt-0.5">{formatAt(item.at)}</time>
               {item.note && (
-                <p className="text-[10px] text-gray-400 mt-1 bg-gray-50 p-2 rounded-lg border border-gray-150 font-medium">
+                <p className="text-[10px] text-gray-400 mt-1 bg-gray-50 p-2 rounded-lg border border-gray-200 font-medium">
                   {item.note}
                 </p>
               )}

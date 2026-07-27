@@ -139,7 +139,7 @@ export default function Hero() {
   return (
     <section
       ref={sectionRef}
-      className="relative min-h-screen overflow-hidden bg-[#0a0a12] rounded-3xl"
+      className="relative min-h-screen overflow-hidden rounded-3xl border border-[#E8E1D8] dark:border-gray-800 bg-gradient-to-br from-[#F7F4EF] via-[#F3EFE8] to-[#EEF2FF] dark:from-[#0f172a] dark:via-[#1e1b4b]/60 dark:to-[#0f172a] shadow-sm"
       aria-label="ShopSphere hero section"
     >
       {/* Background */}
@@ -148,7 +148,7 @@ export default function Hero() {
       <GradientOverlays />
 
       {/* Content */}
-      <div className="relative z-10 mx-auto max-w-7xl px-4 pt-28 sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto max-w-[1600px] px-4 pt-28 sm:px-6 lg:px-8 xl:px-10">
         <div className="flex min-h-[calc(100vh-7rem)] flex-col items-center gap-12 lg:flex-row lg:items-center lg:gap-8">
 
           {/* ─── LEFT COLUMN ─── */}

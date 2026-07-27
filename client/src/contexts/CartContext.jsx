@@ -79,7 +79,7 @@ function CartProvider({ children }) {
           <div className="space-y-1">
             <p className="font-extrabold text-gray-900 leading-tight">{item.name}</p>
             <p className="text-[10px] text-gray-500 font-bold">Quantity: {safeQuantity} &bull; Subtotal updated</p>
-            <div className="flex gap-2.5 pt-1 text-[10px] font-black text-indigo-650">
+            <div className="flex gap-2.5 pt-1 text-[10px] font-black text-indigo-600">
               <a href="/cart" className="hover:underline">View Cart</a>
               <span className="text-gray-300">|</span>
               <a href="/products" className="hover:underline">Continue Shopping</a>
@@ -91,7 +91,7 @@ function CartProvider({ children }) {
           <div className="space-y-1">
             <p className="font-extrabold text-gray-900 leading-tight">{item.name}</p>
             <p className="text-[10px] text-gray-500 font-bold">Cart quantity increased to {existing.quantity + safeQuantity}</p>
-            <div className="flex gap-2.5 pt-1 text-[10px] font-black text-indigo-650">
+            <div className="flex gap-2.5 pt-1 text-[10px] font-black text-indigo-600">
               <a href="/cart" className="hover:underline">View Cart</a>
               <span className="text-gray-300">|</span>
               <a href="/products" className="hover:underline">Continue Shopping</a>

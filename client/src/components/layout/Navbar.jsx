@@ -21,7 +21,7 @@ import { fetchProducts } from "../../services/productService";
 import { FALLBACK_PRODUCT_IMAGE } from "../../utils/productImage";
 import { cn } from "../../utils/cn";
 import { useCurrency } from "../../contexts/CurrencyContext";
-import { CATEGORIES_HASH, scrollToCategoriesSection } from "../../utils/scrollToCategories";
+import { CATEGORIES_HASH, CATEGORIES_SECTION_ID, scrollToCategoriesSection } from "../../utils/scrollToCategories";
 import AnimatedBadge from "../ui/AnimatedBadge";
 
 const NAV_LINKS = [
@@ -228,6 +228,39 @@ function Navbar() {
   const height = useTransform(scrollY, [0, 100], [72, 64]);
 
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isCategoriesInView, setIsCategoriesInView] = useState(false);
+
+  useEffect(() => {
+    if (location.pathname !== "/") {
+      setIsCategoriesInView(false);
+      return undefined;
+    }
+
+    let observer;
+    let timerId;
+
+    const attachObserver = () => {
+      const el = document.getElementById(CATEGORIES_SECTION_ID);
+      if (el) {
+        observer = new IntersectionObserver(
+          ([entry]) => {
+            setIsCategoriesInView(entry.isIntersecting);
+          },
+          { threshold: 0.2 }
+        );
+        observer.observe(el);
+      } else {
+        timerId = setTimeout(attachObserver, 100);
+      }
+    };
+
+    attachObserver();
+
+    return () => {
+      if (observer) observer.disconnect();
+      if (timerId) clearTimeout(timerId);
+    };
+  }, [location.pathname]);
 
   useEffect(() => {
     const syncDarkMode = () => {
@@ -489,7 +522,38 @@ function Navbar() {
   ];
 
   const isCategoriesActive =
-    location.pathname === "/" && location.hash === CATEGORIES_HASH;
+    location.pathname === "/categories" ||
+    (location.pathname === "/" && (location.hash === CATEGORIES_HASH || isCategoriesInView));
+
+  const isHomeActive = location.pathname === "/" && !isCategoriesActive;
+
+  const isProductsActive =
+    location.pathname === "/products" || location.pathname.startsWith("/products/");
+
+  const getIsActive = (link) => {
+    if (link.scrollToCategories || link.to === "/categories") {
+      return isCategoriesActive;
+    }
+    if (link.to === "/") {
+      return isHomeActive;
+    }
+    if (link.to === "/products") {
+      return isProductsActive;
+    }
+    return location.pathname === link.to;
+  };
+
+  const handleHomeClick = useCallback(
+    (event) => {
+      if (location.pathname === "/") {
+        if (location.hash) {
+          navigate("/", { replace: true });
+        }
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    },
+    [location.pathname, location.hash, navigate]
+  );
 
   return (
     <motion.header
@@ -497,12 +561,12 @@ function Navbar() {
       className={cn(
         "sticky top-0 z-50 border-b backdrop-blur-xl backdrop-saturate-150 transition-all duration-300",
         isScrolled
-          ? "border-gray-200/70 bg-white/85 shadow-sm shadow-gray-900/5 dark:border-gray-800/80 dark:bg-gray-950/85 dark:shadow-black/25"
-          : "border-transparent bg-white/75 dark:bg-gray-950/75"
+          ? "border-[#E8E1D8] bg-[#F7F4EF]/90 shadow-sm shadow-gray-900/5 dark:border-gray-800/80 dark:bg-gray-950/85 dark:shadow-black/25"
+          : "border-[#E8E1D8]/60 bg-[#F7F4EF]/80 dark:bg-gray-950/75"
       )}
     >
       <nav
-        className="mx-auto flex h-full max-w-7xl items-center gap-3 px-4 sm:gap-4 sm:px-6 lg:px-8"
+        className="mx-auto flex h-full max-w-[1600px] items-center gap-3 px-4 sm:gap-4 sm:px-6 lg:px-8 xl:px-10"
         aria-label="Main navigation"
       >
         {/* Brand + desktop nav */}
@@ -528,38 +592,40 @@ function Navbar() {
           </motion.div>
 
           <div className="hidden items-center gap-5 md:flex lg:gap-6">
-            {NAV_LINKS.map((link) =>
-              link.scrollToCategories ? (
+            {NAV_LINKS.map((link) => {
+              const isActive = getIsActive(link);
+              return link.scrollToCategories ? (
                 <CategoriesNavLink
                   key={link.label}
-                  isActive={isCategoriesActive}
+                  isActive={isActive}
                   onNavigate={handleCategoriesNavigate}
-                  className={cn(navLinkClass({ isActive: isCategoriesActive }), "group")}
+                  className={cn(navLinkClass({ isActive }), "group")}
                 >
                   {link.label}
                   <span
                     className={cn(
                       "absolute -bottom-0.5 left-0 h-0.5 w-full origin-left scale-x-0 rounded-full bg-indigo-600 transition-transform duration-300 group-hover:scale-x-100 dark:bg-indigo-400",
-                      isCategoriesActive && "scale-x-100"
+                      isActive && "scale-x-100"
                     )}
                   />
                 </CategoriesNavLink>
               ) : (
-                <NavLink key={link.label} to={link.to} className={navLinkClass} end={link.to === "/"}>
-                  {({ isActive }) => (
-                    <>
-                      {link.label}
-                      <span
-                        className={cn(
-                          "absolute -bottom-0.5 left-0 h-0.5 w-full origin-left scale-x-0 rounded-full bg-indigo-600 transition-transform duration-300 group-hover:scale-x-100 dark:bg-indigo-400",
-                          isActive && "scale-x-100"
-                        )}
-                      />
-                    </>
-                  )}
-                </NavLink>
-              )
-            )}
+                <Link
+                  key={link.label}
+                  to={link.to}
+                  onClick={link.to === "/" ? handleHomeClick : undefined}
+                  className={cn(navLinkClass({ isActive }), "group")}
+                >
+                  {link.label}
+                  <span
+                    className={cn(
+                      "absolute -bottom-0.5 left-0 h-0.5 w-full origin-left scale-x-0 rounded-full bg-indigo-600 transition-transform duration-300 group-hover:scale-x-100 dark:bg-indigo-400",
+                      isActive && "scale-x-100"
+                    )}
+                  />
+                </Link>
+              );
+            })}
           </div>
         </div>
 
@@ -808,47 +874,50 @@ function Navbar() {
                 />
 
                 <nav className="space-y-1" aria-label="Mobile primary">
-                  {NAV_LINKS.map((link, index) => (
-                    <motion.div
-                      key={link.label}
-                      initial={{ opacity: 0, x: 16 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      {link.scrollToCategories ? (
-                        <CategoriesNavLink
-                          isActive={isCategoriesActive}
-                          onNavigate={handleCategoriesNavigate}
-                          className={cn(
-                            "flex items-center justify-between rounded-xl px-3 py-3 text-sm font-medium transition-colors",
-                            isCategoriesActive
-                              ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300"
-                              : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
-                          )}
-                        >
-                          {link.label}
-                          <ChevronRight className="h-4 w-4 text-gray-400" aria-hidden="true" />
-                        </CategoriesNavLink>
-                      ) : (
-                        <NavLink
-                          to={link.to}
-                          end={link.to === "/"}
-                          onClick={() => setIsMenuOpen(false)}
-                          className={({ isActive }) =>
-                            cn(
+                  {NAV_LINKS.map((link, index) => {
+                    const isActive = getIsActive(link);
+                    return (
+                      <motion.div
+                        key={link.label}
+                        initial={{ opacity: 0, x: 16 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                      >
+                        {link.scrollToCategories ? (
+                          <CategoriesNavLink
+                            isActive={isActive}
+                            onNavigate={handleCategoriesNavigate}
+                            className={cn(
                               "flex items-center justify-between rounded-xl px-3 py-3 text-sm font-medium transition-colors",
                               isActive
                                 ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300"
                                 : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
-                            )
-                          }
-                        >
-                          {link.label}
-                          <ChevronRight className="h-4 w-4 text-gray-400" aria-hidden="true" />
-                        </NavLink>
-                      )}
-                    </motion.div>
-                  ))}
+                            )}
+                          >
+                            {link.label}
+                            <ChevronRight className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                          </CategoriesNavLink>
+                        ) : (
+                          <Link
+                            to={link.to}
+                            onClick={(e) => {
+                              setIsMenuOpen(false);
+                              if (link.to === "/") handleHomeClick(e);
+                            }}
+                            className={cn(
+                              "flex items-center justify-between rounded-xl px-3 py-3 text-sm font-medium transition-colors",
+                              isActive
+                                ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300"
+                                : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+                            )}
+                          >
+                            {link.label}
+                            <ChevronRight className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                          </Link>
+                        )}
+                      </motion.div>
+                    );
+                  })}
                 </nav>
 
                 <hr className="border-gray-100 dark:border-gray-800" />

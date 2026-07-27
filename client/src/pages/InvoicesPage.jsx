@@ -115,7 +115,7 @@ export default function InvoicesPage() {
       )}
 
       {orders.length === 0 ? (
-        <div className="rounded-2xl border border-gray-150 bg-white py-14 px-6 text-center shadow-xs">
+        <div className="rounded-2xl border border-gray-200 bg-white py-14 px-6 text-center shadow-sm">
           <div className="text-4xl">📄</div>
           <h2 className="mt-4 text-lg font-bold text-gray-800">No invoices available yet</h2>
           <p className="mt-2 text-xs text-gray-500 max-w-sm mx-auto">
@@ -131,7 +131,7 @@ export default function InvoicesPage() {
       ) : (
         <>
           {/* Search and Filters */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white border border-gray-150 p-4 rounded-2xl shadow-xs">
+          <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white border border-gray-200 p-4 rounded-2xl shadow-sm">
             {/* Search */}
             <div className="relative flex items-center w-full sm:max-w-xs">
               <input
@@ -164,7 +164,7 @@ export default function InvoicesPage() {
                 <button
                   key={status}
                   onClick={() => setFilterStatus(status)}
-                  className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${filterStatus === status ? "bg-white text-indigo-700 shadow-xs" : "text-gray-500 hover:text-gray-800"}`}
+                  className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${filterStatus === status ? "bg-white text-indigo-700 shadow-sm" : "text-gray-500 hover:text-gray-800"}`}
                 >
                   {status}
                 </button>
@@ -174,7 +174,7 @@ export default function InvoicesPage() {
 
           {/* Results check */}
           {filteredOrders.length === 0 ? (
-            <div className="rounded-2xl border border-gray-150 bg-white py-14 px-6 text-center shadow-xs">
+            <div className="rounded-2xl border border-gray-200 bg-white py-14 px-6 text-center shadow-sm">
               <div className="text-3xl">🔍</div>
               <h2 className="mt-4 text-base font-bold text-gray-800">No matching invoices found</h2>
               <p className="mt-2 text-xs text-gray-500">
@@ -182,12 +182,12 @@ export default function InvoicesPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-gray-150 bg-white shadow-xs">
+            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
               {/* Desktop Table View */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="bg-gray-50 border-b border-gray-150 font-bold text-gray-500">
+                    <tr className="bg-gray-50 border-b border-gray-200 font-bold text-gray-500">
                       <th className="px-6 py-4">Invoice Number</th>
                       <th className="px-6 py-4">Order ID</th>
                       <th className="px-6 py-4">Order Date</th>
@@ -217,14 +217,14 @@ export default function InvoicesPage() {
                               {isPaid ? "Paid" : isCancelled ? "Cancelled" : "Pending"}
                             </span>
                           </td>
-                          <td className="px-6 py-4 font-bold text-indigo-650">
+                          <td className="px-6 py-4 font-bold text-indigo-600">
                             {formatCurrency(convertPrice(Number(order.totalPrice || 0)))}
                           </td>
                           <td className="px-6 py-4 text-right">
                             <button
                               onClick={() => handleDownload(order._id || order.id)}
                               disabled={downloadingId === (order._id || order.id)}
-                              className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-200 bg-white px-3 py-1.5 font-bold text-indigo-600 shadow-3xs transition hover:bg-indigo-50 cursor-pointer disabled:opacity-50"
+                              className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-200 bg-white px-3 py-1.5 font-bold text-indigo-600 shadow-sm transition hover:bg-indigo-50 cursor-pointer disabled:opacity-50"
                             >
                               {downloadingId === (order._id || order.id) ? (
                                 <svg className="animate-spin h-3.5 w-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24">
@@ -232,7 +232,7 @@ export default function InvoicesPage() {
                                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                 </svg>
                               ) : (
-                                <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                 </svg>
                               )}
@@ -274,7 +274,7 @@ export default function InvoicesPage() {
                         <button
                           onClick={() => handleDownload(idStr)}
                           disabled={downloadingId === idStr}
-                          className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-indigo-200 bg-white py-2 font-bold text-indigo-600 shadow-3xs transition hover:bg-indigo-50 cursor-pointer disabled:opacity-50"
+                          className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-indigo-200 bg-white py-2 font-bold text-indigo-600 shadow-sm transition hover:bg-indigo-50 cursor-pointer disabled:opacity-50"
                         >
                           {downloadingId === idStr ? (
                             <svg className="animate-spin h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24">
@@ -282,7 +282,7 @@ export default function InvoicesPage() {
                               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                             </svg>
                           ) : (
-                            <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
                           )}

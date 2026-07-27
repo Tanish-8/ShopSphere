@@ -322,7 +322,7 @@ export default function OrderDetailsPage() {
                         {done ? "✓" : ""}
                       </div>
                       <span className={`text-[9px] font-bold whitespace-nowrap hidden md:block ${
-                        active ? "text-indigo-650 font-extrabold" : done ? "text-gray-700" : "text-gray-400"
+                        active ? "text-indigo-600 font-extrabold" : done ? "text-gray-700" : "text-gray-400"
                       }`}>{step}</span>
                     </div>
                   );
@@ -438,7 +438,7 @@ export default function OrderDetailsPage() {
               <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
                 🔄 Refund Details
               </h2>
-              <div className="grid gap-4 sm:grid-cols-2 text-xs font-semibold text-gray-700 bg-gray-50 p-4 rounded-xl border border-gray-150">
+              <div className="grid gap-4 sm:grid-cols-2 text-xs font-semibold text-gray-700 bg-gray-50 p-4 rounded-xl border border-gray-200">
                 <div>
                   <p className="text-gray-400 text-[10px]">Refund ID</p>
                   <p className="font-bold text-gray-900 select-all font-mono mt-0.5 text-[10px]">{order.refundResult.refundId}</p>
@@ -478,7 +478,7 @@ export default function OrderDetailsPage() {
               {order.orderItems.map((it) => (
                 <div key={it._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4 first:pt-0 last:pb-0">
                   <div className="flex items-center gap-4">
-                    <img src={it.image} alt={it.name} className="h-18 w-18 rounded-xl object-cover border border-gray-100 flex-shrink-0 h-[72px] w-[72px]" />
+                    <img src={it.image} alt={it.name} className="h-20 w-20 rounded-xl object-cover border border-gray-100 flex-shrink-0 h-[72px] w-[72px]" />
                     <div className="min-w-0">
                       <h4 className="text-xs font-extrabold text-gray-900 leading-snug">{it.name}</h4>
                       <p className="text-[10px] text-gray-400 font-bold mt-1">
@@ -570,13 +570,13 @@ export default function OrderDetailsPage() {
                     </p>
                   )}
                   {order.paymentResult?.paymentId && (
-                    <p className="flex justify-between text-[10px] text-gray-550">
+                    <p className="flex justify-between text-[10px] text-gray-500">
                       <span>Transaction ID:</span>
                       <span className="font-mono select-all bg-gray-50 px-1 py-0.5 rounded border border-gray-100">{order.paymentResult.paymentId}</span>
                     </p>
                   )}
                   {order.paymentStatus === PAYMENT_STATUS.REFUNDED && order.refundResult && (
-                    <div className="bg-teal-50/50 border border-teal-150 rounded-xl p-2.5 text-[10px] text-teal-800 space-y-1 mt-2">
+                    <div className="bg-teal-50/50 border border-teal-200 rounded-xl p-2.5 text-[10px] text-teal-800 space-y-1 mt-2">
                       <p className="font-bold flex items-center gap-1"><span>✓</span> Refund Completed</p>
                       <p>Txn: <span className="font-mono select-all font-semibold">{order.refundResult.refundId}</span></p>
                       <p>Amount: <span className="font-bold">{formatCurrency(convertPrice(Number(order.refundResult.amount)))}</span></p>
@@ -584,7 +584,7 @@ export default function OrderDetailsPage() {
                     </div>
                   )}
                   {order.paymentStatus === PAYMENT_STATUS.REFUND_PENDING && (
-                    <div className="bg-amber-50/50 border border-amber-150 rounded-xl p-2.5 text-[10px] text-amber-800 space-y-1 mt-2">
+                    <div className="bg-amber-50/50 border border-amber-200 rounded-xl p-2.5 text-[10px] text-amber-800 space-y-1 mt-2">
                       <p className="font-bold flex items-center gap-1"><span>🕒</span> Refund Initiated</p>
                       <p>Amount: <span className="font-bold">{formatCurrency(convertPrice(Number(order.totalPrice)))}</span></p>
                       <p>Status: <span className="font-bold uppercase">Pending Release</span></p>
@@ -608,7 +608,7 @@ export default function OrderDetailsPage() {
               )}
               <div className="flex justify-between"><span>Shipping</span><Money value={shipping} /></div>
               <div className="flex justify-between"><span>Tax</span><Money value={tax} /></div>
-              <div className="flex justify-between border-t border-gray-150 pt-3 text-sm font-extrabold text-gray-900">
+              <div className="flex justify-between border-t border-gray-200 pt-3 text-sm font-extrabold text-gray-900">
                 <span>Total</span><Money value={total} />
               </div>
             </div>
@@ -739,7 +739,7 @@ export default function OrderDetailsPage() {
                         onChange={(e) => setSelectedItems({ ...selectedItems, [item._id]: e.target.checked })}
                         className="accent-indigo-600 h-4 w-4"
                       />
-                      <img src={item.image} alt={item.name} className="h-10 w-10 rounded-lg object-cover border border-gray-150 flex-shrink-0" />
+                      <img src={item.image} alt={item.name} className="h-10 w-10 rounded-lg object-cover border border-gray-200 flex-shrink-0" />
                       <div className="min-w-0 flex-1 text-left">
                         <p className="text-xs font-bold text-gray-900 truncate leading-snug">{item.name}</p>
                         <p className="text-[10px] text-gray-400 font-semibold mt-0.5">Qty: {item.quantity} &bull; Price: {formatCurrency(convertPrice(Number(item.price)))}</p>
@@ -773,7 +773,7 @@ export default function OrderDetailsPage() {
                     <button
                       type="button"
                       onClick={handleAddImageInput}
-                      className="text-[10px] font-bold text-indigo-650 hover:text-indigo-850"
+                      className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800"
                     >
                       + Add Image
                     </button>

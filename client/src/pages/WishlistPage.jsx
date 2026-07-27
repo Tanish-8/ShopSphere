@@ -7,7 +7,7 @@ import { useToast } from "../contexts/ToastContext";
 const WishlistSkeleton = () => (
   <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
     {Array.from({ length: 4 }).map((_, i) => (
-      <div key={i} className="flex flex-col overflow-hidden rounded-2xl border border-gray-150 bg-white p-4 space-y-4 animate-pulse">
+      <div key={i} className="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 space-y-4 animate-pulse">
         <div className="aspect-square w-full rounded-xl bg-gray-100"></div>
         <div className="space-y-2">
           <div className="h-3 w-1/3 rounded bg-gray-200"></div>
@@ -52,7 +52,7 @@ export default function WishlistPage() {
       await removeFromWishlist(id);
       toast.dismiss(toastId);
       toast.info("Removed from Wishlist", (
-        <p className="font-bold text-gray-905">{prodName}</p>
+        <p className="font-bold text-gray-900">{prodName}</p>
       ));
       // Dispatch event to update navbar count
       window.dispatchEvent(new Event("wishlist-updated"));
@@ -75,19 +75,19 @@ export default function WishlistPage() {
       ) : items.length === 0 ? (
         <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center shadow-sm max-w-xl mx-auto space-y-4">
           <div className="text-5xl">❤️</div>
-          <h2 className="text-lg font-bold text-gray-850">Your wishlist is empty</h2>
+          <h2 className="text-lg font-bold text-gray-800">Your wishlist is empty</h2>
           <p className="text-xs text-gray-500 max-w-xs mx-auto leading-relaxed">
             Tap the heart icon on any product to save it here, making it easier to find and purchase later!
           </p>
           <Link
             to="/products"
-            className="inline-flex rounded-xl bg-indigo-650 px-6 py-3 text-xs font-extrabold text-white transition-all duration-300 hover:bg-indigo-750 active:scale-95 shadow-sm cursor-pointer"
+            className="inline-flex rounded-xl bg-indigo-600 px-6 py-3 text-xs font-extrabold text-white transition-all duration-300 hover:bg-indigo-700 active:scale-95 shadow-sm cursor-pointer"
           >
             Discover Products
           </Link>
         </div>
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5">
           {items.map((p) => (
             <ProductCard
               key={p._id || p.id}

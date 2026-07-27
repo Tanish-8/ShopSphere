@@ -529,7 +529,7 @@ export default function CheckoutPage() {
 
                 {/* Expanded payment card form below selection */}
                 {paymentMethod === "card" && (
-                  <div className="px-6 pb-6 pt-2 border-t border-gray-150 space-y-4 text-left animate-tab-fade">
+                  <div className="px-6 pb-6 pt-2 border-t border-gray-200 space-y-4 text-left animate-tab-fade">
                     <div className="space-y-1">
                       <label className="block text-[10px] font-bold uppercase text-gray-500 tracking-wider">Cardholder Name</label>
                       <input
@@ -537,7 +537,7 @@ export default function CheckoutPage() {
                         value={cardholderName}
                         onChange={(e) => setCardholderName(e.target.value)}
                         placeholder="e.g. John Doe"
-                        className={`w-full h-11 rounded-xl border px-4 py-3 text-xs outline-none transition ${formErrors.cardholderName ? "border-red-550" : "border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"}`}
+                        className={`w-full h-11 rounded-xl border px-4 py-3 text-xs outline-none transition ${formErrors.cardholderName ? "border-red-500" : "border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"}`}
                       />
                       {formErrors.cardholderName && <p className="text-[10px] text-red-600 font-semibold">{formErrors.cardholderName}</p>}
                     </div>
@@ -550,7 +550,7 @@ export default function CheckoutPage() {
                           value={cardNumber}
                           onChange={handleCardNumberChange}
                           placeholder="4000 1234 5678 9010"
-                          className={`w-full h-11 rounded-xl border pl-4 pr-16 py-3 text-xs outline-none transition ${formErrors.cardNumber ? "border-red-550" : "border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"}`}
+                          className={`w-full h-11 rounded-xl border pl-4 pr-16 py-3 text-xs outline-none transition ${formErrors.cardNumber ? "border-red-500" : "border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"}`}
                         />
                         {cardBrand && (
                           <span className="absolute right-4 top-1/2 -translate-y-1/2 rounded bg-indigo-50 px-2.5 py-1 text-[10px] font-bold text-indigo-700 uppercase border border-indigo-200">
@@ -569,7 +569,7 @@ export default function CheckoutPage() {
                           value={expiry}
                           onChange={handleExpiryChange}
                           placeholder="MM / YY"
-                          className={`w-full h-11 rounded-xl border px-4 py-3 text-xs outline-none transition ${formErrors.expiry ? "border-red-550" : "border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"}`}
+                          className={`w-full h-11 rounded-xl border px-4 py-3 text-xs outline-none transition ${formErrors.expiry ? "border-red-500" : "border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"}`}
                         />
                         {formErrors.expiry && <p className="text-[10px] text-red-600 font-semibold">{formErrors.expiry}</p>}
                       </div>
@@ -580,7 +580,7 @@ export default function CheckoutPage() {
                           value={cvv}
                           onChange={handleCvvChange}
                           placeholder="123"
-                          className={`w-full h-11 rounded-xl border px-4 py-3 text-xs outline-none transition ${formErrors.cvv ? "border-red-550" : "border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"}`}
+                          className={`w-full h-11 rounded-xl border px-4 py-3 text-xs outline-none transition ${formErrors.cvv ? "border-red-500" : "border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"}`}
                         />
                         {formErrors.cvv && <p className="text-[10px] text-red-600 font-semibold">{formErrors.cvv}</p>}
                       </div>
@@ -626,7 +626,7 @@ export default function CheckoutPage() {
           </div>
 
           {/* Coupon Code Section */}
-          <div className="border-t border-gray-150 pt-4 space-y-3">
+          <div className="border-t border-gray-200 pt-4 space-y-3">
             <h3 className="text-xs font-bold text-gray-900">Have a Coupon?</h3>
             <div className="flex gap-2">
               <input
@@ -659,7 +659,7 @@ export default function CheckoutPage() {
                     }
                   }}
                   disabled={!couponCode.trim() || loadingPrices}
-                  className="btn-small border border-indigo-600 text-indigo-650 hover:bg-indigo-50"
+                  className="btn-small border border-indigo-600 text-indigo-600 hover:bg-indigo-50"
                 >
                   Apply
                 </button>
@@ -678,7 +678,7 @@ export default function CheckoutPage() {
           </div>
 
           {/* Total calculation list */}
-          <div className="border-t border-gray-150 pt-4 space-y-2 text-xs font-semibold text-gray-600">
+          <div className="border-t border-gray-200 pt-4 space-y-2 text-xs font-semibold text-gray-600">
             <div className="flex justify-between">
               <span>Items Total</span>
               <span>{formatCurrency(convertPrice(prices.itemsPrice))}</span>
@@ -697,7 +697,7 @@ export default function CheckoutPage() {
               <span>Shipping Fee</span>
               <span>{formatCurrency(convertPrice(prices.shippingPrice))}</span>
             </div>
-            <div className="flex justify-between text-base font-bold text-gray-900 border-t border-gray-150 pt-2.5">
+            <div className="flex justify-between text-base font-bold text-gray-900 border-t border-gray-200 pt-2.5">
               <span>Grand Total</span>
               <span>{formatCurrency(convertPrice(prices.totalPrice))}</span>
             </div>
@@ -721,8 +721,8 @@ export default function CheckoutPage() {
 
       {/* Simulated Razorpay Checkout Dialog */}
       {showRpModal && simulatedRpOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs animate-dropdown">
-          <div className="w-full max-w-md rounded-2xl border border-gray-150 bg-white p-6 shadow-2xl space-y-5 text-left">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-dropdown">
+          <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl space-y-5 text-left">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <div className="flex items-center gap-2">
                 <span className="text-xl">💳</span>
@@ -736,7 +736,7 @@ export default function CheckoutPage() {
               </span>
             </div>
 
-            <div className="space-y-3 bg-gray-50 p-4 rounded-xl text-xs text-gray-600 font-semibold border border-gray-150">
+            <div className="space-y-3 bg-gray-50 p-4 rounded-xl text-xs text-gray-600 font-semibold border border-gray-200">
               <div className="flex justify-between">
                 <span>ShopSphere Order ID:</span>
                 <span className="font-bold text-gray-900">{simulatedOrderObj?._id || simulatedOrderObj?.id}</span>
@@ -745,7 +745,7 @@ export default function CheckoutPage() {
                 <span>Razorpay Order ID:</span>
                 <span className="font-bold text-gray-900">{simulatedRpOrder.orderId}</span>
               </div>
-              <div className="flex justify-between border-t border-gray-150 pt-2 text-sm text-gray-950 font-extrabold">
+              <div className="flex justify-between border-t border-gray-200 pt-2 text-sm text-gray-950 font-extrabold">
                 <span>Total Amount:</span>
                 <span>{formatCurrency(convertPrice(simulatedRpOrder.amount / 100))}</span>
               </div>

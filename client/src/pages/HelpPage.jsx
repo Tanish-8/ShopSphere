@@ -51,7 +51,7 @@ export default function HelpPage() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-12">
+    <div className="space-y-12 text-left">
       {/* Title */}
       <div>
         <h1 className="text-3xl font-extrabold text-gray-900">Help & Support</h1>
@@ -62,7 +62,7 @@ export default function HelpPage() {
         {/* Left Side: General Info tabs */}
         <div className="md:col-span-1 space-y-6">
           {/* Contact Details */}
-          <div className="rounded-2xl border border-gray-150 bg-white p-5 shadow-xs space-y-3">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-3">
             <h3 className="text-sm font-bold text-gray-900">Contact Us</h3>
             <div className="space-y-2 text-[10px] text-gray-600 leading-relaxed">
               <p>📞 Phone: +1 (800) 555-0199</p>
@@ -72,7 +72,7 @@ export default function HelpPage() {
           </div>
 
           {/* Quick Policy details */}
-          <div className="rounded-2xl border border-gray-150 bg-white p-5 shadow-xs space-y-4">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
             <h3 className="text-sm font-bold text-gray-900">Quick Policies</h3>
             <div className="space-y-3 text-[10px] text-gray-500 leading-normal">
               <div>
@@ -98,7 +98,7 @@ export default function HelpPage() {
             <h2 className="text-lg font-bold text-gray-800">Frequently Asked Questions</h2>
             <div className="space-y-2">
               {faqs.map((faq, i) => (
-                <div key={i} className="overflow-hidden rounded-xl border border-gray-150 bg-white">
+                <div key={i} className="overflow-hidden rounded-xl border border-gray-200 bg-white">
                   <button
                     onClick={() => toggleFaq(i)}
                     className="flex w-full items-center justify-between px-4 py-3.5 text-xs font-bold text-gray-800 hover:bg-gray-50/50 transition cursor-pointer"
@@ -119,7 +119,7 @@ export default function HelpPage() {
           </section>
 
           {/* Contact Support form */}
-          <section className="rounded-2xl border border-gray-150 bg-white p-6 shadow-xs space-y-4">
+          <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
             <h2 className="text-lg font-bold text-gray-800 border-b border-gray-50 pb-2">Submit Support Ticket</h2>
             
             {supportSuccess && (
@@ -172,7 +172,7 @@ export default function HelpPage() {
           </section>
 
           {/* Report problem form */}
-          <section className="rounded-2xl border border-gray-150 bg-white p-6 shadow-xs space-y-4">
+          <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
             <h2 className="text-lg font-bold text-gray-800 border-b border-gray-50 pb-2">Report a Problem</h2>
 
             {problemSuccess && (
