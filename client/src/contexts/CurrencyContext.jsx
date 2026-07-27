@@ -1,14 +1,14 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+ï»¿import React, { createContext, useContext, useState, useEffect } from 'react';
 import { convertPrice, formatCurrency } from '../utils/currencyUtils';
 
 const CurrencyContext = createContext();
 
 const CURRENCY_OPTIONS = [
+  { code: 'INR', country: 'India', symbol: 'â‚¹', locale: 'en-IN' },
   { code: 'USD', country: 'United States', symbol: '$', locale: 'en-US' },
-  { code: 'INR', country: 'India', symbol: '?', locale: 'en-IN' },
-  { code: 'GBP', country: 'United Kingdom', symbol: '£', locale: 'en-GB' },
-  { code: 'EUR', country: 'Germany', symbol: '€', locale: 'de-DE' },
-  { code: 'JPY', country: 'Japan', symbol: '¥', locale: 'ja-JP' },
+  { code: 'GBP', country: 'United Kingdom', symbol: 'Â£', locale: 'en-GB' },
+  { code: 'EUR', country: 'Euro', symbol: 'â‚¬', locale: 'de-DE' },
+  { code: 'JPY', country: 'Japan', symbol: 'Â¥', locale: 'ja-JP' },
   { code: 'AUD', country: 'Australia', symbol: 'A$', locale: 'en-AU' },
   { code: 'CAD', country: 'Canada', symbol: 'C$', locale: 'en-CA' },
 ];
@@ -18,18 +18,20 @@ const getStoredCurrency = () => {
     const stored = localStorage.getItem('selectedCurrency');
     if (stored) {
       try {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.code) {
+          const match = CURRENCY_OPTIONS.find(opt => opt.code === parsed.code);
+          if (match) return match;
+        }
       } catch (e) {
-        return null;
+        // Fallback
       }
     }
-    // Try to detect from browser language
-    const browserLang = navigator.language || navigator.userLanguage;
+    const browserLang = navigator.language || navigator.userLanguage || '';
     const supported = CURRENCY_OPTIONS.find(opt => opt.locale.startsWith(browserLang.split('-')[0]));
     if (supported) return supported;
   }
-  // Default to USD
-  return CURRENCY_OPTIONS.find(opt => opt.code === 'USD');
+  return CURRENCY_OPTIONS.find(opt => opt.code === 'INR') || CURRENCY_OPTIONS[0];
 };
 
 const fetchExchangeRates = async () => {
@@ -37,33 +39,34 @@ const fetchExchangeRates = async () => {
     const response = await fetch('https://api.exchangerate.host/latest?base=USD');
     if (!response.ok) throw new Error('Failed to fetch rates');
     const data = await response.json();
-    return data.rates; // object with currency codes as keys and rates as values
+    return data.rates;
   } catch (error) {
     console.warn('Failed to fetch exchange rates, using cached or defaults', error);
     return null;
   }
 };
 
-const CurrencyProvider = ({ children }) => {
+export const CurrencyProvider = ({ children }) => {
   const [currency, setCurrencyState] = useState(getStoredCurrency());
   const [rates, setRates] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadRates = async () => {
-      // Try to get from localStorage
       const cached = localStorage.getItem('exchangeRates');
       if (cached) {
-        const { timestamp, rates } = JSON.parse(cached);
-        const now = Date.now();
-        // Cache for 24 hours
-        if (now - timestamp < 24 * 60 * 60 * 1000) {
-          setRates(rates);
-          setLoading(false);
-          return;
+        try {
+          const { timestamp, rates } = JSON.parse(cached);
+          const now = Date.now();
+          if (now - timestamp < 24 * 60 * 60 * 1000 && rates) {
+            setRates(rates);
+            setLoading(false);
+            return;
+          }
+        } catch (e) {
+          // ignore
         }
       }
-      // Fetch from API
       const fetchedRates = await fetchExchangeRates();
       if (fetchedRates) {
         setRates(fetchedRates);
@@ -72,10 +75,9 @@ const CurrencyProvider = ({ children }) => {
           rates: fetchedRates,
         }));
       } else {
-        // Fallback to static rates (approximate)
         const fallback = {
           USD: 1,
-          INR: 83.2, // approximate
+          INR: 83.2,
           GBP: 0.79,
           EUR: 0.92,
           JPY: 151.34,
@@ -93,12 +95,17 @@ const CurrencyProvider = ({ children }) => {
   const rate = rates[currency.code] || 1;
 
   const setCurrency = (newCurrency) => {
-    setCurrencyState(newCurrency);
-    localStorage.setItem('selectedCurrency', JSON.stringify(newCurrency));
+    let target = newCurrency;
+    if (typeof newCurrency === 'string') {
+      target = CURRENCY_OPTIONS.find(opt => opt.code === newCurrency) || currency;
+    }
+    setCurrencyState(target);
+    localStorage.setItem('selectedCurrency', JSON.stringify(target));
   };
 
   const value = {
     currency: currency.code,
+    currencyObj: currency,
     country: currency.country,
     symbol: currency.symbol,
     locale: currency.locale,

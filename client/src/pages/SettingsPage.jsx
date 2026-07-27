@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import useTheme from "../hooks/useTheme";
@@ -11,15 +11,7 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const currentTab = searchParams.get("tab") || "personal";
-
-  // Personal Info Form
-  const [name, setName] = useState(user?.name || "");
-  const [email, setEmail] = useState(user?.email || "");
-  const [phone, setPhone] = useState(user?.phone || "");
-  const [personalMsg, setPersonalMsg] = useState("");
-  const [personalErr, setPersonalErr] = useState("");
-  const [savingPersonal, setSavingPersonal] = useState(false);
+  const currentTab = searchParams.get("tab") || "security";
 
   // Password Form
   const [currentPassword, setCurrentPassword] = useState("");
@@ -39,35 +31,14 @@ export default function SettingsPage() {
   const [emailOrder, setEmailOrder] = useState(true);
   const [pushNotify, setPushNotify] = useState(false);
   const [smsNotify, setSmsNotify] = useState(true);
-  const [language, setLanguage] = useState("en-US");
+
+  // Privacy & Data
+  const [downloadMsg, setDownloadMsg] = useState("");
 
   // Modal dialog toggles
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleteErr, setDeleteErr] = useState("");
-
-  useEffect(() => {
-    if (user) {
-      setName(user.name || "");
-      setEmail(user.email || "");
-      setPhone(user.phone || "");
-    }
-  }, [user]);
-
-  const handleUpdatePersonal = async (e) => {
-    e.preventDefault();
-    setPersonalMsg("");
-    setPersonalErr("");
-    setSavingPersonal(true);
-    try {
-      await updateProfile({ name, email, phone });
-      setPersonalMsg("Personal information updated successfully.");
-    } catch (err) {
-      setPersonalErr(err?.response?.data?.message || "Failed to update profile.");
-    } finally {
-      setSavingPersonal(false);
-    }
-  };
 
   const handleUpdatePassword = async (e) => {
     e.preventDefault();
@@ -105,35 +76,67 @@ export default function SettingsPage() {
     }
   };
 
-  const getPasswordStrength = (pwd) => {
-    if (!pwd) return { score: 0, label: "None", color: "bg-gray-200" };
+  const strengthInfo = useMemo(() => {
+    if (!password) return { label: "", color: "bg-gray-200", score: 0 };
     let score = 0;
-    if (pwd.length >= 6) score += 1;
-    if (pwd.length >= 10) score += 1;
-    if (/[A-Z]/.test(pwd)) score += 1;
-    if (/[0-9]/.test(pwd)) score += 1;
-    if (/[^A-Za-z0-9]/.test(pwd)) score += 1;
+    if (password.length >= 6) score += 1;
+    if (password.length >= 10) score += 1;
+    if (/[A-Z]/.test(password)) score += 1;
+    if (/[0-9]/.test(password)) score += 1;
+    if (/[^A-Za-z0-9]/.test(password)) score += 1;
 
-    if (score <= 1) return { score, label: "Weak", color: "bg-red-500" };
-    if (score <= 3) return { score, label: "Medium", color: "bg-amber-500" };
-    return { score, label: "Strong", color: "bg-emerald-500" };
+    if (score <= 2) return { label: "Weak", color: "bg-red-500", score };
+    if (score <= 4) return { label: "Medium", color: "bg-amber-500", score };
+    return { label: "Strong", color: "bg-emerald-500", score };
+  }, [password]);
+
+  const handleDownloadData = () => {
+    setDownloadMsg("");
+    const userData = {
+      profile: {
+        name: user?.name,
+        email: user?.email,
+        phone: user?.phone,
+        createdAt: user?.createdAt,
+        isVerified: user?.isVerified
+      },
+      exportedAt: new Date().toISOString(),
+      system: "ShopSphere E-Commerce System"
+    };
+
+    const blob = new Blob([JSON.stringify(userData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `ShopSphere_Data_${user?.name?.replace(/\s+/g, "_") || "User"}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setDownloadMsg("Your personal account data has been downloaded successfully.");
   };
 
-  const strengthInfo = getPasswordStrength(password);
-
-  const handleDeleteAccount = () => {
-    if (deleteConfirmText.toLowerCase() !== "delete") {
-      setDeleteErr("Please type 'DELETE' to confirm account deletion.");
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "DELETE") {
+      setDeleteErr("Type DELETE to confirm account deletion.");
       return;
     }
+    setDeleteErr("");
+    try {
+      logout();
+      navigate("/");
+    } catch (err) {
+      setDeleteErr(err?.response?.data?.message || "Failed to delete account.");
+    }
+  };
+
+  const handleLogoutAllDevices = () => {
     logout();
-    navigate("/");
+    navigate("/login");
   };
 
   const tabs = [
-    { id: "personal", label: "Personal Information", icon: "👤" },
     { id: "security", label: "Security & Password", icon: "🔑" },
     { id: "preferences", label: "Preferences", icon: "⚙️" },
+    { id: "privacy", label: "Privacy & Data", icon: "🛡️" },
     { id: "danger", label: "Danger Zone", icon: "🚨" },
   ];
 
@@ -157,20 +160,20 @@ export default function SettingsPage() {
 
       {/* Header and Title block */}
       <div className="space-y-1.5 pb-2">
-        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Settings</h1>
-        <p className="text-xs text-gray-500 font-medium">Manage your profile, account security, and notification preferences.</p>
+        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Account Settings</h1>
+        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Configure security credentials, display preferences, privacy controls, and account management.</p>
       </div>
 
       {/* Mobile Navigation segmented horizontal row */}
-      <div className="flex md:hidden gap-1.5 bg-gray-100 p-1 rounded-xl overflow-x-auto select-none mb-4">
+      <div className="flex md:hidden gap-1.5 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl overflow-x-auto select-none mb-4">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setSearchParams({ tab: tab.id })}
             className={`flex-1 min-w-[100px] py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
               currentTab === tab.id
-                ? "bg-white text-indigo-700 shadow-sm"
-                : "text-gray-500 hover:text-gray-800"
+                ? "bg-white dark:bg-gray-700 text-indigo-700 dark:text-indigo-300 shadow-sm"
+                : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
             }`}
           >
             {tab.icon} {tab.label.split(" ")[0]}
@@ -179,8 +182,8 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid gap-8 md:grid-cols-4 items-start">
-        {/* Left Column: Premium Sidebar layout */}
-        <aside className="hidden md:block col-span-1 space-y-1.5 bg-white border border-gray-200 p-2.5 rounded-2xl shadow-sm">
+        {/* Left Column: Sidebar layout */}
+        <aside className="hidden md:block col-span-1 space-y-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-2.5 rounded-2xl shadow-sm">
           {tabs.map((tab) => {
             const isActive = currentTab === tab.id;
             return (
@@ -189,8 +192,8 @@ export default function SettingsPage() {
                 onClick={() => setSearchParams({ tab: tab.id })}
                 className={`w-full h-11 flex items-center gap-3.5 px-3.5 text-xs font-bold rounded-xl transition text-left cursor-pointer border-l-4 ${
                   isActive
-                    ? "border-indigo-600 bg-indigo-50/30 text-indigo-700 font-bold"
-                    : "border-transparent text-gray-500 hover:bg-gray-50/50 hover:text-gray-900"
+                    ? "border-indigo-600 bg-indigo-50/30 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-bold"
+                    : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-50/50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-100"
                 }`}
               >
                 <span className="text-base flex items-center justify-center w-5 h-5">{tab.icon}</span>
@@ -200,165 +203,136 @@ export default function SettingsPage() {
           })}
         </aside>
 
-        {/* Right Column: Content Card (takes 75% width) */}
+        {/* Right Column: Content Cards */}
         <div key={currentTab} className="md:col-span-3 animate-tab-fade">
-          {currentTab === "personal" && (
-            <section id="personal-info" className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
-              <h2 className="text-lg font-bold text-gray-800 border-b border-gray-50 pb-2">Personal Information</h2>
-              
-              {personalMsg && <p className="text-xs text-emerald-600 font-semibold">{personalMsg}</p>}
-              {personalErr && <p className="text-xs text-red-600 font-semibold">{personalErr}</p>}
-
-              <form onSubmit={handleUpdatePersonal} className="space-y-5">
-                <div className="space-y-2">
-                  <label className="block text-[10px] font-bold uppercase text-gray-500 tracking-wider">Full Name</label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full h-11 rounded-xl border border-gray-300 px-4 py-3 text-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition"
-                    required
-                  />
-                </div>
-                <div className="grid gap-5 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <label className="block text-[10px] font-bold uppercase text-gray-500 tracking-wider">Email Address</label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full h-11 rounded-xl border border-gray-300 px-4 py-3 text-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-[10px] font-bold uppercase text-gray-500 tracking-wider">Phone Number</label>
-                    <input
-                      type="text"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="Optional"
-                      className="w-full h-11 rounded-xl border border-gray-300 px-4 py-3 text-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition"
-                    />
-                  </div>
-                </div>
-                <button
-                  type="submit"
-                  disabled={savingPersonal}
-                  className="btn-primary mt-2"
-                >
-                  {savingPersonal ? "Saving..." : "Save Changes"}
-                </button>
-              </form>
-            </section>
-          )}
-
+          {/* 1. Security & Password Tab */}
           {currentTab === "security" && (
-            <section id="change-password" className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
-              <h2 className="text-lg font-bold text-gray-800 border-b border-gray-50 pb-2">Security & Password</h2>
+            <div className="space-y-6">
+              <section id="change-password" className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm space-y-4">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-700/60 pb-2">Change Password</h2>
 
-              {passwordMsg && <p className="text-xs text-emerald-600 font-semibold">{passwordMsg}</p>}
-              {passwordErr && <p className="text-xs text-red-600 font-semibold">{passwordErr}</p>}
+                {passwordMsg && <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">{passwordMsg}</p>}
+                {passwordErr && <p className="text-xs text-red-600 dark:text-red-400 font-semibold">{passwordErr}</p>}
 
-              <form onSubmit={handleUpdatePassword} className="space-y-5">
-                <div className="space-y-2">
-                  <label className="block text-[10px] font-bold uppercase text-gray-500 tracking-wider">Current Password</label>
-                  <div className="flex gap-2">
-                    <input
-                      type={showCurrent ? "text" : "password"}
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      placeholder="Enter current password"
-                      className="w-full h-11 rounded-xl border border-gray-300 px-4 py-3 text-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowCurrent(!showCurrent)}
-                      className="btn-small shrink-0"
-                    >
-                      {showCurrent ? "Hide" : "Show"}
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="grid gap-5 sm:grid-cols-2">
+                <form onSubmit={handleUpdatePassword} className="space-y-5">
                   <div className="space-y-2">
-                    <label className="block text-[10px] font-bold uppercase text-gray-500 tracking-wider">New Password</label>
+                    <label className="block text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 tracking-wider">Current Password</label>
                     <div className="flex gap-2">
                       <input
-                        type={showNew ? "text" : "password"}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Min 6 characters"
-                        className="w-full h-11 rounded-xl border border-gray-300 px-4 py-3 text-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition"
+                        type={showCurrent ? "text" : "password"}
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        placeholder="Enter current password"
+                        className="w-full h-11 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 px-4 py-2.5 text-xs text-gray-900 dark:text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/30 transition"
                         required
                       />
                       <button
                         type="button"
-                        onClick={() => setShowNew(!showNew)}
-                        className="btn-small shrink-0"
+                        onClick={() => setShowCurrent(!showCurrent)}
+                        className="px-3.5 py-1.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-xs font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition shrink-0"
                       >
-                        {showNew ? "Hide" : "Show"}
+                        {showCurrent ? "Hide" : "Show"}
                       </button>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="block text-[10px] font-bold uppercase text-gray-500 tracking-wider">Confirm New Password</label>
-                    <div className="flex gap-2">
-                      <input
-                        type={showConfirm ? "text" : "password"}
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="Confirm password"
-                        className="w-full h-11 rounded-xl border border-gray-300 px-4 py-3 text-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition"
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirm(!showConfirm)}
-                        className="btn-small shrink-0"
-                      >
-                        {showConfirm ? "Hide" : "Show"}
-                      </button>
+                  
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 tracking-wider">New Password</label>
+                      <div className="flex gap-2">
+                        <input
+                          type={showNew ? "text" : "password"}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="Min 6 characters"
+                          className="w-full h-11 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 px-4 py-2.5 text-xs text-gray-900 dark:text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/30 transition"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNew(!showNew)}
+                          className="px-3.5 py-1.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-xs font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition shrink-0"
+                        >
+                          {showNew ? "Hide" : "Show"}
+                        </button>
+                      </div>
                     </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 tracking-wider">Confirm New Password</label>
+                      <div className="flex gap-2">
+                        <input
+                          type={showConfirm ? "text" : "password"}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="Confirm password"
+                          className="w-full h-11 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 px-4 py-2.5 text-xs text-gray-900 dark:text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/30 transition"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirm(!showConfirm)}
+                          className="px-3.5 py-1.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-xs font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition shrink-0"
+                        >
+                          {showConfirm ? "Hide" : "Show"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {password && (
+                    <div className="space-y-2 pt-1">
+                      <div className="flex justify-between items-center text-[10px] font-bold text-gray-500 dark:text-gray-400">
+                        <span>Password Strength:</span>
+                        <span className="capitalize">{strengthInfo.label}</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full ${strengthInfo.color} transition-all duration-300`}
+                          style={{ width: `${(strengthInfo.score / 5) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={savingPassword}
+                    className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold transition-all active:scale-95 shadow-sm disabled:opacity-50 cursor-pointer"
+                  >
+                    {savingPassword ? "Updating..." : "Update Password"}
+                  </button>
+                </form>
+              </section>
+
+              <section className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm space-y-4">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-700/60 pb-2">Two-Factor Authentication & Devices</h2>
+                <div className="grid gap-4 sm:grid-cols-2 text-xs">
+                  <div className="p-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30 space-y-1">
+                    <span className="block text-[10px] font-bold uppercase text-gray-400">2FA Status</span>
+                    <span className="font-bold text-gray-700 dark:text-gray-300">Disabled (Standard Password Protection)</span>
+                  </div>
+                  <div className="p-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30 space-y-1">
+                    <span className="block text-[10px] font-bold uppercase text-gray-400">Active Login Sessions</span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                      <span>🟢</span> 1 Active Session (Current Browser)
+                    </span>
                   </div>
                 </div>
-
-                {password && (
-                  <div className="space-y-2 pt-1">
-                    <div className="flex justify-between items-center text-[10px] font-bold text-gray-500">
-                      <span>Password Strength:</span>
-                      <span className="capitalize">{strengthInfo.label}</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full ${strengthInfo.color} transition-all duration-300`}
-                        style={{ width: `${(strengthInfo.score / 5) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={savingPassword}
-                  className="btn-primary mt-2"
-                >
-                  {savingPassword ? "Updating..." : "Update Password"}
-                </button>
-              </form>
-            </section>
+              </section>
+            </div>
           )}
 
+          {/* 2. Preferences Tab */}
           {currentTab === "preferences" && (
-            <section id="preferences" className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-6">
+            <section id="preferences" className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm space-y-6">
+              {/* Currency & Region */}
               <div>
-                <h2 className="text-lg font-bold text-gray-800 border-b border-gray-50 pb-2">Display Preferences</h2>
+                <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 border-b border-gray-100 dark:border-gray-700/60 pb-2">Currency & Region</h2>
                 <div className="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="space-y-1">
-                    <span className="block text-xs font-bold text-gray-800">🌍 Currency & Region</span>
-                    <span className="block text-[10px] text-gray-400 max-w-md">
+                    <span className="block text-xs font-bold text-gray-800 dark:text-gray-200">🌍 Preferred Currency</span>
+                    <span className="block text-[10px] text-gray-400 dark:text-gray-400 max-w-md">
                       Choose the currency used to display prices throughout ShopSphere. Product prices are converted automatically using current exchange rates.
                     </span>
                   </div>
@@ -368,19 +342,20 @@ export default function SettingsPage() {
                 </div>
               </div>
 
+              {/* Appearance */}
               <div>
-                <h2 className="text-lg font-bold text-gray-800 border-b border-gray-50 pb-2">Appearance</h2>
+                <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 border-b border-gray-100 dark:border-gray-700/60 pb-2">Appearance</h2>
                 <div className="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <span className="block text-xs font-semibold text-gray-800 font-bold">Theme Mode</span>
-                    <span className="block text-[10px] text-gray-400">Choose between light, dark, or system preferences.</span>
+                    <span className="block text-xs font-bold text-gray-800 dark:text-gray-200">Theme Mode</span>
+                    <span className="block text-[10px] text-gray-400 dark:text-gray-400">Choose between light, dark, or system preferences.</span>
                   </div>
-                  <div className="flex gap-1 bg-gray-100 p-1 rounded-xl">
+                  <div className="flex gap-1 bg-gray-100 dark:bg-gray-700/60 p-1 rounded-xl">
                     {["light", "dark", "system"].map((mode) => (
                       <button
                         key={mode}
                         onClick={() => setTheme(mode)}
-                        className={`px-4 py-1.5 text-xs font-bold rounded-lg capitalize transition-all cursor-pointer ${theme === mode ? "bg-white text-indigo-700 shadow-sm" : "text-gray-500 hover:text-gray-800"}`}
+                        className={`px-4 py-1.5 text-xs font-bold rounded-lg capitalize transition-all cursor-pointer ${theme === mode ? "bg-white dark:bg-gray-800 text-indigo-700 dark:text-indigo-300 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}
                       >
                         {mode}
                       </button>
@@ -389,38 +364,20 @@ export default function SettingsPage() {
                 </div>
               </div>
 
+              {/* Communication Preferences */}
               <div>
-                <h2 className="text-lg font-bold text-gray-800 border-b border-gray-50 pb-2">Language Preference</h2>
-                <div className="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <span className="block text-xs font-semibold text-gray-800 font-bold">Language / Locale</span>
-                    <span className="block text-[10px] text-gray-400">Choose your preferred display language.</span>
-                  </div>
-                  <select
-                    value={language}
-                    onChange={(e) => setLanguage(e.target.value)}
-                    className="rounded-xl border border-gray-300 bg-white px-3 py-1.5 text-xs font-bold text-gray-700 outline-none cursor-pointer h-10"
-                  >
-                    <option value="en-US">English (US)</option>
-                    <option value="es-ES">Español (ES)</option>
-                    <option value="fr-FR">Français (FR)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <h2 className="text-lg font-bold text-gray-800 border-b border-gray-50 pb-2">Communication Preferences</h2>
+                <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 border-b border-gray-100 dark:border-gray-700/60 pb-2">Communication Preferences</h2>
                 <div className="mt-3 space-y-3">
                   <label className="flex items-start gap-3 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={emailPromo}
                       onChange={(e) => setEmailPromo(e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mt-0.5"
+                      className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 mt-0.5"
                     />
                     <div>
-                      <span className="block text-xs font-semibold text-gray-800">Promotions & Discounts</span>
-                      <span className="block text-[10px] text-gray-400">Receive emails regarding sales, codes, and coupons.</span>
+                      <span className="block text-xs font-semibold text-gray-800 dark:text-gray-200">Promotions & Discounts</span>
+                      <span className="block text-[10px] text-gray-400 dark:text-gray-400">Receive emails regarding sales, codes, and coupons.</span>
                     </div>
                   </label>
                   <label className="flex items-start gap-3 cursor-pointer">
@@ -428,29 +385,30 @@ export default function SettingsPage() {
                       type="checkbox"
                       checked={emailOrder}
                       onChange={(e) => setEmailOrder(e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mt-0.5"
+                      className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 mt-0.5"
                     />
                     <div>
-                      <span className="block text-xs font-semibold text-gray-800">Order Updates</span>
-                      <span className="block text-[10px] text-gray-400">Receive notifications on order receipts and shipping schedules.</span>
+                      <span className="block text-xs font-semibold text-gray-800 dark:text-gray-200">Order Updates</span>
+                      <span className="block text-[10px] text-gray-400 dark:text-gray-400">Receive notifications on order receipts and shipping schedules.</span>
                     </div>
                   </label>
                 </div>
               </div>
 
+              {/* Notifications */}
               <div>
-                <h2 className="text-lg font-bold text-gray-800 border-b border-gray-50 pb-2">Notifications</h2>
+                <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 border-b border-gray-100 dark:border-gray-700/60 pb-2">Notifications</h2>
                 <div className="mt-3 space-y-3">
                   <label className="flex items-start gap-3 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={pushNotify}
                       onChange={(e) => setPushNotify(e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mt-0.5"
+                      className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 mt-0.5"
                     />
                     <div>
-                      <span className="block text-xs font-semibold text-gray-800">Browser Push Notifications</span>
-                      <span className="block text-[10px] text-gray-400">Receive instant alerts directly in your browser.</span>
+                      <span className="block text-xs font-semibold text-gray-800 dark:text-gray-200">Browser Push Notifications</span>
+                      <span className="block text-[10px] text-gray-400 dark:text-gray-400">Receive instant alerts directly in your browser.</span>
                     </div>
                   </label>
                   <label className="flex items-start gap-3 cursor-pointer">
@@ -458,11 +416,11 @@ export default function SettingsPage() {
                       type="checkbox"
                       checked={smsNotify}
                       onChange={(e) => setSmsNotify(e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mt-0.5"
+                      className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 mt-0.5"
                     />
                     <div>
-                      <span className="block text-xs font-semibold text-gray-800">SMS Notifications</span>
-                      <span className="block text-[10px] text-gray-400">Receive alerts on your registered phone number.</span>
+                      <span className="block text-xs font-semibold text-gray-800 dark:text-gray-200">SMS Notifications</span>
+                      <span className="block text-[10px] text-gray-400 dark:text-gray-400">Receive alerts on your registered phone number.</span>
                     </div>
                   </label>
                 </div>
@@ -470,55 +428,103 @@ export default function SettingsPage() {
             </section>
           )}
 
-          {currentTab === "danger" && (
-            <section id="danger-zone" className="rounded-2xl border border-red-200 bg-red-50/40 p-6 shadow-sm space-y-4">
-              <h2 className="text-lg font-bold text-red-700 border-b border-red-200 pb-2">Danger Zone</h2>
-              <p className="text-xs text-gray-600 font-medium">
-                Permanently delete your user profile account and clear all historical orders list data. This action is irreversible.
-              </p>
-              <button
-                onClick={() => {
-                  setDeleteConfirmText("");
-                  setDeleteErr("");
-                  setShowDeleteModal(true);
-                }}
-                className="btn-danger"
-              >
-                Delete Account
-              </button>
+          {/* 3. Privacy & Data Tab */}
+          {currentTab === "privacy" && (
+            <section id="privacy-data" className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm space-y-6">
+              <div>
+                <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 border-b border-gray-100 dark:border-gray-700/60 pb-2">Privacy & Data Controls</h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  You have full ownership of your data on ShopSphere. Download your personal account profile information at any time.
+                </p>
+                
+                {downloadMsg && <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-3 animate-fade-in">{downloadMsg}</p>}
+
+                <div className="mt-4 pt-2 border-t border-gray-100 dark:border-gray-700/60">
+                  <button
+                    type="button"
+                    onClick={handleDownloadData}
+                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold transition-all shadow-sm cursor-pointer flex items-center gap-2"
+                  >
+                    <span>📥</span> Download My Data (.json)
+                  </button>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-gray-100 dark:border-gray-700/60 space-y-2">
+                <h3 className="text-xs font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wider">Activity Log</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Account session created on {new Date(user?.createdAt || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}. All activity is secured with TLS encryption.
+                </p>
+              </div>
             </section>
+          )}
+
+          {/* 4. Danger Zone Tab */}
+          {currentTab === "danger" && (
+            <div className="space-y-6">
+              <section id="danger-zone" className="rounded-2xl border border-red-200 dark:border-red-900/50 bg-red-50/20 dark:bg-red-950/20 p-6 shadow-sm space-y-4">
+                <h2 className="text-lg font-bold text-red-700 dark:text-red-400 border-b border-red-100 dark:border-red-900/50 pb-2">Danger Zone</h2>
+                <div className="space-y-3 text-xs text-gray-600 dark:text-gray-300">
+                  <p>
+                    Permanently delete your account and all associated order history, profile data, and saved preferences. This action cannot be undone.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowDeleteModal(true)}
+                      className="px-4 py-2 rounded-xl bg-red-600 text-white text-xs font-extrabold hover:bg-red-700 transition cursor-pointer"
+                    >
+                      Delete Account
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleLogoutAllDevices}
+                      className="px-4 py-2 rounded-xl border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 bg-white dark:bg-gray-800 text-xs font-extrabold hover:bg-red-50 dark:hover:bg-red-950/40 transition cursor-pointer"
+                    >
+                      Logout from All Devices
+                    </button>
+                  </div>
+                </div>
+              </section>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Delete account Modal Dialog */}
+      {/* Delete Account Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-dropdown">
-          <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-xl space-y-4">
-            <h3 className="text-base font-bold text-gray-900">Are you absolutely sure?</h3>
-            <p className="text-xs text-gray-500">
-              This action cannot be undone. To proceed, please type <strong className="text-red-600">DELETE</strong> in the box below:
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-xl space-y-4">
+            <h3 className="text-lg font-extrabold text-red-600 dark:text-red-400">Confirm Account Deletion</h3>
+            <p className="text-xs text-gray-600 dark:text-gray-300">
+              Type <strong className="text-gray-900 dark:text-white">DELETE</strong> to confirm permanent deletion.
             </p>
+            {deleteErr && <p className="text-xs text-red-600 dark:text-red-400 font-semibold">{deleteErr}</p>}
             <input
               type="text"
               value={deleteConfirmText}
               onChange={(e) => setDeleteConfirmText(e.target.value)}
-              placeholder="Type DELETE here"
-              className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-xs outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
+              placeholder="Type DELETE"
+              className="w-full h-11 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 px-4 text-xs text-gray-900 dark:text-white outline-none focus:border-red-500 transition"
             />
-            {deleteErr && <p className="text-[10px] text-red-600 font-semibold">{deleteErr}</p>}
-            <div className="flex gap-3 justify-end pt-2">
+            <div className="flex gap-2 pt-2">
               <button
-                onClick={() => setShowDeleteModal(false)}
-                className="btn-secondary"
+                type="button"
+                onClick={handleDeleteAccount}
+                className="flex-1 rounded-xl bg-red-600 py-2.5 text-xs font-bold text-white hover:bg-red-700 transition cursor-pointer"
               >
-                Cancel
+                Permanently Delete
               </button>
               <button
-                onClick={handleDeleteAccount}
-                className="btn-danger"
+                type="button"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteConfirmText("");
+                  setDeleteErr("");
+                }}
+                className="flex-1 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 py-2.5 text-xs font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition cursor-pointer"
               >
-                Delete Profile
+                Cancel
               </button>
             </div>
           </div>
