@@ -148,7 +148,7 @@ export default function Hero() {
       <GradientOverlays />
 
       {/* Content */}
-      <div className="relative z-10 mx-auto max-w-7xl px-4 pt-28 sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto max-w-[1600px] px-4 pt-28 sm:px-6 lg:px-8 xl:px-10">
         <div className="flex min-h-[calc(100vh-7rem)] flex-col items-center gap-12 lg:flex-row lg:items-center lg:gap-8">
 
           {/* ─── LEFT COLUMN ─── */}

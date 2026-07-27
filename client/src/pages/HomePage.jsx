@@ -340,7 +340,7 @@ export default function HomePage() {
             <LegacyProductCardSkeleton />
           </div>
         ) : (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5">
             {bestSellers.map((product) => (
               <ProductCard
                 key={product._id || product.id}

@@ -566,7 +566,7 @@ function Navbar() {
       )}
     >
       <nav
-        className="mx-auto flex h-full max-w-7xl items-center gap-3 px-4 sm:gap-4 sm:px-6 lg:px-8"
+        className="mx-auto flex h-full max-w-[1600px] items-center gap-3 px-4 sm:gap-4 sm:px-6 lg:px-8 xl:px-10"
         aria-label="Main navigation"
       >
         {/* Brand + desktop nav */}

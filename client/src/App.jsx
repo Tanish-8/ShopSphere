@@ -37,7 +37,7 @@ function App() {
     <div className="min-h-screen bg-gray-50 text-gray-900">
       <Navbar />
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10">
+      <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 sm:px-6 lg:px-8 xl:px-10 py-10">
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/products" element={<ProductsPage />} />

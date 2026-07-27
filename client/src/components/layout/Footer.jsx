@@ -11,7 +11,7 @@ function Footer() {
   return (
     <footer className="mt-20 border-t border-[#E8E1D8] dark:border-gray-800 bg-[#F1ECE5] dark:bg-[#0b1329] text-gray-900 dark:text-gray-100">
       {/* Top Footer Section */}
-      <div className="mx-auto grid max-w-7xl gap-10 px-6 py-16 sm:px-8 lg:grid-cols-5 text-left">
+      <div className="mx-auto grid max-w-[1600px] gap-10 px-6 py-16 sm:px-8 lg:px-10 lg:grid-cols-5 text-left">
         {/* Column 1: Brand & Contact Info */}
         <section className="lg:col-span-2 space-y-5">
           <Link to="/" className="flex items-center gap-2">
@@ -135,7 +135,7 @@ function Footer() {
 
       {/* Bottom Footer Section: Social Links, Payments, and Copyright */}
       <div className="border-t border-gray-200 py-8 bg-gray-50">
-        <div className="mx-auto max-w-7xl px-6 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="mx-auto max-w-[1600px] px-6 lg:px-10 flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Copyright Info */}
           <div className="text-xs text-gray-400 font-bold text-center md:text-left space-y-1">
             <p>&copy; {new Date().getFullYear()} ShopSphere Ltd. All rights reserved.</p>

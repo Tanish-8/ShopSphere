@@ -18,7 +18,7 @@ const FeaturedSection = ({
 }) => {
   return (
     <section className={cn("py-16 px-6 md:px-12 lg:px-16 bg-[#F3EFE8] dark:bg-[#0f172a] rounded-3xl border border-[#E8E1D8] dark:border-gray-800 shadow-sm overflow-hidden", className)}>
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[1600px] mx-auto">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <motion.div

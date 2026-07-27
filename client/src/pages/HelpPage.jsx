@@ -51,7 +51,7 @@ export default function HelpPage() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-12">
+    <div className="space-y-12 text-left">
       {/* Title */}
       <div>
         <h1 className="text-3xl font-extrabold text-gray-900">Help & Support</h1>

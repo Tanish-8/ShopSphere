@@ -90,7 +90,7 @@ const CATEGORIES = [
 export const CategorySection = () => {
   return (
     <section id="categories" className="py-16 px-6 md:px-12 lg:px-16 bg-[#F3EFE8] dark:bg-[#0f172a] rounded-3xl border border-[#E8E1D8] dark:border-gray-800 shadow-sm scroll-mt-20">
-      <div className="max-w-screen-2xl mx-auto">
+      <div className="max-w-[1600px] mx-auto">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
