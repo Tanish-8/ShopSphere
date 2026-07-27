@@ -56,12 +56,12 @@ export default function ProductCard({ product, isWishlisted, onWishlistToggle, c
     <div className={`group relative flex flex-col h-full overflow-hidden rounded-[18px] border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-[6px] dark:bg-gray-800 ${className}`}>
       {/* Product Badges (Top Left) */}
       {badge && (
-        <span className="absolute left-3 top-3 z-10 rounded-md bg-indigo-600 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-white shadow-sm">
+        <span className="absolute left-3 top-3 z-10 rounded-md bg-indigo-600 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider text-white shadow-sm">
           {badge}
         </span>
       )}
       {discount > 0 && (
-        <span className="absolute left-3 top-[28px] z-10 rounded-md bg-rose-500 px-2 py-0.5 text-xs font-semibold tracking-wider text-white shadow-sm">
+        <span className="absolute left-3 top-[28px] z-10 rounded-md bg-rose-500 px-2.5 py-0.5 text-xs font-semibold tracking-wider text-white shadow-sm">
           {discount}% OFF
         </span>
       )}
@@ -114,7 +114,7 @@ export default function ProductCard({ product, isWishlisted, onWishlistToggle, c
         />
         {stock === 0 && (
           <div className="absolute inset-0 bg-white/75 backdrop-blur-sm flex items-center justify-center dark:bg-black/75 dark:backdrop-blur-sm">
-            <span className="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-white shadow-sm">
+            <span className="rounded-lg bg-red-600 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white shadow-sm">
               Out of Stock
             </span>
           </div>
@@ -122,13 +122,13 @@ export default function ProductCard({ product, isWishlisted, onWishlistToggle, c
       </Link>
 
       {/* Body details - Flex container with mt-auto button anchoring */}
-      <div className="flex flex-1 flex-col p-4 text-left">
+      <div className="flex flex-1 flex-col p-5 text-left">
         {/* Fixed Height: Brand & Category */}
         <div className="flex h-5 items-center justify-between gap-2 shrink-0">
-          <span className="text-xs font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 truncate max-w-[55%]">
+          <span className="text-xs font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 truncate">
             {brand}
           </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[45%] text-right">
+          <span className="text-xs text-gray-500 dark:text-gray-400 truncate text-right">
             {category}
           </span>
         </div>
@@ -150,7 +150,7 @@ export default function ProductCard({ product, isWishlisted, onWishlistToggle, c
             {[...Array(5)].map((_, i) => (
               <Star
                 key={i}
-                size={12}
+                size={13}
                 fill={i < rating ? "currentColor" : "none"}
                 className={i < rating ? "text-amber-400" : "text-gray-300"}
               />
@@ -161,14 +161,14 @@ export default function ProductCard({ product, isWishlisted, onWishlistToggle, c
           </span>
         </div>
 
-        {/* Fixed Height: Price & Stock Status (Reserved Badge Slot) */}
-        <div className="mt-3 flex h-7 items-center justify-between gap-2 shrink-0">
-          <div className="flex items-baseline gap-1.5 min-w-0">
-            <span className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 truncate">
+        {/* Price & Stock Status (Unclipped Price Display + Stock Badge) */}
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 min-h-[2.25rem] shrink-0">
+          <div className="flex flex-wrap items-baseline gap-1.5 min-w-0">
+            <span className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 whitespace-nowrap">
               {formatCurrency(convertPrice(price))}
             </span>
             {discount > 0 && (
-              <span className="text-xs text-gray-400 line-through dark:text-gray-500 truncate">
+              <span className="text-xs sm:text-sm text-gray-400 line-through dark:text-gray-500 whitespace-nowrap">
                 {formatCurrency(convertPrice(originalPrice))}
               </span>
             )}
@@ -176,17 +176,17 @@ export default function ProductCard({ product, isWishlisted, onWishlistToggle, c
           {/* Reserved Stock Badge Height */}
           <div className="flex items-center h-6 shrink-0">
             {stock > 0 && stock <= 5 && (
-              <span className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 rounded-full px-2 py-0.5 animate-pulse dark:bg-amber-900/20 dark:text-amber-300 whitespace-nowrap">
+              <span className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 rounded-full px-2.5 py-0.5 animate-pulse dark:bg-amber-900/20 dark:text-amber-300 whitespace-nowrap">
                 Only {stock} Left
               </span>
             )}
             {stock > 5 && (
-              <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-full px-2 py-0.5 dark:bg-emerald-900/20 dark:text-emerald-300 whitespace-nowrap">
+              <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-full px-2.5 py-0.5 dark:bg-emerald-900/20 dark:text-emerald-300 whitespace-nowrap">
                 In Stock
               </span>
             )}
             {stock === 0 && (
-              <span className="text-xs font-semibold text-red-700 bg-red-50 rounded-full px-2 py-0.5 dark:bg-red-900/20 dark:text-red-300 whitespace-nowrap">
+              <span className="text-xs font-semibold text-red-700 bg-red-50 rounded-full px-2.5 py-0.5 dark:bg-red-900/20 dark:text-red-300 whitespace-nowrap">
                 Out of Stock
               </span>
             )}

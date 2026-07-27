@@ -1,4 +1,5 @@
 import { Route, Routes } from "react-router-dom";
+import ScrollToTop from "./components/common/ScrollToTop";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AdminRoute from "./components/auth/AdminRoute";
 import Footer from "./components/layout/Footer";
@@ -35,6 +36,7 @@ import CouponsAdminPage from "./pages/admin/CouponsPage";
 function App() {
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
+      <ScrollToTop />
       <Navbar />
 
       <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 sm:px-6 lg:px-8 xl:px-10 py-10">

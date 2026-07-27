@@ -610,7 +610,7 @@ function ProductsPage() {
           )}
 
           {/* Grid Section */}
-          <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+          <section className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(290px,1fr))]">
             {loading && Array.from({ length: 9 }).map((_, index) => <SkeletonCard key={index} />)}
 
             {!loading &&
