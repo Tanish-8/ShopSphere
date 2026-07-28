@@ -173,17 +173,17 @@ app.get("/api", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
-    app.use("/api/addresses", addressRoutes);
-    app.use("/api/admin", adminRoutes);
-    app.use("/api/payments", paymentRoutes);
-  app.use("/api/wishlist", wishlistRoutes);
-  app.use("/api/upload", uploadRoutes);
-  app.use("/api/coupons", couponRoutes);
+app.use("/api/addresses", addressRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/upload", uploadRoutes);
+app.use("/api/coupons", couponRoutes);
 
-  // Serve Swagger API Documentation (hidden in production by default unless ENABLE_SWAGGER_IN_PRODUCTION is true)
-  if (process.env.NODE_ENV !== "production" || process.env.ENABLE_SWAGGER_IN_PRODUCTION === "true") {
-    app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-  }
+// Serve Swagger API Documentation (hidden in production by default unless ENABLE_SWAGGER_IN_PRODUCTION is true)
+if (process.env.NODE_ENV !== "production" || process.env.ENABLE_SWAGGER_IN_PRODUCTION === "true") {
+  app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+}
 
 // ---------------------------------------------------------------------------
 // Error Handling
@@ -200,15 +200,20 @@ const startServer = async () => {
   try {
     // Wait for MongoDB connection before accepting HTTP requests
     await connectDB();
-        
-        // Run address, order, and category migrations (idempotent)
-        await migrateAddresses();
-        await migrateOrders();
-        await migrateCategories();
+
+    // Run address, order, and category migrations (idempotent)
+    await migrateAddresses();
+    await migrateOrders();
+    await migrateCategories();
 
     app.listen(PORT, () => {
-      console.log(`\n🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-      console.log(`   http://localhost:${PORT}/api\n`);
+      console.log(`🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+
+      if (process.env.NODE_ENV === "production") {
+        console.log(`🌐 API URL: https://shopsphere-g67n.onrender.com/api`);
+      } else {
+        console.log(`🌐 API URL: http://localhost:${PORT}/api`);
+      }
     });
   } catch (error) {
     console.error("💥 Failed to start server:", error.message);
