@@ -139,7 +139,7 @@ export default function Hero() {
   return (
     <section
       ref={sectionRef}
-      className="relative min-h-screen overflow-hidden rounded-3xl border border-[#E8E1D8] dark:border-gray-800 bg-gradient-to-br from-[#F7F4EF] via-[#F3EFE8] to-[#EEF2FF] dark:from-[#0f172a] dark:via-[#1e1b4b]/60 dark:to-[#0f172a] shadow-sm"
+      className="relative min-h-[85vh] overflow-hidden rounded-3xl border border-[#E8E1D8] dark:border-gray-800 bg-gradient-to-br from-[#F7F4EF] via-[#F3EFE8] to-[#EEF2FF] dark:from-[#0f172a] dark:via-[#1e1b4b]/60 dark:to-[#0f172a] shadow-sm"
       aria-label="ShopSphere hero section"
     >
       {/* Background */}
@@ -148,8 +148,8 @@ export default function Hero() {
       <GradientOverlays />
 
       {/* Content */}
-      <div className="relative z-10 mx-auto max-w-[1600px] px-4 pt-28 sm:px-6 lg:px-8 xl:px-10">
-        <div className="flex min-h-[calc(100vh-7rem)] flex-col items-center gap-12 lg:flex-row lg:items-center lg:gap-8">
+      <div className="relative z-10 mx-auto max-w-[1600px] px-4 pt-16 pb-8 sm:px-6 lg:px-8 xl:px-10">
+        <div className="flex min-h-[calc(85vh-4rem)] flex-col items-center gap-8 lg:flex-row lg:items-center lg:gap-8">
 
           {/* ─── LEFT COLUMN ─── */}
           <motion.div
@@ -198,7 +198,7 @@ export default function Hero() {
           {/* ─── RIGHT COLUMN ─── */}
           <motion.div
             style={{ y: rightY, opacity: rightOpacity }}
-            className="relative h-[520px] w-full flex-1 lg:h-[600px]"
+            className="relative w-full flex-1 flex items-center justify-center py-6"
           >
             <ProductShowcase />
           </motion.div>
